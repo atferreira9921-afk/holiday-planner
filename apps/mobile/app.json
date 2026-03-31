@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "Holiday Planner",
+    "slug": "holiday-planner",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "holiday-planner",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.holidayplanner.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.holidayplanner.app"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static"
+    },
+    "plugins": [
+      "expo-router"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+		"supabaseUrl": "https://qjnipnkwwcbjwzoljebl.supabase.co",
+		"supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqbmlwbmt3d2Niand6b2xqZWJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2MTI0MjMsImV4cCI6MjA5MDE4ODQyM30.hkftzcE5BbRVKay4PuKDvbgGzC5WG_IslA5PeUFLES8"
+	}
+  }
+}

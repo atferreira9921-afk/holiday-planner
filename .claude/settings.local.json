@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls /c/Users/alexandferreira/holiday-planner/apps/web/src/app/\\\\\\(app\\\\\\))",
+      "Bash(ls /c/Users/alexandferreira/holiday-planner/apps/web/src/app/\\\\\\(auth\\\\\\))",
+      "Bash(ls /c/Users/alexandferreira/holiday-planner/apps/web/src/app/\\\\\\(app\\\\\\)/dashboard)",
+      "Bash(ls /c/Users/alexandferreira/holiday-planner/apps/web/src/app/\\\\\\(app\\\\\\)/trips)",
+      "Bash(ls /c/Users/alexandferreira/holiday-planner/apps/web/src/app/\\\\\\(app\\\\\\)/holidays)",
+      "Bash(ls /c/Users/alexandferreira/holiday-planner/apps/web/src/app/\\\\\\(app\\\\\\)/family)",
+      "Bash(ls /c/Users/alexandferreira/holiday-planner/apps/web/src/app/\\\\\\(app\\\\\\)/wishlist)",
+      "Bash(ls /c/Users/alexandferreira/holiday-planner/apps/web/src/app/\\\\\\(app\\\\\\)/trips/[id])",
+      "Bash(ls /c/Users/alexandferreira/holiday-planner/apps/web/src/app/\\\\\\(app\\\\\\)/trips/new)",
+      "Bash(ls /c/Users/alexandferreira/holiday-planner/apps/web/src/app/api/trips/[id])",
+      "Bash(ls /c/Users/alexandferreira/holiday-planner/apps/mobile/app/\\\\\\(auth\\\\\\))",
+      "Bash(ls /c/Users/alexandferreira/holiday-planner/apps/mobile/app/\\\\\\(tabs\\\\\\))",
+      "Bash(grep -n \"from.*trip_expenses\" /c/Users/alexandferreira/holiday-planner/apps/web/src/app/\\\\\\(app\\\\\\)/trips/[id]/page.tsx)",
+      "Bash(grep -n \"trip_suggestion_votes\" /c/Users/alexandferreira/holiday-planner/apps/web/src/app/api/suggestions/[id]/vote/route.ts)",
+      "Bash(ls:*)",
+      "Bash(grep -n \"TripRealtimeUpdater\" /c/Users/alexandferreira/holiday-planner/apps/web/src/app/\\\\\\(app\\\\\\)/trips/[id]/page.tsx)",
+      "Bash(grep -n \"trip_packing_items\" /c/Users/alexandferreira/holiday-planner/apps/web/src/app/\\\\\\(app\\\\\\)/trips/[id]/SmartPackingButton.tsx)"
+    ]
+  }
+}

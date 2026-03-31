@@ -1,0 +1,517 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import type { FamilyMember } from "@holiday-planner/shared-types";
+import { COUNTRIES, getAirports, getRegions } from "@/lib/data/geo";
+import FamilyMemberAvatarCard from "./FamilyMemberAvatarCard";
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const COLORS = [
+  { id: "indigo",  dot: "#6366f1" },
+  { id: "rose",    dot: "#f43f5e" },
+  { id: "amber",   dot: "#f59e0b" },
+  { id: "teal",    dot: "#14b8a6" },
+  { id: "violet",  dot: "#8b5cf6" },
+  { id: "orange",  dot: "#f97316" },
+  { id: "cyan",    dot: "#06b6d4" },
+  { id: "emerald", dot: "#10b981" },
+];
+
+const INTERESTS = ["beach", "mountains", "culture", "food", "nightlife", "nature", "city", "adventure", "relaxation", "history"];
+
+const STYLES = [
+  { value: "budget",    label: "Budget",    icon: "🎒" },
+  { value: "mid-range", label: "Mid-range", icon: "✈️" },
+  { value: "luxury",    label: "Luxury",    icon: "💎" },
+];
+
+const GENDERS = [
+  { value: "prefer_not_to_say", label: "Prefer not to say" },
+  { value: "female",            label: "Female" },
+  { value: "male",              label: "Male" },
+  { value: "other",             label: "Other" },
+];
+
+const emptyForm: Omit<FamilyMember, "id" | "owner_user_id" | "linked_user_id" | "created_at"> = {
+  display_name: "",
+  home_country: "PT",
+  home_city: "LIS",
+  color: "rose",
+  vacation_days_per_year: 22,
+  gender: "prefer_not_to_say",
+  birthday: null,
+  on_parental_leave: false,
+  parental_leave_end_date: null,
+  travel_style: "mid-range",
+  budget_min_eur: 300,
+  budget_max_eur: 2000,
+  interests: [],
+  avoid_destinations: [],
+  preferred_countries: [],
+  home_region: null,
+  home_city_name: null,
+};
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
+export default function FamilyPage() {
+  const [members, setMembers] = useState<FamilyMember[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [form, setForm] = useState(emptyForm);
+  const [saving, setSaving] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function load() {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { data } = await supabase
+      .from("family_members").select("*")
+      .eq("owner_user_id", user.id).order("created_at");
+    setMembers(data ?? []);
+    setLoading(false);
+  }
+
+  useEffect(() => { load(); }, []);
+
+  function setF<K extends keyof typeof emptyForm>(key: K, value: typeof emptyForm[K]) {
+    setForm(f => ({ ...f, [key]: value }));
+  }
+
+  function toggleInterest(v: string) {
+    setForm(f => ({
+      ...f,
+      interests: f.interests.includes(v) ? f.interests.filter(x => x !== v) : [...f.interests, v],
+    }));
+  }
+
+  function handleCountryChange(code: string) {
+    const airports = getAirports(code);
+    setForm(f => ({
+      ...f,
+      home_country: code,
+      home_city: airports[0]?.iata ?? f.home_city,
+      home_region: null,
+    }));
+  }
+
+  async function handleSave(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    if (!form.display_name.trim() || !form.home_country) {
+      setError("Name and country are required.");
+      return;
+    }
+    setSaving(true);
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const payload = {
+      ...form,
+      display_name: form.display_name.trim(),
+      home_country: form.home_country.toUpperCase(),
+      home_city: form.home_city.toUpperCase() || "???",
+      owner_user_id: user.id,
+    };
+
+    if (editId) {
+      await supabase.from("family_members").update(payload).eq("id", editId);
+    } else {
+      await supabase.from("family_members").insert(payload);
+    }
+
+    setForm(emptyForm);
+    setEditId(null);
+    setSaving(false);
+    load();
+  }
+
+  function startEdit(m: FamilyMember) {
+    setEditId(m.id);
+    setForm({
+      display_name: m.display_name,
+      home_country: m.home_country,
+      home_city: m.home_city,
+      color: m.color,
+      vacation_days_per_year: m.vacation_days_per_year ?? 22,
+      gender: m.gender ?? "prefer_not_to_say",
+      birthday: m.birthday ?? null,
+      on_parental_leave: m.on_parental_leave ?? false,
+      parental_leave_end_date: m.parental_leave_end_date ?? null,
+      travel_style: m.travel_style ?? "mid-range",
+      budget_min_eur: m.budget_min_eur ?? 300,
+      budget_max_eur: m.budget_max_eur ?? 2000,
+      interests: m.interests ?? [],
+      avoid_destinations: m.avoid_destinations ?? [],
+      preferred_countries: m.preferred_countries ?? [],
+      home_region: m.home_region ?? null,
+      home_city_name: m.home_city_name ?? null,
+    });
+    window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+  }
+
+  async function remove(id: string) {
+    const supabase = createClient();
+    await supabase.from("family_members").delete().eq("id", id);
+    load();
+  }
+
+  function cancelEdit() { setEditId(null); setForm(emptyForm); setError(null); }
+
+  const colorDot = (id: string) => COLORS.find(c => c.id === id)?.dot ?? "#6366f1";
+
+  const leaveLabel = (gender: string) =>
+    gender === "female" ? "Maternity leave" : gender === "male" ? "Paternity leave" : "Parental leave";
+
+  const formAirports = getAirports(form.home_country);
+  const formRegions = getRegions(form.home_country);
+  const countryName = (code: string) => COUNTRIES.find(c => c.code === code)?.name ?? code;
+
+  const avatarColorDot = COLORS.find(c => c.id === form.color)?.dot ?? "#6366f1";
+
+  return (
+    <div className="max-w-5xl mx-auto space-y-8">
+      <div>
+        <h1 className="text-2xl font-bold text-slate-900">Family & Friends</h1>
+        <p className="text-slate-500 text-sm mt-1">
+          Each person has their own profile — vacation days, interests, travel style, and parental leave — so trip planning accounts for everyone.
+        </p>
+      </div>
+
+      {/* Members list */}
+      {loading ? (
+        <div className="text-slate-400 text-sm">Loading...</div>
+      ) : members.length === 0 ? (
+        <div className="card p-8 text-center text-slate-400 text-sm">
+          No one added yet. Use the form below to add a family member or travel companion.
+        </div>
+      ) : (
+        <div className="card divide-y divide-slate-100">
+          {members.map(m => (
+            <div key={m.id}>
+              {/* Summary row */}
+              <div
+                className="flex items-center gap-4 px-5 py-4 cursor-pointer hover:bg-slate-50 transition"
+                onClick={() => setExpanded(expanded === m.id ? null : m.id)}
+              >
+                <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
+                  style={{ backgroundColor: colorDot(m.color) }}>
+                  {m.display_name.slice(0, 2).toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="font-semibold text-slate-800">{m.display_name}</p>
+                    {m.on_parental_leave && (
+                      <span className="text-xs bg-purple-50 text-purple-600 border border-purple-100 px-2 py-0.5 rounded-full">
+                        {leaveLabel(m.gender)}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    {countryName(m.home_country)} · {m.home_city} · {m.vacation_days_per_year ?? 22} days/yr · {m.travel_style ?? "mid-range"}
+                    {(m.interests ?? []).length > 0 && ` · ${m.interests.slice(0, 2).join(", ")}${m.interests.length > 2 ? "…" : ""}`}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <span className="text-slate-400 text-xs">{expanded === m.id ? "▲" : "▼"}</span>
+                  <button onClick={e => { e.stopPropagation(); startEdit(m); }}
+                    className="btn-ghost text-xs px-3 py-1.5">Edit</button>
+                  <button onClick={e => { e.stopPropagation(); remove(m.id); }}
+                    className="text-xs px-3 py-1.5 rounded-lg text-red-500 hover:bg-red-50 transition">Remove</button>
+                </div>
+              </div>
+
+              {/* Expanded detail */}
+              {expanded === m.id && (
+                <div className="px-5 pb-4 grid grid-cols-2 gap-x-8 gap-y-2 text-sm bg-slate-50 border-t border-slate-100">
+                  <Detail label="Base city" value={(() => {
+                    const airportList = getAirports(m.home_country);
+                    const city = m.home_city_name ?? airportList.find(a => a.iata === m.home_city)?.city ?? m.home_city;
+                    const country = countryName(m.home_country);
+                    return `${city}, ${country}`;
+                  })()} />
+                  {m.home_region && (
+                    <Detail label="Region" value={(() => {
+                      const r = getRegions(m.home_country).find(r => r.code === m.home_region);
+                      return r ? `${r.name} (${r.code})` : m.home_region ?? "—";
+                    })()} />
+                  )}
+                  <Detail label="Gender" value={GENDERS.find(g => g.value === m.gender)?.label ?? "—"} />
+                  <Detail label="Vacation days/yr" value={String(m.vacation_days_per_year ?? 22)} />
+                  <Detail label="Travel style" value={STYLES.find(s => s.value === m.travel_style)?.label ?? "—"} />
+                  <Detail label="Budget" value={`€${m.budget_min_eur ?? 300}–€${m.budget_max_eur ?? 2000}`} />
+                  {m.on_parental_leave && (
+                    <Detail label={leaveLabel(m.gender)} value={m.parental_leave_end_date ? `until ${m.parental_leave_end_date}` : "yes"} />
+                  )}
+                  {(m.interests ?? []).length > 0 && (
+                    <div className="col-span-2">
+                      <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Interests</span>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {m.interests.map(i => (
+                          <span key={i} className="text-xs bg-indigo-50 text-indigo-700 border border-indigo-100 px-2 py-0.5 rounded-full capitalize">{i}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {(m.avoid_destinations ?? []).length > 0 && (
+                    <Detail label="Avoid" value={m.avoid_destinations.join(", ")} />
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Add / Edit form — two-column on large screens */}
+      <div className="flex flex-col lg:flex-row gap-6 items-start">
+
+        {/* Avatar preview — sticky on desktop */}
+        <div className="w-full lg:w-72 lg:flex-shrink-0 lg:sticky lg:top-[88px]">
+          <FamilyMemberAvatarCard
+            name={form.display_name}
+            gender={form.gender ?? "prefer_not_to_say"}
+            country={form.home_country}
+            cityName={form.home_city_name}
+            travelStyle={form.travel_style ?? "mid-range"}
+            interests={form.interests ?? []}
+            colorId={form.color}
+            colorDot={avatarColorDot}
+          />
+        </div>
+
+        {/* Form */}
+        <div className="flex-1 card p-6 space-y-6">
+        <h2 className="font-bold text-slate-900 text-lg">{editId ? "Edit person" : "Add a person"}</h2>
+
+        <form onSubmit={handleSave} className="space-y-6">
+
+          {/* ── Identity ── */}
+          <section className="space-y-4">
+            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100 pb-2">Identity</h3>
+
+            <div>
+              <label className="label">Name</label>
+              <input className="input" value={form.display_name}
+                onChange={e => setF("display_name", e.target.value)} placeholder="e.g. Sarah" required />
+            </div>
+
+            <div>
+              <label className="label">Calendar colour</label>
+              <div className="flex gap-2 flex-wrap mt-1">
+                {COLORS.map(c => (
+                  <button key={c.id} type="button" onClick={() => setF("color", c.id)}
+                    className={`w-8 h-8 rounded-full border-2 transition ${form.color === c.id ? "border-slate-700 scale-110" : "border-transparent"}`}
+                    style={{ backgroundColor: c.dot }} />
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* ── Home base ── */}
+          <section className="space-y-4">
+            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100 pb-2">Home base</h3>
+
+            <div>
+              <label className="label">Country</label>
+              <select
+                className="input"
+                value={form.home_country}
+                onChange={e => handleCountryChange(e.target.value)}
+                required
+              >
+                {COUNTRIES.map(c => (
+                  <option key={c.code} value={c.code}>{c.name} ({c.code})</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="label">Home airport</label>
+              {formAirports.length > 0 ? (
+                <select
+                  className="input"
+                  value={form.home_city}
+                  onChange={e => setF("home_city", e.target.value)}
+                >
+                  {formAirports.map(a => (
+                    <option key={a.iata} value={a.iata}>
+                      {a.city} — {a.name} ({a.iata})
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <div className="space-y-1">
+                  <input className="input" value={form.home_city}
+                    onChange={e => setF("home_city", e.target.value.toUpperCase().slice(0, 3))}
+                    placeholder="IATA code, e.g. LHR" maxLength={3} />
+                  <p className="text-xs text-slate-400">No airports listed for this country. Enter IATA code manually.</p>
+                </div>
+              )}
+            </div>
+
+            {/* Region + city of residence */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="label">Region / province</label>
+                {formRegions.length > 0 ? (
+                  <select
+                    className="input"
+                    value={form.home_region ?? ""}
+                    onChange={e => setF("home_region", e.target.value || null)}
+                  >
+                    <option value="">— Any / whole country —</option>
+                    {formRegions.map(r => (
+                      <option key={r.code} value={r.code}>{r.name} ({r.code})</option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    className="input"
+                    value={form.home_region ?? ""}
+                    onChange={e => setF("home_region", e.target.value || null)}
+                    placeholder="ISO 3166-2, e.g. PT-06"
+                  />
+                )}
+                <p className="text-xs text-slate-400 mt-1">For regional holiday filtering.</p>
+              </div>
+
+              <div>
+                <label className="label">City of residence</label>
+                <input
+                  className="input"
+                  value={form.home_city_name ?? ""}
+                  onChange={e => setF("home_city_name", e.target.value || null)}
+                  placeholder="e.g. Coimbra"
+                />
+                <p className="text-xs text-slate-400 mt-1">May differ from airport city.</p>
+              </div>
+            </div>
+
+            <div>
+              <label className="label">Vacation days per year</label>
+              <div className="flex items-center gap-2">
+                <input className="input" type="number" style={{ maxWidth: 100 }}
+                  value={form.vacation_days_per_year}
+                  onChange={e => setF("vacation_days_per_year", parseInt(e.target.value) || 22)}
+                  min={1} max={60} />
+                <span className="text-sm text-slate-500">days</span>
+              </div>
+            </div>
+          </section>
+
+          {/* ── Personal ── */}
+          <section className="space-y-4">
+            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100 pb-2">Personal</h3>
+
+            <div>
+              <label className="label">Gender</label>
+              <select className="input" value={form.gender}
+                onChange={e => setF("gender", e.target.value as typeof form.gender)}>
+                {GENDERS.map(g => <option key={g.value} value={g.value}>{g.label}</option>)}
+              </select>
+            </div>
+
+            <div>
+              <label className="label">Birthday</label>
+              <input className="input" type="date" value={form.birthday ?? ""} onChange={e => setF("birthday", e.target.value || null)} />
+              <p className="text-xs text-slate-400 mt-1">Shown on calendar. Trip suggestions near their birthday get special ideas.</p>
+            </div>
+
+            <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+              <div>
+                <p className="text-sm font-semibold text-slate-700">{leaveLabel(form.gender)}</p>
+                <p className="text-xs text-slate-400 mt-0.5">Dates up to end date will be blocked from trip planning</p>
+              </div>
+              <button type="button"
+                onClick={() => setF("on_parental_leave", !form.on_parental_leave)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${form.on_parental_leave ? "bg-indigo-500" : "bg-slate-200"}`}>
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${form.on_parental_leave ? "translate-x-6" : "translate-x-1"}`} />
+              </button>
+            </div>
+
+            {form.on_parental_leave && (
+              <div>
+                <label className="label">Leave end date</label>
+                <input className="input" type="date"
+                  value={form.parental_leave_end_date ?? ""}
+                  onChange={e => setF("parental_leave_end_date", e.target.value || null)} />
+              </div>
+            )}
+          </section>
+
+          {/* ── Travel style ── */}
+          <section className="space-y-4">
+            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100 pb-2">Travel style</h3>
+
+            <div className="grid grid-cols-3 gap-3">
+              {STYLES.map(s => (
+                <button key={s.value} type="button"
+                  onClick={() => setF("travel_style", s.value as typeof form.travel_style)}
+                  className={`p-3 rounded-xl border-2 text-center transition ${form.travel_style === s.value ? "border-indigo-500 bg-indigo-50" : "border-slate-200 hover:border-slate-300"}`}>
+                  <div className="text-xl mb-1">{s.icon}</div>
+                  <div className="text-xs font-semibold text-slate-700">{s.label}</div>
+                </button>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="label">Min budget (€)</label>
+                <input className="input" type="number" value={form.budget_min_eur}
+                  onChange={e => setF("budget_min_eur", parseInt(e.target.value) || 0)} />
+              </div>
+              <div>
+                <label className="label">Max budget (€)</label>
+                <input className="input" type="number" value={form.budget_max_eur}
+                  onChange={e => setF("budget_max_eur", parseInt(e.target.value) || 0)} />
+              </div>
+            </div>
+          </section>
+
+          {/* ── Interests ── */}
+          <section className="space-y-3">
+            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100 pb-2">Interests</h3>
+            <div className="flex flex-wrap gap-2">
+              {INTERESTS.map(interest => {
+                const active = form.interests.includes(interest);
+                return (
+                  <button key={interest} type="button" onClick={() => toggleInterest(interest)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold border-2 transition capitalize ${active ? "border-indigo-500 bg-indigo-500 text-white" : "border-slate-200 text-slate-600 hover:border-indigo-300"}`}>
+                    {interest}
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+
+          {error && <p className="text-red-500 text-sm">{error}</p>}
+
+          <div className="flex gap-2 pt-2">
+            <button type="submit" className="btn-primary" disabled={saving}>
+              {saving ? "Saving..." : editId ? "Save changes" : "Add person"}
+            </button>
+            {editId && (
+              <button type="button" onClick={cancelEdit} className="btn-ghost">Cancel</button>
+            )}
+          </div>
+        </form>
+        </div> {/* end form card */}
+      </div> {/* end two-column */}
+    </div>
+  );
+}
+
+function Detail({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="py-1.5">
+      <span className="text-xs text-slate-400">{label}: </span>
+      <span className="text-xs font-medium text-slate-700">{value}</span>
+    </div>
+  );
+}

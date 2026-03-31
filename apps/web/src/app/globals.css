@@ -1,0 +1,344 @@
+@import "tailwindcss";
+
+:root {
+  --primary: #6366f1;
+  --primary-dark: #4f46e5;
+  --accent: #f59e0b;
+  --bg: #f8fafc;
+  --surface: #ffffff;
+  --border: #e2e8f0;
+  --text: #0f172a;
+  --muted: #64748b;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--bg);
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.gradient-hero {
+  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 40%, #4338ca 70%, #6366f1 100%);
+}
+
+.gradient-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.gradient-sunset {
+  background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+}
+
+.gradient-ocean {
+  background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+}
+
+.gradient-forest {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.04);
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.card:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08), 0 8px 32px rgba(0,0,0,0.06);
+  transform: translateY(-1px);
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: white;
+  border-radius: 10px;
+  padding: 10px 20px;
+  font-weight: 600;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-primary:hover {
+  background: var(--primary-dark);
+  transform: translateY(-1px);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 10px 20px;
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-ghost:hover {
+  background: var(--bg);
+}
+
+.input {
+  width: 100%;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 14px;
+  color: var(--text);
+  background: var(--surface);
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
+.label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #94a3b8;
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s;
+}
+
+.sidebar-link:hover {
+  background: rgba(255,255,255,0.08);
+  color: white;
+}
+
+.sidebar-link.active {
+  background: rgba(99, 102, 241, 0.25);
+  color: white;
+}
+
+@media (max-width: 768px) {
+  .card {
+    border-radius: 12px;
+  }
+}
+
+/* ── Scrollbar hide utility ── */
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+
+/* ── Ensure all app pages fill the viewport ── */
+html, body { height: 100%; }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   DARK MODE
+   Applied when data-theme="dark" is on <html> (set by DarkModeToggle).
+   Overrides Tailwind's hardcoded utility classes so the whole app goes dark
+   without needing dark: prefixes on every element.
+───────────────────────────────────────────────────────────────────────────── */
+
+[data-theme="dark"] {
+  --bg: #0f172a;
+  --surface: #1e293b;
+  --border: #334155;
+  --text: #f1f5f9;
+  --muted: #94a3b8;
+  color-scheme: dark;
+}
+
+/* ── Slate text ── */
+[data-theme="dark"] .text-slate-900 { color: #f1f5f9; }
+[data-theme="dark"] .text-slate-800 { color: #e2e8f0; }
+[data-theme="dark"] .text-slate-700 { color: #cbd5e1; }
+[data-theme="dark"] .text-slate-600 { color: #94a3b8; }
+[data-theme="dark"] .text-slate-500 { color: #94a3b8; }
+[data-theme="dark"] .text-slate-400 { color: #64748b; }
+
+/* ── Slate backgrounds ── */
+[data-theme="dark"] .bg-white     { background-color: #1e293b; }
+[data-theme="dark"] .bg-slate-50  { background-color: #1e293b; }
+[data-theme="dark"] .bg-slate-100 { background-color: #293548; }
+[data-theme="dark"] .bg-slate-200 { background-color: #334155; }
+
+/* ── Slate borders & dividers ── */
+[data-theme="dark"] .border-slate-100 { border-color: #334155; }
+[data-theme="dark"] .border-slate-200 { border-color: #334155; }
+[data-theme="dark"] .border-slate-300 { border-color: #475569; }
+[data-theme="dark"] .divide-slate-100 > * + * { border-color: #334155; }
+
+/* ── Hover states ── */
+[data-theme="dark"] .hover\:bg-slate-50:hover  { background-color: #293548; }
+[data-theme="dark"] .hover\:bg-slate-100:hover { background-color: #334155; }
+
+/* ── Colored accent backgrounds → tinted overlays ── */
+[data-theme="dark"] .bg-indigo-50  { background-color: rgba(99, 102, 241, 0.12); }
+[data-theme="dark"] .bg-indigo-100 { background-color: rgba(99, 102, 241, 0.2); }
+[data-theme="dark"] .bg-violet-50  { background-color: rgba(139, 92, 246, 0.12); }
+[data-theme="dark"] .bg-violet-100 { background-color: rgba(139, 92, 246, 0.2); }
+[data-theme="dark"] .bg-blue-50    { background-color: rgba(59, 130, 246, 0.12); }
+[data-theme="dark"] .bg-blue-100   { background-color: rgba(59, 130, 246, 0.2); }
+[data-theme="dark"] .bg-sky-50     { background-color: rgba(14, 165, 233, 0.1); }
+[data-theme="dark"] .bg-sky-100    { background-color: rgba(14, 165, 233, 0.18); }
+[data-theme="dark"] .bg-green-50   { background-color: rgba(34, 197, 94, 0.1); }
+[data-theme="dark"] .bg-green-100  { background-color: rgba(34, 197, 94, 0.18); }
+[data-theme="dark"] .bg-emerald-50 { background-color: rgba(16, 185, 129, 0.1); }
+[data-theme="dark"] .bg-emerald-100 { background-color: rgba(16, 185, 129, 0.18); }
+[data-theme="dark"] .bg-amber-50   { background-color: rgba(245, 158, 11, 0.1); }
+[data-theme="dark"] .bg-amber-100  { background-color: rgba(245, 158, 11, 0.18); }
+[data-theme="dark"] .bg-yellow-50  { background-color: rgba(234, 179, 8, 0.1); }
+[data-theme="dark"] .bg-yellow-100 { background-color: rgba(234, 179, 8, 0.2); }
+[data-theme="dark"] .bg-red-50     { background-color: rgba(239, 68, 68, 0.1); }
+[data-theme="dark"] .bg-red-100    { background-color: rgba(239, 68, 68, 0.18); }
+[data-theme="dark"] .bg-rose-50    { background-color: rgba(244, 63, 94, 0.1); }
+[data-theme="dark"] .bg-rose-100   { background-color: rgba(244, 63, 94, 0.18); }
+[data-theme="dark"] .bg-purple-50  { background-color: rgba(168, 85, 247, 0.1); }
+[data-theme="dark"] .bg-purple-100 { background-color: rgba(168, 85, 247, 0.18); }
+[data-theme="dark"] .bg-teal-50    { background-color: rgba(20, 184, 166, 0.1); }
+[data-theme="dark"] .bg-teal-100   { background-color: rgba(20, 184, 166, 0.18); }
+[data-theme="dark"] .bg-cyan-50    { background-color: rgba(6, 182, 212, 0.1); }
+[data-theme="dark"] .bg-orange-50  { background-color: rgba(249, 115, 22, 0.1); }
+[data-theme="dark"] .bg-orange-100 { background-color: rgba(249, 115, 22, 0.18); }
+
+/* ── Colored text → lighter shades for dark backgrounds ── */
+[data-theme="dark"] .text-indigo-700 { color: #a5b4fc; }
+[data-theme="dark"] .text-indigo-600 { color: #a5b4fc; }
+[data-theme="dark"] .text-indigo-500 { color: #818cf8; }
+[data-theme="dark"] .text-violet-700 { color: #c4b5fd; }
+[data-theme="dark"] .text-violet-600 { color: #c4b5fd; }
+[data-theme="dark"] .text-sky-700    { color: #7dd3fc; }
+[data-theme="dark"] .text-sky-600    { color: #7dd3fc; }
+[data-theme="dark"] .text-rose-700   { color: #fda4af; }
+[data-theme="dark"] .text-rose-600   { color: #fda4af; }
+[data-theme="dark"] .text-orange-700 { color: #fdba74; }
+[data-theme="dark"] .text-orange-600 { color: #fdba74; }
+[data-theme="dark"] .text-blue-700   { color: #93c5fd; }
+[data-theme="dark"] .text-blue-600   { color: #93c5fd; }
+[data-theme="dark"] .text-blue-400   { color: #60a5fa; }
+[data-theme="dark"] .text-green-700  { color: #86efac; }
+[data-theme="dark"] .text-green-600  { color: #86efac; }
+[data-theme="dark"] .text-emerald-700 { color: #6ee7b7; }
+[data-theme="dark"] .text-emerald-600 { color: #6ee7b7; }
+[data-theme="dark"] .text-teal-700   { color: #5eead4; }
+[data-theme="dark"] .text-yellow-800 { color: #fde68a; }
+[data-theme="dark"] .text-amber-800  { color: #fde68a; }
+[data-theme="dark"] .text-amber-700  { color: #fcd34d; }
+[data-theme="dark"] .text-amber-600  { color: #fcd34d; }
+[data-theme="dark"] .text-orange-600 { color: #fdba74; }
+[data-theme="dark"] .text-red-700    { color: #fca5a5; }
+[data-theme="dark"] .text-red-600    { color: #fca5a5; }
+[data-theme="dark"] .text-red-500    { color: #f87171; }
+[data-theme="dark"] .text-red-400    { color: #f87171; }
+[data-theme="dark"] .text-purple-700 { color: #d8b4fe; }
+[data-theme="dark"] .text-purple-600 { color: #d8b4fe; }
+
+/* ── Colored borders ── */
+[data-theme="dark"] .border-indigo-100 { border-color: rgba(99, 102, 241, 0.2); }
+[data-theme="dark"] .border-indigo-200 { border-color: rgba(99, 102, 241, 0.3); }
+[data-theme="dark"] .border-indigo-300 { border-color: rgba(99, 102, 241, 0.4); }
+[data-theme="dark"] .border-violet-100 { border-color: rgba(139, 92, 246, 0.2); }
+[data-theme="dark"] .border-violet-200 { border-color: rgba(139, 92, 246, 0.3); }
+[data-theme="dark"] .border-sky-100    { border-color: rgba(14, 165, 233, 0.2); }
+[data-theme="dark"] .border-sky-200    { border-color: rgba(14, 165, 233, 0.3); }
+[data-theme="dark"] .border-emerald-100 { border-color: rgba(16, 185, 129, 0.2); }
+[data-theme="dark"] .border-emerald-200 { border-color: rgba(16, 185, 129, 0.3); }
+[data-theme="dark"] .border-amber-100  { border-color: rgba(245, 158, 11, 0.2); }
+[data-theme="dark"] .border-amber-200  { border-color: rgba(245, 158, 11, 0.3); }
+[data-theme="dark"] .border-rose-100   { border-color: rgba(244, 63, 94, 0.2); }
+[data-theme="dark"] .border-rose-200   { border-color: rgba(244, 63, 94, 0.3); }
+[data-theme="dark"] .border-teal-100   { border-color: rgba(20, 184, 166, 0.2); }
+[data-theme="dark"] .border-teal-200   { border-color: rgba(20, 184, 166, 0.3); }
+[data-theme="dark"] .border-orange-100 { border-color: rgba(249, 115, 22, 0.2); }
+[data-theme="dark"] .border-orange-200 { border-color: rgba(249, 115, 22, 0.3); }
+[data-theme="dark"] .border-purple-100 { border-color: rgba(168, 85, 247, 0.2); }
+[data-theme="dark"] .border-purple-200 { border-color: rgba(168, 85, 247, 0.3); }
+[data-theme="dark"] .border-green-200  { border-color: rgba(34, 197, 94, 0.3); }
+[data-theme="dark"] .border-red-200    { border-color: rgba(239, 68, 68, 0.3); }
+[data-theme="dark"] .border-blue-200   { border-color: rgba(59, 130, 246, 0.3); }
+
+/* ── Native form controls ── */
+[data-theme="dark"] select,
+[data-theme="dark"] option,
+[data-theme="dark"] textarea {
+  background-color: #1e293b;
+  color: #f1f5f9;
+  border-color: #334155;
+}
+
+/* ── Placeholder text ── */
+[data-theme="dark"] ::placeholder {
+  color: #475569;
+}
+
+/* ── Ring/focus ── */
+[data-theme="dark"] .ring-2 { --tw-ring-opacity: 1; }
+
+/* ── Opacity utilities used for greyed-out suggestions ── */
+[data-theme="dark"] .opacity-50 { opacity: 0.4; }
+
+/* ── Tab borders ── */
+[data-theme="dark"] .border-b { border-bottom-color: #334155; }
+[data-theme="dark"] .border-b-2 { border-bottom-color: #334155; }
+[data-theme="dark"] .border-t { border-top-color: #334155; }
+
+/* ── Ring colors ── */
+[data-theme="dark"] .ring-2.ring-emerald-400 { --tw-ring-color: #34d399; }
+
+/* ── Prose text that uses no class (bare elements inside cards) ── */
+[data-theme="dark"] p,
+[data-theme="dark"] span,
+[data-theme="dark"] li,
+[data-theme="dark"] td,
+[data-theme="dark"] th {
+  color: inherit;
+}
+
+/* ── Focus-visible rings ── */
+[data-theme="dark"] *:focus-visible {
+  outline-color: #818cf8;
+}
