@@ -65,21 +65,13 @@ export default function SmartPackingButton({
   return (
     <div className="space-y-3">
       <button
-        onClick={fetchSuggestions}
-        disabled={loading}
-        className="btn-primary text-sm"
+        disabled
+        className="px-4 py-2 rounded-lg text-sm bg-slate-100 text-slate-400 cursor-not-allowed"
+        title="AI features are temporarily disabled"
       >
-        {loading ? (
-          <span className="flex items-center gap-2">
-            <span className="inline-block w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-            AI is thinking…
-          </span>
-        ) : (
-          "🤖 Suggest items"
-        )}
+        🤖 Suggest items — coming soon
       </button>
-
-      {error && <p className="text-sm text-red-500">⚠️ {error}</p>}
+      <p className="text-xs text-slate-400">AI features are temporarily unavailable.</p>
 
       {suggestions && suggestions.length > 0 && (
         <div className="card p-4 space-y-3">

@@ -34,7 +34,8 @@
       "Bash(curl:*)",
       "Bash(node:*)",
       "Bash(supabase --version)",
-      "Bash(npx supabase:*)"
+      "Bash(npx supabase:*)",
+      "Bash(find:*)"
     ]
   }
 }
