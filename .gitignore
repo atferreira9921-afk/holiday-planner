@@ -9,10 +9,11 @@ dist
 build
 out
 
-# Env files
+# Env files — ignore all variants, keep only example templates
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
+!.env.*.example
 
 # Logs
 *.log

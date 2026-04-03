@@ -11,8 +11,8 @@ class Settings(BaseSettings):
     # Flights (SerpApi — Google Flights)
     serpapi_key: str = ""
 
-    # Service auth (shared secret with Next.js)
-    fastapi_secret: str = "dev-secret"
+    # Service auth (shared secret with Next.js) — required, no default
+    fastapi_secret: str
 
     port: int = 8000
 

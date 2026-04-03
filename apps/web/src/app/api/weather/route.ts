@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
 
 // Uses open-meteo climate API — free, no key required.
 // Returns 30-year climate normals for a destination city and date range.
@@ -15,6 +16,10 @@ async function geocode(city: string, country: string): Promise<{ lat: number; ln
 }
 
 export async function GET(req: Request) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const { searchParams } = new URL(req.url);
   const city    = searchParams.get("city");
   const country = searchParams.get("country");

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import WishlistLoading from "./loading";
 import dynamic from "next/dynamic";
 import { createClient } from "@/lib/supabase/client";
 import { COUNTRIES, getAirports } from "@/lib/data/geo";
@@ -292,9 +293,11 @@ export default function WishlistPage() {
   const totalPins = markers.length;
   const hasAny = items.length > 0 || freeStays.length > 0;
 
+  if (loadingWishlist && loadingStays) return <WishlistLoading />;
+
   return (
     // Wider container when globe is shown, normal otherwise
-    <div className={hasAny ? "max-w-6xl mx-auto" : "max-w-2xl mx-auto"}>
+    <div className={hasAny ? "" : "max-w-2xl mx-auto"}>
       <div className={hasAny ? "flex flex-col lg:flex-row gap-8 items-start" : ""}>
 
         {/* ─── Left: all content ─── */}

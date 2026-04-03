@@ -18,6 +18,7 @@ export interface FamilyMemberRow {
   on_parental_leave: boolean;
   gender: string;
   interests: string[];
+  avatar_config: { hair?: number; glasses?: number; face?: number; shirt?: number; bottom?: number; clothesColor?: number } | null;
 }
 
 export interface BookingRow {
@@ -51,6 +52,8 @@ export interface DashboardProps {
   thisYear: number;
   todayISO: string;
   userPrefs: { vacation_days_per_year: number; birthday: string | null; home_country: string } | null;
+  userGender?: string;
+  userAvatarConfig?: { hair?: number; glasses?: number; face?: number; shirt?: number; bottom?: number; clothesColor?: number } | null;
   allBookings: BookingRow[];
   allAway: AwayRow[];
   allEvents: EventRow[];
@@ -62,6 +65,8 @@ export interface DashboardProps {
   wishlist: WishlistRow[];
   publicHolidaysByCountry: Record<string, { date: string; name: string }[]>;
   userCountry: string;
+  familyMemberTripIds: Record<string, string[]>;
+  allPublicHolidayDates: string[];
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -245,9 +250,10 @@ function AddBookingForm({
 
 export default function DashboardClient({
   userId, firstName, thisYear, todayISO,
-  userPrefs, allBookings, allAway, allEvents,
+  userPrefs, userGender, userAvatarConfig, allBookings, allAway, allEvents,
   familyMembers, activeTrips, completedTrips, tripCounts,
-  freeStays, wishlist, publicHolidaysByCountry, userCountry,
+  freeStays, wishlist, publicHolidaysByCountry, userCountry, familyMemberTripIds,
+  allPublicHolidayDates,
 }: DashboardProps) {
   const [isDark, setIsDark] = useState(false);
   useEffect(() => {
@@ -310,6 +316,10 @@ export default function DashboardClient({
   // ── All upcoming items ───────────────────────────────────────────────────
   type UpcomingItem = { id: string; title: string; start: string; end: string; emoji: string; color: string; bg: string; daysAway: number };
 
+  // Set of all public holiday dates (national + regional + preferred countries)
+  // used to show 📅 for manually-booked single-day entries that fall on a public holiday
+  const publicHolidayDateSet = new Set(allPublicHolidayDates);
+
   // Public holidays — shown for both the logged-in user and family members,
   // using each person's home_country so the right national holidays appear.
   const activeCountry = isYou ? userCountry : (selectedFm?.home_country ?? userCountry);
@@ -322,15 +332,20 @@ export default function DashboardClient({
       const d = new Date(h.date + "T00:00:00");
       if (d.getDay() === 0 || d.getDay() === 6) return false;
       if (deselectedKeys.has(`${deselectedPrefix}::${h.date}`)) return false;
-      // Don't duplicate if this day is already inside a booked period
-      if (memberBookings.some(b => b.start_date <= h.date && b.end_date >= h.date)) return false;
       return true;
     })
     .map(h => ({ id: `ph-${h.date}`, title: h.name, start: h.date, end: h.date, emoji: "📅", color: "#10b981", bg: "#ecfdf5", daysAway: daysUntil(h.date) }));
 
   const upcoming: UpcomingItem[] = [
     ...memberBookings.filter(b => b.end_date >= todayISO)
-      .map(b => ({ id: b.id, title: b.title, start: b.start_date, end: b.end_date, ...EVENT_META.holiday, daysAway: daysUntil(b.start_date) })),
+      .map(b => {
+        // Single-day booking that coincides with a public holiday → show 📅 instead of 🏖️
+        const isPublicHoliday = b.start_date === b.end_date && publicHolidayDateSet.has(b.start_date);
+        const meta = isPublicHoliday
+          ? { emoji: "📅", color: "#10b981", bg: "#ecfdf5" }
+          : EVENT_META.holiday;
+        return { id: b.id, title: b.title, start: b.start_date, end: b.end_date, ...meta, daysAway: daysUntil(b.start_date) };
+      }),
     ...memberAway.filter(b => b.end_date >= todayISO)
       .map(b => ({ id: b.id, title: b.title, start: b.start_date, end: b.end_date, ...(EVENT_META[b.reason] ?? EVENT_META["away-other"]), daysAway: daysUntil(b.start_date) })),
     ...memberEvents.filter(b => b.end_date >= todayISO)
@@ -359,7 +374,7 @@ export default function DashboardClient({
   }
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
+    <div className="space-y-6">
 
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between flex-wrap gap-3">
@@ -537,7 +552,7 @@ export default function DashboardClient({
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
           { label: "Days remaining", value: remainingDays,  sub: `of ${vacationTotal}/yr`,    color: "#6366f1", bg: "#eef2ff", href: "/holidays" },
-          { label: "Days booked",    value: bookedDays,     sub: `${awayDays}d away too`,     color: "#f43f5e", bg: "#fff1f2", href: "/holidays" },
+          { label: "Days booked",    value: bookedDays,     sub: `${awayDays}d away too`,     color: "#0ea5e9", bg: "#f0f9ff", href: "/holidays" },
           { label: "Free stays",     value: freeStays.length, sub: "save on hotels",          color: "#10b981", bg: "#ecfdf5", href: "/wishlist" },
           { label: "Wishlist",       value: wishlist.length,  sub: "dream destinations",      color: "#f59e0b", bg: "#fffbeb", href: "/wishlist" },
         ].map(s => (
@@ -602,129 +617,107 @@ export default function DashboardClient({
           )}
         </div>
 
-        {/* Trips (only shown for own view) */}
-        {isYou ? (
-          <div className="card p-5 space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 className="font-bold text-slate-900">Trips</h2>
-              <Link href="/trips" className="text-xs text-indigo-600 font-semibold hover:underline">View all →</Link>
-            </div>
-            <div className="flex gap-2 flex-wrap">
-              {[
-                { val: tripCounts.planning,  style: STATUS_STYLE.planning  },
-                { val: tripCounts.suggested, style: STATUS_STYLE.suggested },
-                { val: tripCounts.booked,    style: STATUS_STYLE.booked    },
-              ].filter(s => s.val > 0).map(s => (
-                <span key={s.style.label} className="px-2.5 py-1 rounded-full text-xs font-bold"
-                  style={{ background: isDark ? `${s.style.color}26` : s.style.bg, color: s.style.color }}>
-                  {s.style.emoji} {s.val} {s.style.label}
-                </span>
-              ))}
-              {activeTrips.length === 0 && <span className="text-xs text-slate-400">No active trips</span>}
-            </div>
-            {activeTrips.length === 0 ? (
-              <div className="py-6 text-center">
-                <p className="text-slate-400 text-sm">No trips in progress.</p>
-                <Link href="/trips/new" className="text-indigo-500 text-sm font-semibold mt-1 inline-block">Plan one →</Link>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {activeTrips.slice(0, 5).map(t => {
-                  const s = STATUS_STYLE[t.status] ?? STATUS_STYLE.planning;
-                  return (
-                    <Link key={t.id} href={`/trips/${t.id}`}
-                      className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 hover:bg-slate-100 transition">
-                      <div className="w-9 h-9 rounded-xl flex-shrink-0 flex items-center justify-center text-lg"
-                        style={{ background: isDark ? `${s.color}26` : s.bg }}>{s.emoji}</div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-slate-800 text-sm truncate">{t.title}</p>
-                        <p className="text-xs text-slate-400">
-                          {t.desired_duration_days}d · {fmtShort(t.earliest_departure)} – {fmtShort(t.latest_return)}
-                          {t.destination_city ? ` · ${t.destination_city}` : ""}
-                        </p>
-                      </div>
-                      <span className="text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0"
-                        style={{ background: isDark ? `${s.color}26` : s.bg, color: s.color }}>{s.label}</span>
-                    </Link>
-                  );
-                })}
-              </div>
+        {/* Trips */}
+        {(() => {
+          const visibleTrips = isYou
+            ? activeTrips
+            : activeTrips.filter(t => (familyMemberTripIds[selectedId] ?? []).includes(t.id));
+          const visibleCounts = {
+            planning:  visibleTrips.filter(t => t.status === "planning").length,
+            suggested: visibleTrips.filter(t => t.status === "suggested").length,
+            booked:    visibleTrips.filter(t => t.status === "booked").length,
+          };
+          return (
+        <div className="card p-5 space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="font-bold text-slate-900">Trips</h2>
+            <Link href="/trips" className="text-xs text-indigo-600 font-semibold hover:underline">View all →</Link>
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            {[
+              { val: visibleCounts.planning,  style: STATUS_STYLE.planning  },
+              { val: visibleCounts.suggested, style: STATUS_STYLE.suggested },
+              { val: visibleCounts.booked,    style: STATUS_STYLE.booked    },
+            ].filter(s => s.val > 0).map(s => (
+              <span key={s.style.label} className="px-2.5 py-1 rounded-full text-xs font-bold"
+                style={{ background: isDark ? `${s.style.color}26` : s.style.bg, color: s.style.color }}>
+                {s.style.emoji} {s.val} {s.style.label}
+              </span>
+            ))}
+            {visibleTrips.length === 0 && (
+              <span className="text-xs text-slate-400">
+                {isYou ? "No active trips" : `No trips for ${displayName} yet`}
+              </span>
             )}
           </div>
-        ) : (
-          /* Family member detail card */
-          <div className="card p-5 space-y-4">
-            <h2 className="font-bold text-slate-900">{selectedFm?.display_name} — details</h2>
-            <div>
-              <div className="flex justify-between text-xs text-slate-500 mb-1.5">
-                <span>{bookedDays}d used</span>
-                <span>{remainingDays}d left of {vacationTotal}</span>
-              </div>
-              <div className="flex h-3 rounded-full overflow-hidden bg-slate-100">
-                {bookedPct  > 0 && <div style={{ width: `${bookedPct}%`,  background: selectedColor.dot }} />}
-                {plannedPct > 0 && <div style={{ width: `${plannedPct}%`, background: selectedColor.dot + "88" }} />}
-              </div>
+          {visibleTrips.length === 0 ? (
+            <div className="py-6 text-center">
+              <p className="text-slate-400 text-sm">
+                {isYou ? "No trips in progress." : `${displayName} hasn't been added to any trips yet.`}
+              </p>
+              {isYou && <Link href="/trips/new" className="text-indigo-500 text-sm font-semibold mt-1 inline-block">Plan one →</Link>}
             </div>
-            {selectedFm && (
-              <div className="flex flex-wrap gap-1.5">
-                {selectedFm.on_parental_leave && (
-                  <span className="text-xs bg-purple-50 text-purple-600 px-2 py-0.5 rounded-full border border-purple-100">
-                    {selectedFm.gender === "female" ? "Maternity" : "Paternity"} leave
-                  </span>
-                )}
-                {selectedFm.home_country && (
-                  <span className="text-xs bg-slate-50 text-slate-600 px-2 py-0.5 rounded-full border border-slate-100">
-                    🌍 {selectedFm.home_country}
-                  </span>
-                )}
-                {selectedFm.travel_style && (
-                  <span className="text-xs bg-slate-50 text-slate-600 px-2 py-0.5 rounded-full border border-slate-100 capitalize">
-                    {selectedFm.travel_style}
-                  </span>
-                )}
-                {(selectedFm.interests ?? []).map((i: string) => (
-                  <span key={i} className="text-xs bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full capitalize">{i}</span>
-                ))}
-              </div>
-            )}
-            <button onClick={() => setShowAddForm(f => !f)} className="btn-primary text-sm w-full">
-              {showAddForm ? "Close form" : `+ Add booking for ${selectedFm?.display_name}`}
-            </button>
-          </div>
-        )}
+          ) : (
+            <div className="space-y-2">
+              {visibleTrips.slice(0, 5).map(t => {
+                const s = STATUS_STYLE[t.status] ?? STATUS_STYLE.planning;
+                return (
+                  <Link key={t.id} href={`/trips/${t.id}`}
+                    className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 hover:bg-slate-100 transition">
+                    <div className="w-9 h-9 rounded-xl flex-shrink-0 flex items-center justify-center text-lg"
+                      style={{ background: isDark ? `${s.color}26` : s.bg }}>{s.emoji}</div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-slate-800 text-sm truncate">{t.title}</p>
+                      <p className="text-xs text-slate-400">
+                        {t.desired_duration_days}d · {fmtShort(t.earliest_departure)} – {fmtShort(t.latest_return)}
+                        {t.destination_city ? ` · ${t.destination_city}` : ""}
+                      </p>
+                    </div>
+                    <span className="text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0"
+                      style={{ background: isDark ? `${s.color}26` : s.bg, color: s.color }}>{s.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </div>
+          );
+        })()}
       </div>
 
-      {/* ── Vacation bar (own view) ─────────────────────────────────────────── */}
-      {isYou && (
-        <div className="card p-5 space-y-4">
-          <div className="flex items-center justify-between flex-wrap gap-2">
-            <h2 className="font-bold text-slate-900">Vacation days — {thisYear}</h2>
+      {/* ── Vacation bar ───────────────────────────────────────────────────────── */}
+      <div className="card p-5 space-y-4">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <h2 className="font-bold text-slate-900">
+            {isYou ? `Vacation days — ${thisYear}` : `${displayName}'s vacation days — ${thisYear}`}
+          </h2>
+          {isYou && (
             <Link href="/preferences" className="text-xs text-slate-400 hover:text-indigo-600 transition">Edit allocation →</Link>
+          )}
+        </div>
+        <div>
+          <div className="flex h-4 rounded-full overflow-hidden bg-slate-100">
+            {bookedPct  > 0 && <div style={{ width: `${bookedPct}%`,  background: "#0ea5e9" }} />}
+            {plannedPct > 0 && <div style={{ width: `${plannedPct}%`, background: "#7dd3fc" }} />}
           </div>
-          <div>
-            <div className="flex h-4 rounded-full overflow-hidden bg-slate-100">
-              {bookedPct  > 0 && <div style={{ width: `${bookedPct}%`,  background: "#6366f1" }} />}
-              {plannedPct > 0 && <div style={{ width: `${plannedPct}%`, background: "#a5b4fc" }} />}
-            </div>
-            <div className="flex justify-between text-xs text-slate-400 mt-1">
-              <span>0</span><span>{vacationTotal} days</span>
-            </div>
-          </div>
-          <div className="flex gap-5 flex-wrap text-sm">
-            {[
-              { label: `${bookedDays} booked`,   color: "#6366f1" },
-              { label: `${plannedDays} planned`,  color: "#a5b4fc" },
-              { label: `${remainingDays} remaining`, color: "#e2e8f0" },
-              ...(awayDays > 0 ? [{ label: `${awayDays} away (not vacation)`, color: "#94a3b8" }] : []),
-            ].map(s => (
-              <div key={s.label} className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-sm" style={{ background: s.color }} />
-                <span className="text-slate-600">{s.label}</span>
-              </div>
-            ))}
+          <div className="flex justify-between text-xs text-slate-400 mt-1">
+            <span>0</span><span>{vacationTotal} days</span>
           </div>
         </div>
-      )}
+        <div className="flex gap-5 flex-wrap text-sm">
+          {[
+            { label: `${bookedDays} booked`,      color: "#0ea5e9" },
+            { label: `${plannedDays} planned`,     color: "#7dd3fc" },
+            { label: `${remainingDays} remaining`, color: "#e2e8f0" },
+            ...(awayDays > 0 ? [{ label: `${awayDays} away (not vacation)`, color: "#94a3b8" }] : []),
+          ].map(s => (
+            <div key={s.label} className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-sm" style={{ background: s.color }} />
+              <span className="text-slate-600">{s.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
 
       {/* ── Wishlist preview (own view) ─────────────────────────────────────── */}
       {isYou && wishlist.length > 0 && (
@@ -809,14 +802,15 @@ export default function DashboardClient({
       )}
 
       {/* ── Globe + visited countries ────────────────────────────────────────── */}
-      {isYou && (
-        <DashboardGlobe
-          activeTrips={activeTrips}
-          completedTrips={completedTrips}
-          freeStays={freeStays}
-          wishlist={wishlist}
-        />
-      )}
+      <DashboardGlobe
+        activeTrips={activeTrips}
+        completedTrips={completedTrips}
+        freeStays={freeStays}
+        wishlist={wishlist}
+        userName={isYou ? firstName : (selectedFm?.display_name ?? firstName)}
+        userGender={isYou ? userGender : (selectedFm?.gender ?? undefined)}
+        userAvatarConfig={isYou ? userAvatarConfig : (selectedFm?.avatar_config ?? null)}
+      />
 
       {/* ── Empty state ─────────────────────────────────────────────────────── */}
       {isYou && activeTrips.length === 0 && familyMembers.length === 0 && upcoming.length === 0 && (

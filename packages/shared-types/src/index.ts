@@ -30,11 +30,14 @@ export interface UserPreferences {
   // Personal details
   gender: Gender;
   birthday: string | null; // ISO date, year-agnostic stored as full date
+  birthday_is_vacation_day: boolean;
   on_parental_leave: boolean;
   parental_leave_end_date: string | null; // ISO date
   // Residential location (may differ from airport city)
   home_region: string | null; // ISO 3166-2, e.g. "PT-06" for Coimbra
   home_city_name: string | null; // human-readable city name, e.g. "Coimbra"
+  // Avatar customization
+  avatar_config: { hair: number; glasses: number; face: number; shirt: number; bottom: number; clothesColor: number } | null;
   updated_at: string;
 }
 
@@ -275,6 +278,8 @@ export interface FamilyMember {
   // Residential location (may differ from airport city)
   home_region: string | null; // ISO 3166-2, e.g. "PT-06" for Coimbra
   home_city_name: string | null; // human-readable city name, e.g. "Coimbra"
+  // Avatar customization
+  avatar_config: { hair: number; glasses: number; face: number; shirt: number; bottom: number } | null;
 }
 
 // ─── Public Holidays ──────────────────────────────────────────────────────────
@@ -335,7 +340,7 @@ export interface GenerateSuggestionsResponse {
 
 export interface SubmitFeedbackRequest {
   suggestion_id: string;
-  user_id: string;
+  // user_id is passed via X-User-Id header by the Next.js backend, not in the body
   rating: 1 | 2 | 3 | 4 | 5;
   liked_aspects: FeedbackAspect[];
   disliked_aspects: FeedbackAspect[];

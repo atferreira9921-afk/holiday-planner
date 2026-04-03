@@ -1,3 +1,4 @@
+import hmac
 from fastapi import APIRouter, HTTPException, Header
 from app.models.request_models import GenerateSuggestionsRequest
 from app.models.response_models import GenerateSuggestionsResponse
@@ -8,7 +9,7 @@ router = APIRouter(prefix="/suggestions", tags=["suggestions"])
 
 
 def _verify_secret(x_fastapi_secret: str | None):
-    if x_fastapi_secret != settings.fastapi_secret:
+    if not x_fastapi_secret or not hmac.compare_digest(x_fastapi_secret, settings.fastapi_secret):
         raise HTTPException(status_code=401, detail="Invalid service secret")
 
 

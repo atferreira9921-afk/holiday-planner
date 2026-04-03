@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { COUNTRIES, getAirports } from "@/lib/data/geo";
+import { getMunicipalHolidays } from "@/lib/data/pt-municipal-holidays";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -175,7 +176,7 @@ function computeBridgeWindows(members: CalendarMember[], year: number): BridgeWi
 
 function CalendarGrid({
   year, month, members, viewMode, selStart, selEnd,
-  onDayClick, onHoverDay, hoveredDay, bookedPeriods, birthdays, deselectedKeys,
+  onDayClick, onHoverDay, hoveredDay, bookedPeriods, birthdays, deselectedKeys, rawHolidayDates,
 }: {
   year: number; month: number; members: CalendarMember[]; viewMode: "individual" | "family";
   selStart: string | null; selEnd: string | null;
@@ -183,6 +184,7 @@ function CalendarGrid({
   bookedPeriods: BookedPeriod[];
   birthdays: BirthdayEntry[];
   deselectedKeys: Set<string>;
+  rawHolidayDates: Set<string>;
 }) {
   const isDark = useDarkMode();
   const todayStr = toISO(new Date());
@@ -300,8 +302,9 @@ function CalendarGrid({
               {dayBookings.map((bp, j) => {
                 const meta = BOOKING_META[bp.category];
                 const isAway = meta.group === "away";
+                const displayEmoji = rawHolidayDates.has(iso) ? "📅" : meta.emoji;
                 return (
-                  <div key={j} title={`${bp.memberName}: ${meta.emoji} ${bp.title}`}
+                  <div key={j} title={`${bp.memberName}: ${displayEmoji} ${bp.title}`}
                     style={{
                       background: bp.bg,
                       borderLeft: `3px solid ${bp.dot}`,
@@ -313,7 +316,7 @@ function CalendarGrid({
                       fontWeight: 600,
                       backgroundImage: isAway ? "repeating-linear-gradient(45deg,transparent,transparent 3px,rgba(0,0,0,0.04) 3px,rgba(0,0,0,0.04) 6px)" : "none",
                     }}>
-                    {iso === bp.start ? `${meta.emoji} ${bp.title}` : "·"}
+                    {iso === bp.start ? `${displayEmoji} ${bp.title}` : "·"}
                   </div>
                 );
               })}
@@ -325,7 +328,7 @@ function CalendarGrid({
                     style={{ display: "flex", alignItems: "center", gap: 3, background: isDark ? `${h.member.dot}26` : h.member.bg, borderRadius: 3, padding: "1px 3px" }}>
                     <div style={{ width: 5, height: 5, borderRadius: "50%", background: h.member.dot, flexShrink: 0 }} />
                     <span style={{ fontSize: 8, color: isDark ? "#cbd5e1" : "#374151", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>
-                      {h.name}
+                      📅 {h.name}
                     </span>
                   </div>
                 ))}
@@ -410,13 +413,14 @@ export default function HolidaysPage() {
 
       const [{ data: prefs }, { data: family }] = await Promise.all([
         supabase.from("user_preferences")
-          .select("home_country,home_city,home_region,home_city_name,preferred_countries,on_parental_leave,parental_leave_end_date,birthday,vacation_days_per_year")
+          .select("home_country,home_city,home_region,home_city_name,preferred_countries,on_parental_leave,parental_leave_end_date,birthday,vacation_days_per_year,birthday_is_vacation_day")
           .eq("user_id", user.id).single(),
         supabase.from("family_members").select("*").eq("owner_user_id", user.id).order("created_at"),
       ]);
 
       setUserBirthday(prefs?.birthday ?? null);
-      setVacationDaysTotal(prefs?.vacation_days_per_year ?? 22);
+      const baseDays = prefs?.vacation_days_per_year ?? 22;
+      setVacationDaysTotal(baseDays + (prefs?.birthday_is_vacation_day ? 1 : 0));
       setFamilyRaw((family ?? []).map((fm: { id: string; display_name: string; color: string; birthday: string | null }) => ({
         id: fm.id, display_name: fm.display_name, color: fm.color, birthday: fm.birthday,
       })));
@@ -570,7 +574,14 @@ export default function HolidaysPage() {
       fetch(`https://date.nager.at/api/v3/PublicHolidays/${year}/${country}`)
         .then(r => r.ok ? r.json() : []).catch(() => [])
         .then((data: PublicHoliday[]) => {
-          setHolidayCache(prev => ({ ...prev, [key]: data }));
+          // Merge in municipal holidays for members in this country/year
+          const municipal = members
+            .filter(m => m.country === country)
+            .flatMap(m => getMunicipalHolidays(m.cityName, country, year, m.region) as PublicHoliday[]);
+          // Deduplicate by date (municipal takes precedence for same date)
+          const municipalDates = new Set(municipal.map(h => h.date));
+          const merged = [...data.filter(h => !municipalDates.has(h.date)), ...municipal];
+          setHolidayCache(prev => ({ ...prev, [key]: merged }));
           setLoadingKeys(prev => { const n = new Set(prev); n.delete(key); return n; });
         });
     }
@@ -580,11 +591,14 @@ export default function HolidaysPage() {
     const holidays = holidayCache[`${m.country}-${year}`] ?? [];
     const holidayDates = new Map<string, string>();
     for (const h of holidays) {
-      // Filter regional holidays: if member has a region set, only include global
-      // holidays or holidays that cover their region (counties === null means whole country)
+      // Filter regional holidays: include only national holidays (counties === null)
+      // or holidays that match the member's specific region if set.
       if (m.region) {
         const isRelevant = h.global || !h.counties || h.counties.includes(m.region);
         if (!isRelevant) continue;
+      } else {
+        // No region set — exclude region-specific holidays entirely
+        if (h.counties !== null) continue;
       }
       holidayDates.set(h.date, h.name);
     }
@@ -601,6 +615,11 @@ export default function HolidaysPage() {
       return next;
     });
   }
+
+  // All raw holiday dates from cache (before regional filtering) — used for icon detection
+  const rawHolidayDates = new Set<string>(
+    members.flatMap(m => (holidayCache[`${m.country}-${year}`] ?? []).map(h => h.date))
+  );
 
   // Members used for Smart Windows: weekends excluded (already free), per-member opt-outs respected
   const membersForWindows = membersWithHolidays.map(m => ({
@@ -811,7 +830,7 @@ export default function HolidaysPage() {
     .sort((a, b) => a.start.localeCompare(b.start));
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
+    <div className="space-y-6">
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Holiday Calendar</h1>
@@ -944,6 +963,7 @@ export default function HolidaysPage() {
               bookedPeriods={bookedHolidays}
               birthdays={birthdays}
               deselectedKeys={deselectedKeys}
+              rawHolidayDates={rawHolidayDates}
             />
           </div>
 
@@ -1037,10 +1057,10 @@ export default function HolidaysPage() {
                 <div key={b.id}>
                   {/* Row */}
                   <div className="flex items-center gap-3 py-1.5">
-                    <span className="text-sm flex-shrink-0">{BOOKING_META[b.category]?.emoji ?? "📅"}</span>
+                    <span className="text-sm flex-shrink-0">{b.start === b.end && rawHolidayDates.has(b.start) ? "📅" : (BOOKING_META[b.category]?.emoji ?? "📅")}</span>
                     <div className="flex-1 min-w-0">
                       <span className="text-sm font-semibold text-slate-700">{b.title}</span>
-                      <span className="text-xs text-slate-400 ml-2">{fmtShort(b.start)} – {fmtShort(b.end)} · {b.memberName}</span>
+                      <span className="text-xs text-slate-400 ml-2">{b.start === b.end ? fmtShort(b.start) : `${fmtShort(b.start)} – ${fmtShort(b.end)}`} · {b.memberName}</span>
                     </div>
                     <button
                       onClick={() => editingId === b.id ? setEditingId(null) : startEdit(b)}
@@ -1152,16 +1172,20 @@ export default function HolidaysPage() {
                     ))
                 : [];
 
-              // Build set of all dates covered by booked vacations (to suppress redundant public holiday entries)
-              const bookedDateSet = new Set<string>();
-              for (const b of holidays) {
-                let d = parseDate(b.start);
-                const endD = parseDate(b.end);
-                while (d <= endD) { bookedDateSet.add(toISO(d)); d = addDays(d, 1); }
-              }
+              // All public holiday dates (own country + extra country calendars) — used to detect taken public holidays
+              const allPublicHolidayDates = new Set<string>([
+                ...m.holidayDates.keys(),
+                ...extraCountryHolidays.map(([date]) => date),
+              ]);
+
+              // Only suppress public holiday entries for single-day bookings that specifically target
+              // that day (e.g. "Take this day" from the All Holidays tab). Multi-day vacations
+              // should not hide the public holidays they happen to span.
+              const singleDayBookedDates = new Set<string>(
+                holidays.filter(b => b.start === b.end).map(b => b.start)
+              );
 
               // Deduplicate public holidays by date (own country + extra country calendars)
-              // Skip dates already covered by a booked vacation to avoid showing the same date twice.
               const publicHolidayMap = new Map<string, string>();
               for (const [date, name] of [
                 ...[...m.holidayDates.entries()].filter(([date]) =>
@@ -1171,7 +1195,7 @@ export default function HolidaysPage() {
                 ),
                 ...extraCountryHolidays,
               ]) {
-                if (bookedDateSet.has(date)) continue;
+                if (singleDayBookedDates.has(date)) continue;
                 if (!publicHolidayMap.has(date)) publicHolidayMap.set(date, name);
                 else if (publicHolidayMap.get(date) !== name)
                   publicHolidayMap.set(date, `${publicHolidayMap.get(date)} · ${name}`);
@@ -1208,7 +1232,7 @@ export default function HolidaysPage() {
                         if (item.kind === "public") return (
                           <div key={`ph-${item.date}-${i}`} className="flex items-center justify-between text-xs rounded-lg px-2 py-1" style={{ background: isDark ? `${m.dot}18` : m.bg }}>
                             <span className="flex items-center gap-1 truncate flex-1 mr-1">
-                              <span>📅</span>
+                              <span>🗓️</span>
                               <span className="font-medium" style={{ color: isDark ? "#cbd5e1" : "#374151" }}>{item.name}</span>
                             </span>
                             <span className="text-slate-400 flex-shrink-0">{fmtShort(item.date)}</span>
@@ -1217,7 +1241,7 @@ export default function HolidaysPage() {
                         if (item.kind === "booked") return (
                           <div key={`bk-${item.date}-${i}`} className="flex items-center justify-between text-xs rounded-lg px-2 py-1" style={{ background: isDark ? `${m.dot}26` : m.bg }}>
                             <span className="flex items-center gap-1 truncate flex-1 mr-1">
-                              <span>🏖️</span>
+                              <span>{item.days === 1 && members.some(cm => (holidayCache[`${cm.country}-${year}`] ?? []).some(h => h.date === item.date)) ? "🗓️" : BOOKING_META["holiday"].emoji}</span>
                               <span className="font-medium text-slate-700">{item.name}</span>
                             </span>
                             <span className="text-slate-400 flex-shrink-0">
@@ -1464,7 +1488,7 @@ export default function HolidaysPage() {
                   {/* Name + chips */}
                   <div className="flex-1 min-w-0">
                     <p className={`text-sm font-semibold mb-1.5 ${autoSkipped ? "text-slate-400" : "text-slate-800"}`}>
-                      {h.name}
+                      🗓️ {h.name}
                       {birthday && <span className="ml-2 text-purple-500 font-normal text-xs">🎂 {birthday.name}&apos;s birthday!</span>}
                     </p>
                     <div className="flex flex-wrap gap-1.5 items-center">

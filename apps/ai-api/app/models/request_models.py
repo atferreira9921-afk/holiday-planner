@@ -44,7 +44,8 @@ class GenerateSuggestionsRequest(BaseModel):
 
 class SubmitFeedbackRequest(BaseModel):
     suggestion_id: str
-    user_id: str
+    # user_id is NOT accepted from the request body — it is injected server-side
+    # from the X-User-Id header set by the trusted Next.js backend.
     rating: Literal[1, 2, 3, 4, 5]
     liked_aspects: list[str] = []
     disliked_aspects: list[str] = []

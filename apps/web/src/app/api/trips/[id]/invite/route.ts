@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { headers } from "next/headers";
 
 export async function POST(
   req: Request,
@@ -40,10 +39,15 @@ export async function POST(
   }
 
   // ── Build the invite URL ──────────────────────────────────────────────────
-  const headersList = await headers();
-  const host   = headersList.get("host") ?? "localhost:3000";
-  const scheme = host.startsWith("localhost") ? "http" : "https";
-  const inviteUrl = `${scheme}://${host}/invite/${invite.token}`;
+  // Use NEXT_PUBLIC_APP_URL env var (set in production). Fall back to the
+  // request Origin header (validated to be same-origin by Next.js) only in dev.
+  // Never trust the Host header directly — it is attacker-controllable.
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "")
+    ?? (process.env.NODE_ENV === "development" ? "http://localhost:3000" : null);
+  if (!appUrl) {
+    return NextResponse.json({ error: "App URL not configured" }, { status: 500 });
+  }
+  const inviteUrl = `${appUrl}/invite/${invite.token}`;
 
   // ── Send email if address provided and Resend is configured ──────────────
   if (invitedEmail && process.env.RESEND_API_KEY) {

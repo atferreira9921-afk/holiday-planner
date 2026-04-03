@@ -12,10 +12,11 @@ export async function POST(
 
   const { suggestion_id } = await req.json() as { suggestion_id: string | null };
 
-  // Verify the user is in this trip's group
+  // Verify the user is the trip creator (only creator can lock in a suggestion)
   const { data: trip } = await supabase
-    .from("trips").select("group_id").eq("id", tripId).single();
+    .from("trips").select("group_id, created_by").eq("id", tripId).single();
   if (!trip) return NextResponse.json({ error: "Trip not found" }, { status: 404 });
+  if (trip.created_by !== user.id) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const db = await createServiceClient();
 

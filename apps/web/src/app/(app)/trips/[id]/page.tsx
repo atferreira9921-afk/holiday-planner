@@ -27,6 +27,7 @@ import TripStatusControl from "./TripStatusControl";
 import EditTripModal from "./EditTripModal";
 import DeleteTripButton from "./DeleteTripButton";
 import TripRealtimeUpdater from "./TripRealtimeUpdater";
+import TripFamilyMembers from "./TripFamilyMembers";
 
 export default async function TripDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -48,6 +49,8 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
     { data: packingItems },
     { data: userCars },
     { data: userPrefs },
+    { data: familyMembersRaw },
+    { data: tripFamilyMembersRaw },
     { data: itineraryItems },
     { data: availabilityEntries },
     { data: tripPhotos },
@@ -67,6 +70,8 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
     db.from("trip_packing_items").select("*").eq("trip_id", id).order("created_at"),
     db.from("user_cars").select("*").eq("owner_user_id", user.id).order("created_at"),
     db.from("user_preferences").select("home_country").eq("user_id", user.id).maybeSingle(),
+    db.from("family_members").select("id, display_name, color").eq("owner_user_id", user.id).order("created_at"),
+    db.from("trip_family_members").select("family_member_id").eq("trip_id", id),
     db.from("trip_itinerary_items").select("*").eq("trip_id", id).order("day_number").order("sort_order"),
     db.from("group_availability").select("*").eq("trip_id", id),
     db.from("trip_photos").select("*").eq("trip_id", id).order("created_at", { ascending: false }),
@@ -135,7 +140,7 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
     selectedSuggestionData?.suggested_departure ?? trip.earliest_departure;
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <div className="max-w-screen-xl mx-auto space-y-6">
       <TripRealtimeUpdater tripId={id} groupId={trip.group_id} />
 
       {/* Header */}
@@ -169,6 +174,13 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
 
       {/* Status control */}
       <TripStatusControl tripId={trip.id} currentStatus={trip.status} selectedSuggestionId={trip.selected_suggestion_id ?? null} />
+
+      {/* Family member travellers */}
+      <TripFamilyMembers
+        tripId={trip.id}
+        allFamilyMembers={(familyMembersRaw ?? []) as { id: string; display_name: string; color: string }[]}
+        initialTaggedIds={(tripFamilyMembersRaw ?? []).map((r: { family_member_id: string }) => r.family_member_id)}
+      />
 
       {/* Countdown */}
       {(trip.status === "booked" || trip.status === "suggested") && (

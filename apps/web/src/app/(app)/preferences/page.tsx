@@ -6,7 +6,8 @@ import type { UserPreferences } from "@holiday-planner/shared-types";
 import { COUNTRIES, getAirports, getRegions } from "@/lib/data/geo";
 import { getFuelPrice } from "@/lib/data/fuel-prices";
 import LoyaltySection from "./LoyaltySection";
-import FamilyMemberAvatarCard from "@/app/(app)/family/FamilyMemberAvatarCard";
+import FamilyMemberAvatarCard, { type AvatarConfig, DEFAULT_AVATAR_CONFIG } from "@/app/(app)/family/FamilyMemberAvatarCard";
+import PreferencesLoading from "./loading";
 
 const INTERESTS = ["beach", "mountains", "culture", "food", "nightlife", "nature", "city", "adventure", "relaxation", "history"];
 const STYLES: { value: string; label: string; icon: string }[] = [
@@ -41,9 +42,11 @@ export default function PreferencesPage() {
     travel_style: "mid-range", budget_min_eur: 300, budget_max_eur: 2000,
     accommodation_types: ["hotel"], interests: [], avoid_destinations: [],
     min_trip_days: 4, max_trip_days: 14, advance_booking_weeks: 8, preferred_countries: [],
-    gender: "prefer_not_to_say", birthday: null, on_parental_leave: false, parental_leave_end_date: null,
+    gender: "prefer_not_to_say", birthday: null, birthday_is_vacation_day: false, on_parental_leave: false, parental_leave_end_date: null,
     home_region: null, home_city_name: null,
   });
+
+  const [avatarConfig, setAvatarConfig] = useState<AvatarConfig>(DEFAULT_AVATAR_CONFIG);
 
   // Cars
   const [cars, setCars] = useState<Car[]>([]);
@@ -67,7 +70,10 @@ export default function PreferencesPage() {
         supabase.from("user_preferences").select("*").eq("user_id", user.id).single(),
         supabase.from("user_cars").select("*").eq("owner_user_id", user.id).order("created_at"),
       ]);
-      if (prefsData) setPrefs(prefsData);
+      if (prefsData) {
+        setPrefs(prefsData);
+        if (prefsData.avatar_config) setAvatarConfig(prefsData.avatar_config);
+      }
       if (carsData) setCars(carsData as Car[]);
       setLoading(false);
     }
@@ -87,7 +93,7 @@ export default function PreferencesPage() {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-    await supabase.from("user_preferences").upsert({ ...prefs, user_id: user.id }, { onConflict: "user_id" });
+    await supabase.from("user_preferences").upsert({ ...prefs, user_id: user.id, avatar_config: avatarConfig }, { onConflict: "user_id" });
     setSaving(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
@@ -153,14 +159,10 @@ export default function PreferencesPage() {
   const airports = getAirports(homeCountry);
   const regions = getRegions(homeCountry);
 
-  if (loading) return (
-    <div className="flex items-center justify-center h-64">
-      <div className="text-slate-400">Loading preferences...</div>
-    </div>
-  );
+  if (loading) return <PreferencesLoading />;
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
+    <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-slate-900">User Config</h1>
         <p className="text-slate-500 text-sm mt-1">These help the AI personalise suggestions just for you.</p>
@@ -178,6 +180,8 @@ export default function PreferencesPage() {
             interests={prefs.interests ?? []}
             colorId="indigo"
             colorDot="#6366f1"
+            config={avatarConfig}
+            onConfigChange={setAvatarConfig}
           />
         </div>
 
@@ -392,6 +396,19 @@ export default function PreferencesPage() {
               <input className="input" type="date" value={prefs.birthday ?? ""}
                 onChange={e => setPrefs(p => ({ ...p, birthday: e.target.value || null }))} />
               <p className="text-xs text-slate-400 mt-1">Marked on your calendar.</p>
+            </div>
+            <div className="flex items-start gap-3 pt-1">
+              <input
+                id="birthday-vacation"
+                type="checkbox"
+                className="mt-0.5 w-4 h-4 accent-indigo-600 cursor-pointer"
+                checked={prefs.birthday_is_vacation_day ?? false}
+                onChange={e => setPrefs(p => ({ ...p, birthday_is_vacation_day: e.target.checked }))}
+              />
+              <label htmlFor="birthday-vacation" className="cursor-pointer">
+                <span className="text-sm font-medium text-slate-700">🎂 Birthday is a vacation day</span>
+                <p className="text-xs text-slate-400 mt-0.5">Adds +1 to your total vacation days per year.</p>
+              </label>
             </div>
           </div>
 

@@ -40,6 +40,11 @@ export async function middleware(request: NextRequest) {
   const isAuthRoute = request.nextUrl.pathname.startsWith("/login") ||
     request.nextUrl.pathname.startsWith("/register");
 
+  // Unauthenticated API calls get 401 JSON — not a browser redirect
+  if (!user && request.nextUrl.pathname.startsWith("/api/")) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   // Redirect unauthenticated users to login
   if (!user && !isAuthRoute && request.nextUrl.pathname !== "/") {
     const url = request.nextUrl.clone();

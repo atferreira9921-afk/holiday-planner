@@ -435,7 +435,7 @@ export default async function TripsPage() {
   const hasAnyVacation = vacationWindows.length > 0;
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8">
+    <div className="space-y-8">
 
       {/* ── Header ── */}
       <div className="flex items-center justify-between">

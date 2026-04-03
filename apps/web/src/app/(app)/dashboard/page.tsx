@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import DashboardClient from "./DashboardClient";
+import { getMunicipalHolidays } from "@/lib/data/pt-municipal-holidays";
 import type {
   BookingRow, AwayRow, EventRow, TripRow,
   FreeStayRow, WishlistRow, FamilyMemberRow,
@@ -33,7 +34,7 @@ export default async function DashboardPage() {
     { data: wishlistRaw },
   ] = await Promise.all([
     supabase.from("user_preferences")
-      .select("vacation_days_per_year, birthday, home_country")
+      .select("vacation_days_per_year, birthday, home_country, home_city_name, home_region, gender, avatar_config, preferred_countries")
       .eq("user_id", user.id).single(),
     groupIds.length > 0
       ? supabase.from("trips")
@@ -50,7 +51,7 @@ export default async function DashboardPage() {
       .select("id, family_member_id, title, start_date, end_date, event_kind")
       .eq("owner_user_id", user.id).order("start_date"),
     supabase.from("family_members")
-      .select("id, display_name, color, vacation_days_per_year, birthday, home_country, travel_style, on_parental_leave, gender, interests")
+      .select("id, display_name, color, vacation_days_per_year, birthday, home_country, home_region, travel_style, on_parental_leave, gender, interests, avatar_config")
       .eq("owner_user_id", user.id).order("created_at"),
     supabase.from("free_stays")
       .select("id, destination_city, destination_country")
@@ -64,9 +65,14 @@ export default async function DashboardPage() {
   // the user's own home country + each family member's home country.
   const userCountry = prefs?.home_country ?? "PT";
   const familyCountries = (familyMembersRaw ?? []).map((m: { home_country: string }) => m.home_country).filter(Boolean);
-  const allCountries = [...new Set([userCountry, ...familyCountries])];
+  const preferredCountries = ((prefs?.preferred_countries ?? []) as string[]).filter(Boolean);
+  const allCountries = [...new Set([userCountry, ...familyCountries, ...preferredCountries])];
 
   const publicHolidaysByCountry: Record<string, { date: string; name: string }[]> = {};
+  // Flat set of ALL public holiday dates (including regional) — used to detect
+  // manually-booked single-day entries that coincide with a public holiday.
+  const allPublicHolidayDates = new Set<string>();
+
   await Promise.all(
     allCountries.flatMap(country =>
       [thisYear, thisYear + 1].map(async yr => {
@@ -76,9 +82,34 @@ export default async function DashboardPage() {
             { next: { revalidate: 86400 } }
           );
           if (res.ok) {
-            const data: { date: string; localName: string; name: string }[] = await res.json();
+            const data: { date: string; localName: string; name: string; counties: string[] | null }[] = await res.json();
             if (!publicHolidaysByCountry[country]) publicHolidaysByCountry[country] = [];
-            for (const h of data) publicHolidaysByCountry[country].push({ date: h.date, name: h.localName ?? h.name });
+            for (const h of data) {
+              // Add every holiday (including regional) to the flat set for icon detection
+              allPublicHolidayDates.add(h.date);
+              // Exclude region-specific holidays from the per-country list (keeps calendar clean)
+              if (h.counties !== null) continue;
+              publicHolidaysByCountry[country].push({ date: h.date, name: h.localName ?? h.name });
+            }
+            // Merge in municipal holidays for all members in this country
+            const members: { cityName: string | null | undefined; region: string | null | undefined }[] = [
+              ...(country === userCountry ? [{ cityName: prefs?.home_city_name, region: prefs?.home_region }] : []),
+              ...(familyMembersRaw ?? [])
+                .filter((m: { home_country: string }) => m.home_country === country)
+                .map((m: { home_city_name?: string | null; home_region?: string | null }) => ({
+                  cityName: m.home_city_name, region: m.home_region,
+                })),
+            ];
+            const municipalDates = new Set(publicHolidaysByCountry[country].map(h => h.date));
+            for (const member of members) {
+              for (const mh of getMunicipalHolidays(member.cityName, country, yr, member.region)) {
+                allPublicHolidayDates.add(mh.date);
+                if (!municipalDates.has(mh.date)) {
+                  publicHolidaysByCountry[country].push({ date: mh.date, name: mh.localName });
+                  municipalDates.add(mh.date);
+                }
+              }
+            }
           }
         } catch { /* degrade gracefully */ }
       })
@@ -93,6 +124,21 @@ export default async function DashboardPage() {
     suggested: activeTrips.filter(t => t.status === "suggested").length,
     booked:    activeTrips.filter(t => t.status === "booked").length,
   };
+
+  // Fetch which family members are tagged on each trip
+  const tripIds = allTrips.map(t => t.id);
+  const { data: tripFamilyMembersRaw } = tripIds.length > 0
+    ? await supabase.from("trip_family_members")
+        .select("trip_id, family_member_id")
+        .in("trip_id", tripIds)
+    : { data: [] as { trip_id: string; family_member_id: string }[] };
+
+  // Build map: family_member_id → set of trip_ids
+  const familyMemberTripIds: Record<string, string[]> = {};
+  for (const row of (tripFamilyMembersRaw ?? [])) {
+    if (!familyMemberTripIds[row.family_member_id]) familyMemberTripIds[row.family_member_id] = [];
+    familyMemberTripIds[row.family_member_id].push(row.trip_id);
+  }
 
   const firstName = user.user_metadata?.full_name?.split(" ")[0]
     ?? user.email?.split("@")[0]
@@ -111,6 +157,8 @@ export default async function DashboardPage() {
             home_country: prefs.home_country ?? "PT",
           }
         : null}
+      userGender={prefs?.gender ?? undefined}
+      userAvatarConfig={prefs?.avatar_config ?? null}
       allBookings={(allBookingsRaw ?? []) as BookingRow[]}
       allAway={(allAwayRaw ?? []) as AwayRow[]}
       allEvents={(allEventsRaw ?? []) as EventRow[]}
@@ -118,10 +166,12 @@ export default async function DashboardPage() {
       activeTrips={activeTrips}
       completedTrips={completedTrips}
       tripCounts={tripCounts}
+      familyMemberTripIds={familyMemberTripIds}
       freeStays={(freeStaysRaw ?? []) as FreeStayRow[]}
       wishlist={(wishlistRaw ?? []) as WishlistRow[]}
       publicHolidaysByCountry={publicHolidaysByCountry}
       userCountry={userCountry}
+      allPublicHolidayDates={[...allPublicHolidayDates]}
     />
   );
 }

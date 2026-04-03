@@ -24,6 +24,11 @@ export async function POST(
   if (invite.accepted_at) return NextResponse.json({ error: "Invite already used" }, { status: 400 });
   if (new Date(invite.expires_at) < new Date()) return NextResponse.json({ error: "Invite expired" }, { status: 400 });
 
+  // If the invite was scoped to a specific email, verify the logged-in user matches
+  if (invite.invited_email && invite.invited_email.toLowerCase() !== user.email?.toLowerCase()) {
+    return NextResponse.json({ error: "This invite was sent to a different email address" }, { status: 403 });
+  }
+
   // Check not already a member
   const { data: existing } = await db
     .from("group_members")

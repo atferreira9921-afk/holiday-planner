@@ -4,7 +4,9 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { FamilyMember } from "@holiday-planner/shared-types";
 import { COUNTRIES, getAirports, getRegions } from "@/lib/data/geo";
-import FamilyMemberAvatarCard from "./FamilyMemberAvatarCard";
+import { getFuelPrice } from "@/lib/data/fuel-prices";
+import FamilyMemberAvatarCard, { type AvatarConfig, DEFAULT_AVATAR_CONFIG } from "./FamilyMemberAvatarCard";
+import FamilyLoading from "./loading";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -52,7 +54,22 @@ const emptyForm: Omit<FamilyMember, "id" | "owner_user_id" | "linked_user_id" | 
   preferred_countries: [],
   home_region: null,
   home_city_name: null,
+  avatar_config: { hair: 0, glasses: 0, face: 0, shirt: 0, bottom: 0, clothesColor: 0 },
 };
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface Car {
+  id: string;
+  owner_user_id: string;
+  family_member_id: string | null;
+  name: string | null;
+  make: string | null;
+  model: string | null;
+  year: number | null;
+  fuel_consumption_per_100km: number;
+  fuel_cost_per_liter: number;
+}
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -64,6 +81,17 @@ export default function FamilyPage() {
   const [editId, setEditId] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [avatarConfig, setAvatarConfig] = useState<AvatarConfig>(DEFAULT_AVATAR_CONFIG);
+
+  // Cars
+  const [memberCars, setMemberCars] = useState<Car[]>([]);
+  const [showCarForm, setShowCarForm] = useState(false);
+  const [savingCar, setSavingCar] = useState(false);
+  const [deletingCarId, setDeletingCarId] = useState<string | null>(null);
+  const [carForm, setCarForm] = useState({ make: "", model: "", year: "", name: "", fuel_consumption_per_100km: "", fuel_cost_per_liter: "" });
+  const [aiEstimate, setAiEstimate] = useState<{ l_per_100km: number; note: string } | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
 
   async function load() {
     const supabase = createClient();
@@ -77,6 +105,13 @@ export default function FamilyPage() {
   }
 
   useEffect(() => { load(); }, []);
+
+  useEffect(() => {
+    if (!editId) { setMemberCars([]); return; }
+    const supabase = createClient();
+    supabase.from("user_cars").select("*").eq("family_member_id", editId).order("created_at")
+      .then(({ data }) => setMemberCars(data ?? []));
+  }, [editId]);
 
   function setF<K extends keyof typeof emptyForm>(key: K, value: typeof emptyForm[K]) {
     setForm(f => ({ ...f, [key]: value }));
@@ -117,6 +152,7 @@ export default function FamilyPage() {
       home_country: form.home_country.toUpperCase(),
       home_city: form.home_city.toUpperCase() || "???",
       owner_user_id: user.id,
+      avatar_config: avatarConfig,
     };
 
     if (editId) {
@@ -126,6 +162,7 @@ export default function FamilyPage() {
     }
 
     setForm(emptyForm);
+    setAvatarConfig(DEFAULT_AVATAR_CONFIG);
     setEditId(null);
     setSaving(false);
     load();
@@ -152,6 +189,7 @@ export default function FamilyPage() {
       home_region: m.home_region ?? null,
       home_city_name: m.home_city_name ?? null,
     });
+    setAvatarConfig(m.avatar_config ?? DEFAULT_AVATAR_CONFIG);
     window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
   }
 
@@ -161,7 +199,56 @@ export default function FamilyPage() {
     load();
   }
 
-  function cancelEdit() { setEditId(null); setForm(emptyForm); setError(null); }
+  function cancelEdit() { setEditId(null); setForm(emptyForm); setAvatarConfig(DEFAULT_AVATAR_CONFIG); setError(null); setShowCarForm(false); setMemberCars([]); }
+
+  async function saveCar(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editId || !carForm.make || !carForm.model || !carForm.fuel_consumption_per_100km) return;
+    setSavingCar(true);
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setSavingCar(false); return; }
+    const displayName = carForm.name.trim() || `${carForm.make} ${carForm.model}${carForm.year ? ` (${carForm.year})` : ""}`;
+    const { data } = await supabase.from("user_cars").insert({
+      owner_user_id: user.id,
+      family_member_id: editId,
+      make: carForm.make.trim(),
+      model: carForm.model.trim(),
+      year: carForm.year ? parseInt(carForm.year) : null,
+      name: displayName,
+      fuel_consumption_per_100km: parseFloat(carForm.fuel_consumption_per_100km),
+      fuel_cost_per_liter: parseFloat(carForm.fuel_cost_per_liter || String(getFuelPrice(form.home_country) ?? 1.70)),
+    }).select("*").single();
+    if (data) setMemberCars(prev => [...prev, data as Car]);
+    const countryAvg = getFuelPrice(form.home_country);
+    setCarForm({ make: "", model: "", year: "", name: "", fuel_consumption_per_100km: "", fuel_cost_per_liter: countryAvg ? String(countryAvg) : "1.70" });
+    setAiEstimate(null);
+    setShowCarForm(false);
+    setSavingCar(false);
+  }
+
+  async function deleteCar(id: string) {
+    setDeletingCarId(id);
+    const supabase = createClient();
+    await supabase.from("user_cars").delete().eq("id", id);
+    setMemberCars(prev => prev.filter(c => c.id !== id));
+    setDeletingCarId(null);
+  }
+
+  async function estimateCons() {
+    if (!carForm.make || !carForm.model) return;
+    setAiLoading(true); setAiError(null); setAiEstimate(null);
+    try {
+      const res = await fetch("/api/cars/estimate-consumption", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ make: carForm.make, model: carForm.model, year: carForm.year ? parseInt(carForm.year) : undefined }),
+      });
+      const data = await res.json();
+      if (data.error) setAiError(data.error);
+      else { setAiEstimate(data); setCarForm(f => ({ ...f, fuel_consumption_per_100km: String(data.l_per_100km) })); }
+    } catch { setAiError("Request failed"); }
+    setAiLoading(false);
+  }
 
   const colorDot = (id: string) => COLORS.find(c => c.id === id)?.dot ?? "#6366f1";
 
@@ -175,7 +262,7 @@ export default function FamilyPage() {
   const avatarColorDot = COLORS.find(c => c.id === form.color)?.dot ?? "#6366f1";
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8">
+    <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Family & Friends</h1>
         <p className="text-slate-500 text-sm mt-1">
@@ -185,7 +272,7 @@ export default function FamilyPage() {
 
       {/* Members list */}
       {loading ? (
-        <div className="text-slate-400 text-sm">Loading...</div>
+        <FamilyLoading />
       ) : members.length === 0 ? (
         <div className="card p-8 text-center text-slate-400 text-sm">
           No one added yet. Use the form below to add a family member or travel companion.
@@ -282,6 +369,8 @@ export default function FamilyPage() {
             interests={form.interests ?? []}
             colorId={form.color}
             colorDot={avatarColorDot}
+            config={avatarConfig}
+            onConfigChange={setAvatarConfig}
           />
         </div>
 
@@ -489,6 +578,146 @@ export default function FamilyPage() {
               })}
             </div>
           </section>
+
+          {/* ── Holiday countries ── */}
+          <section className="space-y-3">
+            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100 pb-2">Holiday countries</h3>
+            <p className="text-xs text-slate-400">Countries whose public holidays to track for this person.</p>
+            <div className="flex flex-wrap gap-2">
+              <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-semibold border border-indigo-200">
+                {form.home_country} <span className="text-indigo-400">home</span>
+              </span>
+              {form.preferred_countries.filter(c => c !== form.home_country).map(c => (
+                <span key={c} className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold border border-slate-200">
+                  {COUNTRIES.find(x => x.code === c)?.name ?? c} ({c})
+                  <button type="button"
+                    onClick={() => setF("preferred_countries", form.preferred_countries.filter(x => x !== c))}
+                    className="text-slate-400 hover:text-red-500 transition leading-none">×</button>
+                </span>
+              ))}
+            </div>
+            <select className="input" value=""
+              onChange={e => {
+                const code = e.target.value;
+                if (!code || code === form.home_country || form.preferred_countries.includes(code)) return;
+                setF("preferred_countries", [...form.preferred_countries, code]);
+              }}>
+              <option value="">+ Add a country…</option>
+              {COUNTRIES
+                .filter(c => c.code !== form.home_country && !form.preferred_countries.includes(c.code))
+                .map(c => <option key={c.code} value={c.code}>{c.name} ({c.code})</option>)}
+            </select>
+          </section>
+
+          {/* ── Avoid destinations ── */}
+          <section className="space-y-3">
+            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100 pb-2">Avoid destinations</h3>
+            <p className="text-xs text-slate-400">Cities or countries this person prefers not to visit.</p>
+            <div className="flex flex-wrap gap-2">
+              {form.avoid_destinations.map(d => (
+                <span key={d} className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-50 text-red-700 text-xs font-semibold border border-red-200">
+                  {d}
+                  <button type="button"
+                    onClick={() => setF("avoid_destinations", form.avoid_destinations.filter(x => x !== d))}
+                    className="text-red-400 hover:text-red-600 transition leading-none">×</button>
+                </span>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <input className="input flex-1" placeholder="e.g. Dubai or AE"
+                onKeyDown={e => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    const val = (e.target as HTMLInputElement).value.trim();
+                    if (val && !form.avoid_destinations.includes(val)) {
+                      setF("avoid_destinations", [...form.avoid_destinations, val]);
+                      (e.target as HTMLInputElement).value = "";
+                    }
+                  }
+                }}/>
+            </div>
+          </section>
+
+          {/* ── Cars (only shown when editing an existing member) ── */}
+          {editId && (
+            <section className="space-y-3">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide">Cars 🚗</h3>
+                <button type="button" onClick={() => {
+                  if (!showCarForm) {
+                    const avg = getFuelPrice(form.home_country);
+                    setCarForm(f => ({ ...f, fuel_cost_per_liter: avg ? String(avg) : "1.70" }));
+                  }
+                  setShowCarForm(f => !f); setAiEstimate(null); setAiError(null);
+                }} className="btn-ghost text-xs px-2 py-1">
+                  {showCarForm ? "Cancel" : "+ Add car"}
+                </button>
+              </div>
+
+              {memberCars.length === 0 && !showCarForm && (
+                <p className="text-xs text-slate-400">No cars yet.</p>
+              )}
+              <div className="space-y-2">
+                {memberCars.map(car => {
+                  const costPer100 = (car.fuel_consumption_per_100km * car.fuel_cost_per_liter).toFixed(2);
+                  return (
+                    <div key={car.id} className="flex items-center gap-3 p-3 bg-amber-50 border border-amber-100 rounded-xl">
+                      <span className="text-xl">🚗</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-slate-800 text-sm">{car.make} {car.model}{car.year && <span className="text-slate-400 font-normal ml-1">({car.year})</span>}</p>
+                        <p className="text-xs text-slate-500">{car.fuel_consumption_per_100km}L/100km · €{car.fuel_cost_per_liter}/L · <span className="text-amber-700 font-semibold">~€{costPer100}/100km</span></p>
+                      </div>
+                      <button type="button" onClick={() => deleteCar(car.id)} disabled={deletingCarId === car.id}
+                        className="text-xs text-red-400 hover:text-red-600 transition">{deletingCarId === car.id ? "…" : "✕"}</button>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {showCarForm && (
+                <form onSubmit={saveCar} className="bg-slate-50 rounded-xl p-4 space-y-3 border border-slate-200">
+                  <div className="grid grid-cols-3 gap-2">
+                    <div><label className="label">Make *</label><input className="input" value={carForm.make} onChange={e => setCarForm(f => ({ ...f, make: e.target.value }))} placeholder="Volkswagen" required/></div>
+                    <div><label className="label">Model *</label><input className="input" value={carForm.model} onChange={e => setCarForm(f => ({ ...f, model: e.target.value }))} placeholder="Golf" required/></div>
+                    <div><label className="label">Year</label><input className="input" type="number" value={carForm.year} onChange={e => setCarForm(f => ({ ...f, year: e.target.value }))} placeholder="2021" min={1990} max={2030}/></div>
+                  </div>
+                  <div><label className="label">Nickname</label><input className="input" value={carForm.name} onChange={e => setCarForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. My daily driver"/></div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="label mb-0">Consumption (L/100km) *</label>
+                        <button type="button" onClick={estimateCons} disabled={!carForm.make || !carForm.model || aiLoading}
+                          className="text-xs text-indigo-600 hover:text-indigo-800 disabled:text-slate-300 transition">
+                          {aiLoading ? "⏳ Estimating…" : "🤖 AI estimate"}
+                        </button>
+                      </div>
+                      <input className="input" type="number" step="0.1" min="1" max="30" value={carForm.fuel_consumption_per_100km}
+                        onChange={e => setCarForm(f => ({ ...f, fuel_consumption_per_100km: e.target.value }))} placeholder="6.5" required/>
+                      {aiEstimate && <p className="text-xs text-indigo-600 mt-1">🤖 {aiEstimate.l_per_100km}L/100km — {aiEstimate.note}</p>}
+                      {aiError && <p className="text-xs text-red-500 mt-1">⚠️ {aiError}</p>}
+                    </div>
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="label mb-0">Fuel cost (€/L)</label>
+                        {(() => { const avg = getFuelPrice(form.home_country); return avg ? (
+                          <button type="button" onClick={() => setCarForm(f => ({ ...f, fuel_cost_per_liter: String(avg) }))}
+                            className="text-xs text-slate-500 hover:text-indigo-600 transition">⛽ €{avg.toFixed(2)} use</button>
+                        ) : null; })()}
+                      </div>
+                      <input className="input" type="number" step="0.01" min="0" value={carForm.fuel_cost_per_liter}
+                        onChange={e => setCarForm(f => ({ ...f, fuel_cost_per_liter: e.target.value }))} placeholder="1.70"/>
+                      {carForm.fuel_consumption_per_100km && carForm.fuel_cost_per_liter && (
+                        <p className="text-xs text-amber-700 font-semibold mt-1">
+                          ~€{(parseFloat(carForm.fuel_consumption_per_100km) * parseFloat(carForm.fuel_cost_per_liter)).toFixed(2)}/100km
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <button type="submit" disabled={savingCar} className="btn-primary text-sm">{savingCar ? "Saving…" : "Save car"}</button>
+                </form>
+              )}
+            </section>
+          )}
 
           {error && <p className="text-red-500 text-sm">{error}</p>}
 

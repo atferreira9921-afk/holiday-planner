@@ -27,6 +27,15 @@ export async function POST(
 
   if (!trip) return NextResponse.json({ error: "Trip not found" }, { status: 404 });
 
+  // Verify the authenticated user is a member of this trip's group
+  const { data: membership } = await db
+    .from("group_members")
+    .select("user_id")
+    .eq("group_id", trip.group_id)
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (!membership) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
   // Load group members + their preferences
   const { data: members } = await db
     .from("group_members")
@@ -153,10 +162,10 @@ export async function POST(
 
     return NextResponse.json(result);
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    console.error("FastAPI error:", message);
+    // Log internally but never expose raw error details to the client
+    console.error("FastAPI error:", err instanceof Error ? err.message : String(err));
     return NextResponse.json(
-      { error: `FastAPI error: ${message}` },
+      { error: "Failed to generate suggestions. Please try again." },
       { status: 502 }
     );
   }

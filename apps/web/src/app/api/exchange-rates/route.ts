@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
 
 // European Central Bank — free, no key, daily updated XML feed.
 // We cache for 6 hours.
@@ -31,6 +32,10 @@ async function getRates(): Promise<Record<string, number>> {
 }
 
 export async function GET(req: Request) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const { searchParams } = new URL(req.url);
   const from   = searchParams.get("from") ?? "EUR";
   const to     = searchParams.get("to");

@@ -30,6 +30,21 @@ export async function PATCH(
 
   const db = await createServiceClient();
 
+  // Confirm the authenticated user is actually in the trip's group
+  const { data: membership } = await db
+    .from("group_members")
+    .select("user_id")
+    .eq("group_id", trip.group_id)
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (!membership) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+  // Only allow known status transitions to prevent arbitrary state injection
+  const ALLOWED_STATUSES = ["planning", "suggested", "booked", "completed"];
+  if (body.status !== undefined && !ALLOWED_STATUSES.includes(body.status)) {
+    return NextResponse.json({ error: "Invalid status" }, { status: 400 });
+  }
+
   // Build update payload from provided fields
   const updates: Record<string, unknown> = {};
   if (body.title !== undefined) updates.title = body.title;

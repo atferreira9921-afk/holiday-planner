@@ -17,7 +17,24 @@
       "Bash(grep -n \"trip_suggestion_votes\" /c/Users/alexandferreira/holiday-planner/apps/web/src/app/api/suggestions/[id]/vote/route.ts)",
       "Bash(ls:*)",
       "Bash(grep -n \"TripRealtimeUpdater\" /c/Users/alexandferreira/holiday-planner/apps/web/src/app/\\\\\\(app\\\\\\)/trips/[id]/page.tsx)",
-      "Bash(grep -n \"trip_packing_items\" /c/Users/alexandferreira/holiday-planner/apps/web/src/app/\\\\\\(app\\\\\\)/trips/[id]/SmartPackingButton.tsx)"
+      "Bash(grep -n \"trip_packing_items\" /c/Users/alexandferreira/holiday-planner/apps/web/src/app/\\\\\\(app\\\\\\)/trips/[id]/SmartPackingButton.tsx)",
+      "Bash(sed -i 's/className=\"\"max-w-5xl mx-auto space-y-6\"\"/className=\"\"space-y-6\"\"/' \"C:/Users/alexandferreira/holiday-planner/apps/web/src/app/\\(app\\)/dashboard/DashboardClient.tsx\")",
+      "Bash(sed -i 's/className=\"\"max-w-5xl mx-auto space-y-6\"\"/className=\"\"space-y-6\"\"/' \"C:/Users/alexandferreira/holiday-planner/apps/web/src/app/\\(app\\)/holidays/page.tsx\")",
+      "Bash(sed -i 's/className=\"\"max-w-5xl mx-auto space-y-8\"\"/className=\"\"space-y-8\"\"/' \"C:/Users/alexandferreira/holiday-planner/apps/web/src/app/\\(app\\)/trips/page.tsx\")",
+      "Bash(sed -i 's/className=\"\"max-w-5xl mx-auto space-y-8\"\"/className=\"\"space-y-8\"\"/' \"C:/Users/alexandferreira/holiday-planner/apps/web/src/app/\\(app\\)/family/page.tsx\")",
+      "Bash(sed -i 's/className=\"\"max-w-5xl mx-auto space-y-6\"\"/className=\"\"space-y-6\"\"/' \"C:/Users/alexandferreira/holiday-planner/apps/web/src/app/\\(app\\)/preferences/page.tsx\")",
+      "Bash(ls \"C:/Users/alexandferreira/holiday-planner/apps/web/src/app/\\(app\\)/\")",
+      "Bash(ls \"C:/Users/alexandferreira/holiday-planner/apps/web/src/app/\\(app\\)/family/loading.tsx\" \"C:/Users/alexandferreira/holiday-planner/apps/web/src/app/\\(app\\)/preferences/loading.tsx\" \"C:/Users/alexandferreira/holiday-planner/apps/web/src/app/\\(app\\)/wishlist/loading.tsx\")",
+      "Bash(cat \"C:/Users/alexandferreira/holiday-planner/apps/web/src/app/\\(app\\)/family/loading.tsx\")",
+      "Bash(head -3 \"C:/Users/alexandferreira/holiday-planner/apps/web/src/app/\\(app\\)/wishlist/page.tsx\")",
+      "Bash(head -3 \"C:/Users/alexandferreira/holiday-planner/apps/web/src/app/\\(app\\)/family/page.tsx\")",
+      "Bash(head -3 \"C:/Users/alexandferreira/holiday-planner/apps/web/src/app/\\(app\\)/preferences/page.tsx\")",
+      "Bash(head -3 \"C:/Users/alexandferreira/holiday-planner/apps/web/src/app/\\(app\\)/dashboard/page.tsx\")",
+      "Bash(grep:*)",
+      "Bash(curl:*)",
+      "Bash(node:*)",
+      "Bash(supabase --version)",
+      "Bash(npx supabase:*)"
     ]
   }
 }

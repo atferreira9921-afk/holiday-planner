@@ -40,10 +40,11 @@ export const aiApi = {
       `/suggestions/${tripId}`
     ),
 
-  submitFeedback: (req: SubmitFeedbackRequest) =>
+  submitFeedback: (req: SubmitFeedbackRequest, userId: string) =>
     fetchFromAI<{ status: string }>("/feedback/", {
       method: "POST",
       body: JSON.stringify(req),
+      headers: { "X-User-Id": userId },
     }),
 
   getHolidays: (countryCode: string, year: number) =>

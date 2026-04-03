@@ -40,11 +40,15 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id: tripId } = await params;
-  void tripId;
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  // Verify the user is a member of the trip's group
+  const { data: trip } = await supabase
+    .from("trips").select("group_id").eq("id", tripId).single();
+  if (!trip) return NextResponse.json({ error: "Trip not found" }, { status: 404 });
 
   const body = await req.json() as { destinationCountry?: string | null; tripType?: string };
   const tripType = body.tripType ?? "flight";
