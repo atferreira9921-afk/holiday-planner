@@ -1,10 +1,11 @@
 import { useState } from "react";
 import {
   View, Text, TextInput, TouchableOpacity,
-  StyleSheet, KeyboardAvoidingView, Platform, Alert,
+  StyleSheet, KeyboardAvoidingView, Platform, Alert, ScrollView,
 } from "react-native";
 import { router } from "expo-router";
 import { supabase } from "@/lib/supabase";
+import { C } from "@/lib/theme";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
@@ -12,8 +13,9 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
 
   async function handleLogin() {
+    if (!email || !password) { Alert.alert("Missing info", "Please enter your email and password."); return; }
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     if (error) {
       Alert.alert("Login failed", error.message);
     } else {
@@ -24,45 +26,86 @@ export default function LoginScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={{ flex: 1, backgroundColor: C.bg }}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      <Text style={styles.title}>Holiday Planner</Text>
-      <Text style={styles.subtitle}>Sign in to your account</Text>
+      <ScrollView contentContainerStyle={s.container} keyboardShouldPersistTaps="handled">
+        {/* Logo area */}
+        <View style={s.logoArea}>
+          <View style={s.logoIcon}>
+            <Text style={{ fontSize: 36 }}>✈️</Text>
+          </View>
+          <Text style={s.appName}>Holiday Planner</Text>
+          <Text style={s.tagline}>Plan amazing trips together</Text>
+        </View>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        autoCapitalize="none"
-        keyboardType="email-address"
-        value={email}
-        onChangeText={setEmail}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-      />
+        {/* Form */}
+        <View style={s.form}>
+          <Text style={s.formTitle}>Sign in</Text>
 
-      <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
-        <Text style={styles.buttonText}>{loading ? "Signing in..." : "Sign in"}</Text>
-      </TouchableOpacity>
+          <Text style={s.label}>Email</Text>
+          <TextInput
+            style={s.input}
+            placeholder="you@example.com"
+            autoCapitalize="none"
+            keyboardType="email-address"
+            value={email}
+            onChangeText={setEmail}
+            autoCorrect={false}
+          />
 
-      <TouchableOpacity onPress={() => router.push("/(auth)/register")}>
-        <Text style={styles.link}>No account? Create one</Text>
-      </TouchableOpacity>
+          <Text style={s.label}>Password</Text>
+          <TextInput
+            style={s.input}
+            placeholder="••••••••"
+            secureTextEntry
+            value={password}
+            onChangeText={setPassword}
+          />
+
+          <TouchableOpacity
+            style={[s.btn, loading && s.btnDisabled]}
+            onPress={handleLogin}
+            disabled={loading}
+          >
+            <Text style={s.btnText}>{loading ? "Signing in…" : "Sign in"}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={s.linkBtn} onPress={() => router.push("/(auth)/register")}>
+            <Text style={s.linkText}>No account? <Text style={{ color: C.primary }}>Create one</Text></Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: "center", padding: 24, gap: 12 },
-  title: { fontSize: 28, fontWeight: "700", textAlign: "center" },
-  subtitle: { color: "#6b7280", textAlign: "center", marginBottom: 8 },
-  input: { borderWidth: 1, borderColor: "#d1d5db", borderRadius: 10, padding: 12, fontSize: 16 },
-  button: { backgroundColor: "#2563eb", borderRadius: 10, padding: 14, alignItems: "center" },
-  buttonText: { color: "#fff", fontWeight: "600", fontSize: 16 },
-  link: { color: "#2563eb", textAlign: "center", marginTop: 4 },
+const s = StyleSheet.create({
+  container: { flexGrow: 1, padding: 24, paddingTop: 60 },
+  logoArea: { alignItems: "center", marginBottom: 40, marginTop: 20 },
+  logoIcon: {
+    width: 80, height: 80, borderRadius: 24, backgroundColor: C.header,
+    alignItems: "center", justifyContent: "center", marginBottom: 16,
+  },
+  appName: { fontSize: 28, fontWeight: "800", color: C.text },
+  tagline: { fontSize: 15, color: C.muted, marginTop: 4 },
+
+  form: {
+    backgroundColor: C.surface, borderRadius: 20, padding: 24,
+    borderWidth: 1, borderColor: C.border,
+  },
+  formTitle: { fontSize: 20, fontWeight: "700", color: C.text, marginBottom: 20 },
+  label: { fontSize: 13, fontWeight: "600", color: C.muted, marginBottom: 6, marginTop: 12 },
+  input: {
+    borderWidth: 1.5, borderColor: C.border, borderRadius: 12,
+    padding: 13, fontSize: 16, backgroundColor: C.bg, color: C.text,
+  },
+  btn: {
+    backgroundColor: C.primary, borderRadius: 12, padding: 16,
+    alignItems: "center", marginTop: 24,
+  },
+  btnDisabled: { opacity: 0.6 },
+  btnText: { color: "#fff", fontWeight: "700", fontSize: 16 },
+  linkBtn: { alignItems: "center", marginTop: 16 },
+  linkText: { fontSize: 14, color: C.muted },
 });

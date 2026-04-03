@@ -113,7 +113,7 @@ export default function AccountPage() {
   const initials = (fullName || email).slice(0, 2).toUpperCase();
 
   return (
-    <div className="max-w-xl mx-auto space-y-8">
+    <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Account</h1>
         <p className="text-slate-500 text-sm mt-1">Manage your profile photo, display name, and password.</p>
@@ -125,6 +125,9 @@ export default function AccountPage() {
           {msg.text}
         </div>
       )}
+
+      {/* ── Photo + Name row ── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
       {/* ── Photo ── */}
       <div className="card p-6 space-y-4">
@@ -173,7 +176,7 @@ export default function AccountPage() {
       </div>
 
       {/* ── Display name ── */}
-      <div className="card p-6 space-y-4">
+      <div className="card p-6 space-y-4 self-start">
         <h2 className="font-bold text-slate-900">Display name</h2>
         <form onSubmit={handleSaveName} className="space-y-4">
           <div>
@@ -196,6 +199,8 @@ export default function AccountPage() {
           </button>
         </form>
       </div>
+
+      </div>{/* end photo+name grid */}
 
       {/* ── Password ── */}
       <div className="card p-6 space-y-4">
@@ -225,3 +230,4 @@ export default function AccountPage() {
     </div>
   );
 }
+
