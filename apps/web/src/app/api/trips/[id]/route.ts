@@ -28,7 +28,7 @@ export async function PATCH(
     .single();
   if (!trip) return NextResponse.json({ error: "Trip not found" }, { status: 404 });
 
-  const db = await createServiceClient();
+  const db = createServiceClient();
 
   // Confirm the authenticated user is actually in the trip's group
   const { data: membership } = await db
@@ -84,7 +84,7 @@ export async function DELETE(
     .single();
   if (!trip) return NextResponse.json({ error: "Trip not found" }, { status: 404 });
 
-  const db = await createServiceClient();
+  const db = createServiceClient();
 
   const { data: membership } = await db
     .from("group_members")

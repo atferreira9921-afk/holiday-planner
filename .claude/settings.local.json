@@ -35,7 +35,16 @@
       "Bash(node:*)",
       "Bash(supabase --version)",
       "Bash(npx supabase:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git show:*)",
+      "Bash(cat:*)",
+      "Bash(pnpm:*)",
+      "Bash(grep -n \"suggestion\\\\|Suggestion\" /c/Users/alexandferreira/holiday-planner/apps/web/src/app/\\\\\\(app\\\\\\)/trips/[id]/page.tsx)",
+      "Bash(head:*)",
+      "Bash(grep -n \"group_invites\\\\|pending\\\\|invite\" /c/Users/alexandferreira/holiday-planner/apps/web/src/app/\\\\\\(app\\\\\\)/trips/[id]/page.tsx)"
     ]
   }
 }

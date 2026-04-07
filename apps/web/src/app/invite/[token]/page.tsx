@@ -10,7 +10,7 @@ export default async function AcceptInvitePage({
 }) {
   const { token } = await params;
   const supabase  = await createClient();
-  const db        = await createServiceClient();
+  const db        = createServiceClient();
 
   const { data: { user } } = await supabase.auth.getUser();
 

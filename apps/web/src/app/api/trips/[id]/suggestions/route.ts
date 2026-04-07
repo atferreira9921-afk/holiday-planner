@@ -31,7 +31,7 @@ export async function POST(
           return;
         }
 
-        const db = await createServiceClient();
+        const db = createServiceClient();
 
         // ── Trip + membership (parallel) ────────────────────────────────────
         send({ progress: 10, stage: "Loading trip…" });

@@ -38,7 +38,7 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
   const { data: trip } = await supabase.from("trips").select("*").eq("id", id).single();
   if (!trip) notFound();
 
-  const db = await createServiceClient();
+  const db = createServiceClient();
 
   // Fetch everything in parallel
   const [

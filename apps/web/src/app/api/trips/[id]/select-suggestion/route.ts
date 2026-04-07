@@ -18,7 +18,7 @@ export async function POST(
   if (!trip) return NextResponse.json({ error: "Trip not found" }, { status: 404 });
   if (trip.created_by !== user.id) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const db = await createServiceClient();
+  const db = createServiceClient();
 
   if (!suggestion_id) {
     // Deselect: clear selected_suggestion_id, revert status to suggested
