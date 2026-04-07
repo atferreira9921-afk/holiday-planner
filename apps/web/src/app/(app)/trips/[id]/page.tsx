@@ -29,6 +29,8 @@ import DeleteTripButton from "./DeleteTripButton";
 import TripRealtimeUpdater from "./TripRealtimeUpdater";
 import TripFamilyMembers from "./TripFamilyMembers";
 import DuplicateTripButton from "./DuplicateTripButton";
+import FlightSearchPanel from "./FlightSearchPanel";
+import HotelSearchPanel from "./HotelSearchPanel";
 
 export default async function TripDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -70,7 +72,7 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
     db.from("trip_expenses").select("*").eq("trip_id", id).order("created_at"),
     db.from("trip_packing_items").select("*").eq("trip_id", id).order("created_at"),
     db.from("user_cars").select("*").eq("owner_user_id", user.id).order("created_at"),
-    db.from("user_preferences").select("home_country").eq("user_id", user.id).maybeSingle(),
+    db.from("user_preferences").select("home_country, home_city").eq("user_id", user.id).maybeSingle(),
     db.from("family_members").select("id, display_name, color").eq("owner_user_id", user.id).order("created_at"),
     db.from("trip_family_members").select("family_member_id").eq("trip_id", id),
     db.from("trip_itinerary_items").select("*").eq("trip_id", id).order("day_number").order("sort_order"),
@@ -83,7 +85,8 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
     db.from("trip_documents").select("*").eq("trip_id", id).order("created_at"),
   ]);
 
-  const homeCountry = (userPrefs as { home_country?: string } | null)?.home_country ?? "PT";
+  const homeCountry = (userPrefs as { home_country?: string; home_city?: string } | null)?.home_country ?? "PT";
+  const homeIata    = (userPrefs as { home_country?: string; home_city?: string } | null)?.home_city ?? "LIS";
 
   // Fetch poll options + votes with real poll IDs
   const pollIds = (tripPolls ?? []).map((p: { id: string }) => p.id);
@@ -147,10 +150,11 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
 
   const memberNames: Record<string, string> = Object.fromEntries(members.map(m => [m.user_id, m.name]));
 
-  function buildFlightSearchUrl(destIATA: string | null, destCity: string, depart: string, ret: string) {
+  function buildFlightFallbackUrl(destIATA: string | null, destCity: string, depart: string, ret: string) {
+    // Skyscanner fallback using actual home airport IATA
     const fmt = (d: string) => d.replace(/-/g, "").slice(2); // YYYYMMDD → YYMMDD
-    const from = `${homeCountry.toUpperCase()}-sky`;
-    const to   = destIATA ? `${destIATA}-sky` : encodeURIComponent(destCity);
+    const from = homeIata.toLowerCase();
+    const to   = destIATA ? destIATA.toLowerCase() : destCity.toLowerCase().replace(/\s+/g, "-");
     return `https://www.skyscanner.net/transport/flights/${from}/${to}/${fmt(depart)}/${fmt(ret)}/`;
   }
   function buildHotelSearchUrl(destCity: string, destCountry: string, checkin: string, checkout: string) {
@@ -356,10 +360,21 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
                 <SelectSuggestionButton tripId={trip.id} suggestionId={s.id} isSelected={isSelected} />
                 {!dimmed && s.suggested_departure && s.suggested_return && (
                   <>
-                    <a href={s.flight_data?.booking_url ?? buildFlightSearchUrl(s.destination_iata ?? null, s.destination_city, s.suggested_departure, s.suggested_return)}
-                      target="_blank" rel="noopener noreferrer" className="btn-ghost text-sm">✈️ Search flights</a>
-                    <a href={s.hotel_data?.booking_url ?? buildHotelSearchUrl(s.destination_city, s.destination_country, s.suggested_departure, s.suggested_return)}
-                      target="_blank" rel="noopener noreferrer" className="btn-ghost text-sm">🏨 Search hotels</a>
+                    <FlightSearchPanel
+                      fromIata={homeIata}
+                      toIata={s.destination_iata ?? null}
+                      toCity={s.destination_city}
+                      outbound={s.suggested_departure}
+                      ret={s.suggested_return}
+                      fallbackUrl={s.flight_data?.booking_url ?? buildFlightFallbackUrl(s.destination_iata ?? null, s.destination_city, s.suggested_departure, s.suggested_return)}
+                    />
+                    <HotelSearchPanel
+                      city={s.destination_city}
+                      country={s.destination_country}
+                      checkin={s.suggested_departure}
+                      checkout={s.suggested_return}
+                      fallbackUrl={s.hotel_data?.booking_url ?? buildHotelSearchUrl(s.destination_city, s.destination_country, s.suggested_departure, s.suggested_return)}
+                    />
                   </>
                 )}
               </div>
