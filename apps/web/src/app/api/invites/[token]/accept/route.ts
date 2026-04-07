@@ -38,11 +38,15 @@ export async function POST(
     .single();
 
   if (!existing) {
-    await db.from("group_members").insert({
+    const { error: insertError } = await db.from("group_members").insert({
       group_id: invite.group_id,
       user_id: user.id,
       role: "member",
     });
+    if (insertError) {
+      console.error("group_members insert failed:", insertError.message);
+      return NextResponse.json({ error: "Failed to join group. Please try again." }, { status: 500 });
+    }
   }
 
   // Mark invite as accepted

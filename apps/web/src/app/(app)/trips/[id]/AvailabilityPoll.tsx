@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
 interface Member { user_id: string; name: string; pending?: boolean; }
@@ -92,7 +93,9 @@ export default function AvailabilityPoll({
         <div>
           <h2 className="font-bold text-slate-900 text-lg">📅 Availability poll</h2>
           <p className="text-xs text-slate-400 mt-0.5">
-            Mark your available dates — {members.length > 1 ? "green = everyone free" : "tap to mark availability"}
+            {members.length > 1
+              ? `${confirmedMembers.length} member${confirmedMembers.length !== 1 ? "s" : ""} · green = everyone free`
+              : "Just you so far — invite others to compare availability"}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -106,6 +109,16 @@ export default function AvailabilityPoll({
           </button>
         </div>
       </div>
+
+      {!collapsed && confirmedMembers.length <= 1 && members.filter(m => m.pending).length === 0 && (
+        <div className="flex items-center gap-3 bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-3 text-sm text-indigo-700">
+          <span className="text-lg">👋</span>
+          <p>
+            Invite your travel companions so they can mark their available dates.
+            Use the <strong>Invite people</strong> section below.
+          </p>
+        </div>
+      )}
 
       {!collapsed && (
         <>
