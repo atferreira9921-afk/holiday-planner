@@ -178,37 +178,51 @@ Return ONLY a JSON array of 3 suggestions (no markdown, no explanation):
 
         const rawText = message.content[0].type === "text" ? message.content[0].text : "";
         const raw = rawText.trim().replace(/^```json?\n?/, "").replace(/\n?```$/, "");
-        const suggestions: Record<string, unknown>[] = JSON.parse(raw);
+
+        let parsed: Record<string, unknown>[];
+        try {
+          parsed = JSON.parse(raw);
+        } catch {
+          send({ error: `Claude returned invalid JSON: ${raw.slice(0, 200)}` });
+          controller.close();
+          return;
+        }
 
         send({ progress: 90, stage: "Saving to database…" });
 
-        await db.from("trip_suggestions").delete().eq("trip_id", tripId);
+        const { error: deleteError } = await db.from("trip_suggestions").delete().eq("trip_id", tripId);
+        if (deleteError) console.error("Delete error:", deleteError.message);
 
         const now = new Date().toISOString();
-        const rows = suggestions.map(s => ({
+        const rows = parsed.map(s => ({
           trip_id: tripId,
-          rank: s.rank,
-          destination_city: s.destination_city,
-          destination_country: s.destination_country,
+          rank: Number(s.rank) || 1,
+          destination_city: String(s.destination_city ?? ""),
+          destination_country: String(s.destination_country ?? "").slice(0, 2),
           destination_iata: s.destination_iata && String(s.destination_iata).length <= 3 ? String(s.destination_iata) : null,
-          suggested_departure: s.suggested_departure,
-          suggested_return: s.suggested_return,
-          total_days: s.total_days,
-          vacation_days_used: s.vacation_days_used,
-          overlap_score: s.overlap_score,
-          estimated_flight_price_eur: s.estimated_flight_price_eur ?? null,
-          estimated_hotel_price_eur: s.estimated_hotel_price_eur ?? null,
-          estimated_total_price_eur: s.estimated_total_price_eur ?? null,
+          suggested_departure: String(s.suggested_departure ?? ""),
+          suggested_return: String(s.suggested_return ?? ""),
+          total_days: Number(s.total_days) || 7,
+          vacation_days_used: Number(s.vacation_days_used) || 0,
+          overlap_score: Math.min(1, Math.max(0, Number(s.overlap_score) || 0)),
+          estimated_flight_price_eur: s.estimated_flight_price_eur ? Number(s.estimated_flight_price_eur) : null,
+          estimated_hotel_price_eur: s.estimated_hotel_price_eur ? Number(s.estimated_hotel_price_eur) : null,
+          estimated_total_price_eur: s.estimated_total_price_eur ? Number(s.estimated_total_price_eur) : null,
           flight_data: null,
           hotel_data: null,
-          reasoning: s.reasoning,
-          highlights: s.highlights,
-          trade_offs: s.trade_offs,
+          reasoning: String(s.reasoning ?? ""),
+          highlights: Array.isArray(s.highlights) ? s.highlights.map(String) : [],
+          trade_offs: Array.isArray(s.trade_offs) ? s.trade_offs.map(String) : [],
           ai_model_version: "claude-sonnet-4-6",
           created_at: now,
         }));
 
-        await db.from("trip_suggestions").insert(rows);
+        const { error: insertError } = await db.from("trip_suggestions").insert(rows);
+        if (insertError) {
+          send({ error: `Failed to save suggestions: ${insertError.message}` });
+          controller.close();
+          return;
+        }
 
         send({ progress: 95, stage: "Notifying group members…" });
         await Promise.all(

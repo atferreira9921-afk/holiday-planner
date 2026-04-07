@@ -114,20 +114,25 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
       .gt("expires_at", new Date().toISOString()),
   ]);
 
-  const members = [
-    ...(groupMembersRaw ?? []).map(m => {
-      const profile = (profiles ?? []).find((p: { id: string; full_name: string | null; email: string }) => p.id === m.user_id);
-      return {
-        user_id: m.user_id,
-        name: profile?.full_name ?? profile?.email?.split("@")[0] ?? "Member",
-        pending: false,
-      };
-    }),
-    ...(pendingInvites ?? []).map(inv => ({
-      user_id: `pending-${inv.id}`,
-      name: inv.invited_email,
-      pending: true,
-    })),
+  // Confirmed members (used everywhere)
+  const members = (groupMembersRaw ?? []).map(m => {
+    const profile = (profiles ?? []).find((p: { id: string; full_name: string | null; email: string }) => p.id === m.user_id);
+    return {
+      user_id: m.user_id,
+      name: profile?.full_name ?? profile?.email?.split("@")[0] ?? "Member",
+    };
+  });
+
+  // Confirmed + pending — used only for availability poll
+  const availabilityMembers = [
+    ...members,
+    ...(pendingInvites ?? [])
+      .filter(inv => inv.invited_email)
+      .map(inv => ({
+        user_id: `pending-${inv.id}`,
+        name: inv.invited_email as string,
+        pending: true,
+      })),
   ];
 
   const memberNames: Record<string, string> = Object.fromEntries(members.map(m => [m.user_id, m.name]));
@@ -398,7 +403,7 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
       {/* Availability poll */}
       <AvailabilityPoll
         tripId={trip.id}
-        members={members}
+        members={availabilityMembers}
         currentUserId={user.id}
         initialEntries={(availabilityEntries ?? []) as Parameters<typeof AvailabilityPoll>[0]["initialEntries"]}
         earliestDeparture={trip.earliest_departure}
