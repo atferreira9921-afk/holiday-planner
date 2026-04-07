@@ -1,6 +1,6 @@
 {
-  "buildCommand": "pnpm --filter @holiday-planner/web build",
+  "buildCommand": "pnpm run build",
   "installCommand": "pnpm install",
-  "outputDirectory": "apps/web/.next",
+  "outputDirectory": ".next",
   "framework": "nextjs"
 }
