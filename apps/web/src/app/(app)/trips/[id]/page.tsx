@@ -101,18 +101,34 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
     ? await db.from("trip_suggestion_votes").select("*").in("suggestion_id", suggestionIds)
     : { data: [] };
 
-  // Fetch user profiles for group members
+  // Fetch user profiles for group members + pending invites
   const memberUserIds = (groupMembersRaw ?? []).map(m => m.user_id);
-  const { data: profiles } = memberUserIds.length > 0
-    ? await db.from("user_profiles").select("id, full_name, email").in("id", memberUserIds)
-    : { data: [] };
+  const [{ data: profiles }, { data: pendingInvites }] = await Promise.all([
+    memberUserIds.length > 0
+      ? db.from("user_profiles").select("id, full_name, email").in("id", memberUserIds)
+      : Promise.resolve({ data: [] }),
+    db.from("group_invites")
+      .select("id, invited_email")
+      .eq("group_id", trip.group_id)
+      .is("accepted_at", null)
+      .gt("expires_at", new Date().toISOString()),
+  ]);
 
-  const members = (groupMembersRaw ?? []).map(m => {
-    const profile = (profiles ?? []).find((p: { id: string; full_name: string | null; email: string }) => p.id === m.user_id);
-    return {
-      user_id: m.user_id,
-      name: profile?.full_name ?? profile?.email?.split("@")[0] ?? "Member",
-    };
+  const members = [
+    ...(groupMembersRaw ?? []).map(m => {
+      const profile = (profiles ?? []).find((p: { id: string; full_name: string | null; email: string }) => p.id === m.user_id);
+      return {
+        user_id: m.user_id,
+        name: profile?.full_name ?? profile?.email?.split("@")[0] ?? "Member",
+        pending: false,
+      };
+    }),
+    ...(pendingInvites ?? []).map(inv => ({
+      user_id: `pending-${inv.id}`,
+      name: inv.invited_email,
+      pending: true,
+    })),
+  ];
   });
 
   const memberNames: Record<string, string> = Object.fromEntries(members.map(m => [m.user_id, m.name]));

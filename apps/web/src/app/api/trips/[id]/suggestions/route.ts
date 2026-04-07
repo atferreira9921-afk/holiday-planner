@@ -3,6 +3,8 @@ import { anthropic } from "@/lib/anthropic";
 import { createNotification } from "@/lib/notifications";
 import type { MemberCalendar, UserPreferences } from "@holiday-planner/shared-types";
 
+export const maxDuration = 60; // Vercel: allow up to 60s for AI generation
+
 // Helper to encode an SSE event
 function sse(data: object) {
   return new TextEncoder().encode(`data: ${JSON.stringify(data)}\n\n`);
@@ -136,7 +138,7 @@ export async function POST(
         }));
 
         // ── Build prompt ────────────────────────────────────────────────────
-        send({ progress: 40, stage: "Asking Claude for suggestions…" });
+        send({ progress: 40, stage: "Claude is thinking… (this takes ~15s)" });
 
         const membersContext = groupMembers.map((m, i) => {
           const p = m.preferences;
@@ -165,30 +167,17 @@ ${freeStaysCtx}
 Return ONLY a JSON array of 3 suggestions (no markdown, no explanation):
 [{"rank":1,"destination_city":"City","destination_country":"XX","destination_iata":"XXX","suggested_departure":"YYYY-MM-DD","suggested_return":"YYYY-MM-DD","total_days":7,"vacation_days_used":5,"overlap_score":0.9,"estimated_flight_price_eur":150,"estimated_hotel_price_eur":400,"estimated_total_price_eur":600,"reasoning":"2-3 sentences why","highlights":["h1","h2","h3"],"trade_offs":["t1"]}]`;
 
-        // ── Stream Claude response ──────────────────────────────────────────
-        let accumulated = "";
-        const claudeStream = anthropic.messages.stream({
+        // ── Call Claude (non-streaming for proxy compatibility) ─────────────
+        const message = await anthropic.messages.create({
           model: "claude-sonnet-4-6",
           max_tokens: 2048,
           messages: [{ role: "user", content: prompt }],
         });
 
-        // Estimate ~800 tokens for the response; map to 40-80% progress range
-        let inputTokensSeen = 0;
-        for await (const event of claudeStream) {
-          if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
-            accumulated += event.delta.text;
-            inputTokensSeen += event.delta.text.length;
-            // Rough: 800 chars ≈ full response; clamp to 80%
-            const claudeProgress = Math.min(40 + Math.floor((inputTokensSeen / 800) * 40), 80);
-            send({ progress: claudeProgress, stage: "Claude is writing suggestions…" });
-          }
-        }
+        send({ progress: 82, stage: "Processing suggestions…" });
 
-        // ── Parse + save ────────────────────────────────────────────────────
-        send({ progress: 85, stage: "Processing suggestions…" });
-
-        const raw = accumulated.trim().replace(/^```json?\n?/, "").replace(/\n?```$/, "");
+        const rawText = message.content[0].type === "text" ? message.content[0].text : "";
+        const raw = rawText.trim().replace(/^```json?\n?/, "").replace(/\n?```$/, "");
         const suggestions: Record<string, unknown>[] = JSON.parse(raw);
 
         send({ progress: 90, stage: "Saving to database…" });
@@ -201,7 +190,7 @@ Return ONLY a JSON array of 3 suggestions (no markdown, no explanation):
           rank: s.rank,
           destination_city: s.destination_city,
           destination_country: s.destination_country,
-          destination_iata: s.destination_iata ?? "",
+          destination_iata: s.destination_iata && String(s.destination_iata).length <= 3 ? String(s.destination_iata) : null,
           suggested_departure: s.suggested_departure,
           suggested_return: s.suggested_return,
           total_days: s.total_days,

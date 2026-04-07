@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
-interface Member { user_id: string; name: string; }
+interface Member { user_id: string; name: string; pending?: boolean; }
 interface AvailabilityEntry { trip_id: string; user_id: string; date: string; available: boolean; }
 
 function dateRange(from: string, to: string): string[] {
@@ -76,9 +76,11 @@ export default function AvailabilityPoll({
     setSaving(null);
   }
 
-  // Find dates where ALL members responded as available
+  const confirmedMembers = members.filter(m => !m.pending);
+
+  // Find dates where ALL confirmed members responded as available
   const allAvailableDates = dates.filter(date =>
-    members.every(m => getStatus(m.user_id, date) === true)
+    confirmedMembers.length > 1 && confirmedMembers.every(m => getStatus(m.user_id, date) === true)
   );
 
   // Find dates where current user is available
@@ -133,27 +135,30 @@ export default function AvailabilityPoll({
               <tbody>
                 {members.map(member => (
                   <tr key={member.user_id}>
-                    <td className="p-1 pr-3 font-semibold text-slate-700 sticky left-0 bg-white whitespace-nowrap">
-                      {member.name}
+                    <td className="p-1 pr-3 font-semibold text-slate-700 sticky left-0 bg-white whitespace-nowrap max-w-[120px] truncate">
+                      <span title={member.name}>{member.name}</span>
                       {member.user_id === currentUserId && <span className="text-slate-400 font-normal ml-1">(you)</span>}
+                      {member.pending && <span className="text-amber-500 font-normal ml-1 text-[10px]">invited</span>}
                     </td>
                     {dates.map(date => {
-                      const status       = getStatus(member.user_id, date);
+                      const status        = getStatus(member.user_id, date);
                       const isCurrentUser = member.user_id === currentUserId;
-                      const isSaving     = saving === `${member.user_id}-${date}`;
-                      const allFree      = members.length > 1 && allAvailableDates.includes(date);
+                      const isSaving      = saving === `${member.user_id}-${date}`;
+                      const allFree       = members.filter(m => !m.pending).length > 1 && allAvailableDates.includes(date);
 
-                      let bg = "bg-slate-100";
-                      if (status === true)  bg = allFree ? "bg-emerald-600" : "bg-emerald-400";
-                      if (status === false) bg = "bg-red-300";
+                      let bg = member.pending ? "bg-slate-50 border border-dashed border-slate-200" : "bg-slate-100";
+                      if (!member.pending) {
+                        if (status === true)  bg = allFree ? "bg-emerald-600" : "bg-emerald-400";
+                        if (status === false) bg = "bg-red-300";
+                      }
 
                       return (
                         <td key={date} className="p-0.5 text-center">
                           <button
                             onClick={() => isCurrentUser ? toggle(date) : undefined}
-                            disabled={!isCurrentUser || isSaving}
+                            disabled={!isCurrentUser || isSaving || !!member.pending}
                             className={`w-6 h-6 rounded transition ${bg} ${isCurrentUser ? "hover:opacity-75 cursor-pointer" : "cursor-default"} ${isSaving ? "animate-pulse" : ""}`}
-                            title={isCurrentUser ? "Click to toggle" : member.name}
+                            title={member.pending ? `${member.name} — invite pending` : isCurrentUser ? "Click to toggle" : member.name}
                           />
                         </td>
                       );
