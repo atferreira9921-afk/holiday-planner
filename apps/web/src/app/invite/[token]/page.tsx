@@ -36,7 +36,7 @@ export default async function AcceptInvitePage({
     return <ErrorPage message="This invite link has expired. Ask the trip owner to generate a new one." />;
   }
 
-  const groupName = (invite.travel_groups as { name: string } | null)?.name ?? "a travel group";
+  const groupName = (invite.travel_groups as unknown as { name: string } | null)?.name ?? "a travel group";
 
   // If already a member, redirect to dashboard
   const { data: existing } = await db

@@ -306,7 +306,6 @@ function CalendarGrid({
                 return (
                   <div key={j} title={`${bp.memberName}: ${displayEmoji} ${bp.title}`}
                     style={{
-                      background: bp.bg,
                       borderLeft: `3px solid ${bp.dot}`,
                       fontSize: 9, padding: "1px 4px", marginBottom: 2,
                       borderRadius: "0 3px 3px 0",

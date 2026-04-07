@@ -282,6 +282,7 @@ function defaultPreferences(): UserPreferences {
     on_parental_leave: false,
     parental_leave_end_date: null,
     birthday: null,
+    birthday_is_vacation_day: false,
     home_region: null,
     home_city_name: null,
     updated_at: new Date().toISOString(),

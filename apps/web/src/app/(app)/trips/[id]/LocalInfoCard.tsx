@@ -89,7 +89,7 @@ export default function LocalInfoCard({
       {/* Practical info */}
       {info && (
         <div className="space-y-0">
-          <Row label="💰 Currency" value={`${info.currency} (${info.currencyCode}) ${info.currencySymbol}`} />
+          <Row label="💰 Currency" value={`${info.currency} ${info.currencySymbol}`} />
           <Row label="🗣️ Language" value={info.language} />
           <Row label="🚨 Emergency" value={info.emergencyNumber} />
           <Row label="👮 Police" value={info.policeNumber} />
@@ -98,7 +98,6 @@ export default function LocalInfoCard({
           <Row label="🚗 Drives on" value={info.drivingSide === "left" ? "Left side" : "Right side"} />
           <Row label="📞 Calling code" value={info.callingCode} />
           <Row label="💵 Tipping" value={info.tippingCulture} />
-          <Row label="📱 SIM / eSIM" value={info.simOptions} />
         </div>
       )}
     </div>

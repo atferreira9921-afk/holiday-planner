@@ -264,7 +264,7 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
           : null;
         const otherSuggestions = suggestions.filter(s => s.id !== trip.selected_suggestion_id);
 
-        function SuggestionCard({ s, dimmed }: { s: typeof suggestions[0]; dimmed?: boolean }) {
+        function SuggestionCard({ s, dimmed }: { s: NonNullable<typeof suggestions>[0]; dimmed?: boolean }) {
           const isSelected = trip.selected_suggestion_id === s.id;
           return (
             <div className={["card transition", isSelected ? "ring-2 ring-emerald-400 p-6" : dimmed ? "p-4" : "p-6"].join(" ")}>

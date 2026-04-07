@@ -39,7 +39,6 @@ export default function TripStatusControl({ tripId, currentStatus, selectedSugge
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-sm font-medium text-slate-600">Status:</span>
         <span
-          className="badge"
           className={`badge ${statusCls}`}
         >
           {currentStatus}

@@ -37,7 +37,7 @@ export interface UserPreferences {
   home_region: string | null; // ISO 3166-2, e.g. "PT-06" for Coimbra
   home_city_name: string | null; // human-readable city name, e.g. "Coimbra"
   // Avatar customization
-  avatar_config: { hair: number; glasses: number; face: number; shirt: number; bottom: number; clothesColor: number } | null;
+  avatar_config?: { hair: number; glasses: number; face: number; shirt: number; bottom: number; clothesColor?: number } | null;
   updated_at: string;
 }
 

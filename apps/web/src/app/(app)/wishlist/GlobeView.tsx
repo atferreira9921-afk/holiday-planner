@@ -353,9 +353,10 @@ function drawFrame(
   }
 
   // ── Tooltip ────────────────────────────────────────────────────────────────
-  if (hoverM !== null) {
+  const hoverMarker = hoverM as GlobeMarker | null;
+  if (hoverMarker !== null) {
     ctx.font = "bold 11px system-ui, sans-serif";
-    const tw  = ctx.measureText(hoverM.label).width;
+    const tw  = ctx.measureText(hoverMarker.label).width;
     const pad = 8, bw = tw + pad * 2, bh = 26;
     let bx = hoverPx + 14;
     let by = hoverPy - bh / 2;
@@ -369,7 +370,7 @@ function drawFrame(
     roundRect(ctx, bx, by, bw, bh, 7);
     ctx.fill(); ctx.stroke();
     ctx.fillStyle = "#fff";
-    ctx.fillText(hoverM.label, bx + pad, by + bh / 2 + 4);
+    ctx.fillText(hoverMarker.label, bx + pad, by + bh / 2 + 4);
   }
 
   ctx.restore();
