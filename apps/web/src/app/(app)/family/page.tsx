@@ -188,6 +188,7 @@ export default function FamilyPage() {
       preferred_countries: m.preferred_countries ?? [],
       home_region: m.home_region ?? null,
       home_city_name: m.home_city_name ?? null,
+      avatar_config: m.avatar_config ?? DEFAULT_AVATAR_CONFIG,
     });
     setAvatarConfig(m.avatar_config ?? DEFAULT_AVATAR_CONFIG);
     window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
