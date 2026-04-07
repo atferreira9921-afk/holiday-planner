@@ -32,7 +32,7 @@ export default function TripStatusControl({ tripId, currentStatus, selectedSugge
     router.refresh();
   }
 
-  const isTerminal = currentStatus === "completed" || currentStatus === "cancelled";
+  const isTerminal = currentStatus === "completed";
 
   return (
     <div className="card p-4">
@@ -44,8 +44,18 @@ export default function TripStatusControl({ tripId, currentStatus, selectedSugge
           {currentStatus}
         </span>
 
-        {isTerminal && (
-          <span className="text-sm text-slate-400">Trip is {currentStatus}</span>
+        {currentStatus === "completed" && (
+          <span className="text-sm text-slate-400">Trip completed</span>
+        )}
+
+        {currentStatus === "cancelled" && (
+          <button
+            className="btn-ghost text-sm"
+            onClick={() => updateStatus("planning")}
+            disabled={saving}
+          >
+            ↩ Reopen trip
+          </button>
         )}
 
         {!isTerminal && (
