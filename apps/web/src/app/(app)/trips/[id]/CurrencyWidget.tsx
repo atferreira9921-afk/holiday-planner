@@ -92,16 +92,16 @@ export default function CurrencyWidget({ destinationCountry }: { destinationCoun
         <p className="text-sm text-slate-400">Loading rates…</p>
       ) : (
         <>
-          <div className="flex gap-2 items-center">
-            <input className="input flex-1" type="number" min="0" step="any"
+          <div className="flex flex-wrap gap-2 items-center">
+            <input className="input w-24 flex-1 min-w-0" type="number" min="0" step="any"
               value={amount} onChange={e => setAmount(e.target.value)} placeholder="Amount" />
-            <select className="input w-28" value={from} onChange={e => setFrom(e.target.value)}>
+            <select className="input w-24" value={from} onChange={e => setFrom(e.target.value)}>
               {POPULAR_CURRENCIES.map(c => (
                 <option key={c.code} value={c.code}>{c.code} {c.symbol}</option>
               ))}
             </select>
             <span className="text-slate-400 text-lg">→</span>
-            <select className="input w-28" value={to} onChange={e => setTo(e.target.value)}>
+            <select className="input w-24" value={to} onChange={e => setTo(e.target.value)}>
               {POPULAR_CURRENCIES.map(c => (
                 <option key={c.code} value={c.code}>{c.code} {c.symbol}</option>
               ))}

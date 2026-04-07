@@ -239,7 +239,7 @@ export default function ExpensesSection({
           {members.length > 1 && (
             <div className="space-y-2">
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Per person breakdown</p>
-              <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.min(members.length, 3)}, 1fr)` }}>
+              <div className={`grid gap-2 grid-cols-2 sm:grid-cols-${Math.min(members.length, 3)}`}>
                 {perPerson.map(m => (
                   <div key={m.user_id} className="bg-slate-50 rounded-xl p-3">
                     <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 truncate">{m.name}</p>
@@ -313,7 +313,7 @@ export default function ExpensesSection({
               {showCarForm && (
                 <form onSubmit={handleAddCar} className="bg-white rounded-xl p-3 space-y-3 border border-amber-200">
                   <p className="text-xs font-semibold text-slate-600">Add a car</p>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                     <div>
                       <label className="label text-xs">Name</label>
                       <input className="input text-sm" value={carForm.name}
@@ -357,7 +357,7 @@ export default function ExpensesSection({
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="label">Description</label>
               <input className="input" value={form.description}
@@ -380,7 +380,7 @@ export default function ExpensesSection({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="label">Paid by</label>
               <select className="input" value={form.paid_by}

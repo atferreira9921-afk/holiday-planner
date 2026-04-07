@@ -10,6 +10,7 @@ const navItems = [
   { href: "/family", icon: "👨‍👩‍👧", label: "Family & Friends" },
   { href: "/preferences", icon: "⚙️", label: "User Config" },
   { href: "/about", icon: "📖", label: "About / Features" },
+  { href: "/account", icon: "👤", label: "Account" },
 ];
 
 export default function MobileMenuButton() {
@@ -20,15 +21,27 @@ export default function MobileMenuButton() {
         {open ? "✕" : "☰"}
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-1 w-56 rounded-xl shadow-xl z-50 overflow-hidden" style={{ background: "linear-gradient(180deg, #1e1b4b, #312e81)" }}>
-          {navItems.map(item => (
-            <Link key={item.href} href={item.href} onClick={() => setOpen(false)}
-              className="flex items-center gap-3 px-4 py-3 text-sm text-slate-300 hover:bg-white/10 hover:text-white transition">
-              <span>{item.icon}</span>
-              <span>{item.label}</span>
-            </Link>
-          ))}
-        </div>
+        <>
+          {/* Backdrop */}
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 top-full mt-1 w-56 rounded-xl shadow-xl z-50 overflow-hidden" style={{ background: "linear-gradient(180deg, #1e1b4b, #312e81)" }}>
+            {navItems.map(item => (
+              <Link key={item.href} href={item.href} onClick={() => setOpen(false)}
+                className="flex items-center gap-3 px-4 py-3 text-sm text-slate-300 hover:bg-white/10 hover:text-white transition">
+                <span>{item.icon}</span>
+                <span>{item.label}</span>
+              </Link>
+            ))}
+            <div className="border-t border-white/10">
+              <form action="/api/auth/signout" method="POST">
+                <button className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-300 hover:bg-white/10 hover:text-white transition">
+                  <span>🚪</span>
+                  <span>Sign out</span>
+                </button>
+              </form>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );

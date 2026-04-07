@@ -289,7 +289,7 @@ export default function NewTripPage() {
             <p className="text-xs text-slate-400 mt-0.5">Choose your main mode of transport to the destination.</p>
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {([
               { type: "flight" as VehicleType, icon: "✈️", label: "Flight" },
               { type: "car"    as VehicleType, icon: "🚗", label: "Road trip" },

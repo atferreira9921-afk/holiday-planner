@@ -123,7 +123,17 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
     };
   });
 
-  // Confirmed + pending — used only for availability poll
+  // Tagged family members for this trip
+  const taggedFamilyMemberIds = new Set((tripFamilyMembersRaw ?? []).map((t: { family_member_id: string }) => t.family_member_id));
+  const taggedFamilyMembers = (familyMembersRaw ?? [])
+    .filter((fm: { id: string }) => taggedFamilyMemberIds.has(fm.id))
+    .map((fm: { id: string; display_name: string }) => ({
+      user_id: fm.id, // family_members.id is UUID, no FK on group_availability.user_id
+      name: fm.display_name,
+      familyMember: true as const,
+    }));
+
+  // Confirmed + pending + tagged family members — used only for availability poll
   const availabilityMembers = [
     ...members,
     ...(pendingInvites ?? []).map((inv, i) => ({
@@ -131,6 +141,7 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
       name: inv.invited_email ?? `Invited person ${i + 1}`,
       pending: true,
     })),
+    ...taggedFamilyMembers,
   ];
 
   const memberNames: Record<string, string> = Object.fromEntries(members.map(m => [m.user_id, m.name]));
@@ -166,7 +177,7 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
         <Link href="/trips" className="text-slate-400 text-sm hover:text-slate-600 transition flex items-center gap-1 mb-4">
           ← Back to trips
         </Link>
-        <div className="flex items-start justify-between">
+        <div className="flex items-start justify-between flex-wrap gap-3">
           <div>
             <h1 className="text-2xl font-bold text-slate-900">{trip.title}</h1>
             <p className="text-slate-500 text-sm mt-1">
@@ -240,7 +251,7 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
               <p className="text-sm text-slate-500 mt-1 mb-4">
                 The AI will analyse public holidays, find optimal date windows, and suggest your top trips.
               </p>
-              <GenerateSuggestionsButton tripId={trip.id} />
+              <GenerateSuggestionsButton tripId={trip.id} hasSuggestions={false} />
             </div>
           </div>
         </div>
@@ -354,6 +365,15 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
           );
         }
 
+        // Group into batches of 3 by rank (batch 1 = ranks 1-3, batch 2 = ranks 4-6, …)
+        const batches: (typeof suggestions)[] = [];
+        for (const s of suggestions) {
+          const batchIdx = Math.ceil(s.rank / 3) - 1;
+          if (!batches[batchIdx]) batches[batchIdx] = [];
+          batches[batchIdx].push(s);
+        }
+        const latestBatchIdx = batches.length - 1;
+
         return (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -363,30 +383,57 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
               )}
             </div>
 
-            {/* Selected suggestion — full card */}
+            {/* Selected suggestion — always shown full */}
             {selectedSuggestion && <SuggestionCard s={selectedSuggestion} />}
 
-            {/* Non-selected — collapsible greyed section */}
-            {otherSuggestions.length > 0 && (
-              selectedSuggestion ? (
-                <details className="group">
+            {batches.map((batch, batchIdx) => {
+              const isLatest = batchIdx === latestBatchIdx;
+              const batchNum = batchIdx + 1;
+              const visibleBatch = batch.filter(s => s.id !== trip.selected_suggestion_id);
+              if (visibleBatch.length === 0) return null;
+
+              if (isLatest && !selectedSuggestion) {
+                // Latest batch, no selection yet — show all full
+                return (
+                  <div key={batchIdx} className="space-y-4">
+                    {visibleBatch.map(s => <SuggestionCard key={s.id} s={s} />)}
+                  </div>
+                );
+              }
+
+              // Older batches or post-selection — collapsed
+              return (
+                <details key={batchIdx} className="group">
                   <summary className="list-none cursor-pointer flex items-center gap-2 px-1 py-2 text-sm text-slate-400 hover:text-slate-600 transition select-none">
                     <span className="text-xs group-open:rotate-90 transition-transform inline-block">▶</span>
-                    {otherSuggestions.length} other option{otherSuggestions.length !== 1 ? "s" : ""} — not selected
+                    {isLatest
+                      ? `${visibleBatch.length} other option${visibleBatch.length !== 1 ? "s" : ""} — not selected`
+                      : `Batch ${batchNum} — ${visibleBatch.length} suggestion${visibleBatch.length !== 1 ? "s" : ""}`}
                   </summary>
-                  <div className="space-y-2 mt-2 opacity-50 pointer-events-auto">
-                    {otherSuggestions.map(s => <SuggestionCard key={s.id} s={s} dimmed />)}
+                  <div className="space-y-2 mt-2 opacity-60">
+                    {visibleBatch.map(s => <SuggestionCard key={s.id} s={s} dimmed />)}
                   </div>
                 </details>
-              ) : (
-                otherSuggestions.map(s => (
-                  <SuggestionCard key={s.id} s={s} />
-                ))
-              )
-            )}
+              );
+            })}
           </div>
         );
       })()}
+
+      {/* Regenerate suggestions */}
+      {suggestions && suggestions.length > 0 && !trip.selected_suggestion_id && (
+        <div className="card p-5">
+          <details className="group">
+            <summary className="flex items-center gap-2 cursor-pointer list-none text-sm font-medium text-slate-500 hover:text-slate-700 transition">
+              <span className="group-open:rotate-90 transition-transform inline-block">▸</span>
+              Not happy with these suggestions? Generate new ones
+            </summary>
+            <div className="mt-4">
+              <GenerateSuggestionsButton tripId={trip.id} hasSuggestions={true} />
+            </div>
+          </details>
+        </div>
+      )}
 
       {/* Voting — hidden once a destination is selected */}
       {suggestions && suggestions.length > 0 && !trip.selected_suggestion_id && (

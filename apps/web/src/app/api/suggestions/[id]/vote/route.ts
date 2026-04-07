@@ -10,7 +10,12 @@ export async function POST(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { vote } = await req.json() as { vote: "up" | "down" | null };
+  const body = await req.json() as { vote: unknown };
+  const vote = body.vote;
+
+  if (vote !== "up" && vote !== "down" && vote !== null) {
+    return NextResponse.json({ error: "Invalid vote value" }, { status: 400 });
+  }
 
   if (vote === null) {
     // Remove vote

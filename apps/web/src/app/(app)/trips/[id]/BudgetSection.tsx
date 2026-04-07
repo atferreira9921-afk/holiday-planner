@@ -44,7 +44,7 @@ export default function BudgetSection({
     <div className="card p-6 space-y-5">
       <h2 className="font-bold text-slate-900 text-lg">📊 Budget tracker</h2>
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {budgetPerPerson && (
           <div className="bg-indigo-50 rounded-xl p-3 text-center">
             <p className="text-xs text-indigo-500 font-semibold uppercase tracking-wide mb-1">Budget</p>
@@ -104,7 +104,7 @@ export default function BudgetSection({
               const catPct = totalActual > 0 ? (amount / totalActual) * 100 : 0;
               return (
                 <div key={cat} className="flex items-center gap-2">
-                  <span className="text-xs text-slate-600 w-32 flex-shrink-0">{CATEGORY_LABELS[cat] ?? cat}</span>
+                  <span className="text-xs text-slate-600 w-24 sm:w-32 flex-shrink-0">{CATEGORY_LABELS[cat] ?? cat}</span>
                   <div className="flex-1 h-2 rounded-full bg-slate-100 overflow-hidden">
                     <div className="h-full rounded-full bg-indigo-400 transition-all"
                       style={{ width: `${catPct}%` }} />

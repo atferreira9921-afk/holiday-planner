@@ -411,7 +411,7 @@ export default function PackingSection({
       {/* Add item form */}
       {showForm && (
         <form onSubmit={addItem} className="flex flex-wrap gap-2">
-          <select className="input text-sm flex-shrink-0" style={{ width: "150px" }}
+          <select className="input text-sm flex-shrink-0 w-36"
             value={newCategory} onChange={e => setNewCategory(e.target.value)}>
             {CATEGORIES.map(c => (
               <option key={c.key} value={c.key}>{c.emoji} {c.label}</option>
@@ -456,7 +456,8 @@ export default function PackingSection({
                       {item.item}
                     </span>
                     <button onClick={() => deleteItem(item.id)}
-                      className="opacity-0 group-hover:opacity-100 text-xs text-red-400 hover:text-red-600 transition flex-shrink-0 px-1">
+                      className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 text-xs text-red-400 hover:text-red-600 transition flex-shrink-0 w-6 text-center"
+                      aria-label="Delete item">
                       ✕
                     </button>
                   </div>

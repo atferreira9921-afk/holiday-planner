@@ -5,20 +5,20 @@ export default function LandingPage() {
     <main className="min-h-screen flex flex-col">
 
       {/* Nav */}
-      <nav className="flex items-center justify-between px-8 py-5 absolute top-0 left-0 right-0 z-10">
+      <nav className="flex items-center justify-between px-4 sm:px-8 py-5 absolute top-0 left-0 right-0 z-10">
         <div className="flex items-center gap-2">
           <span className="text-2xl">✈️</span>
           <span className="font-bold text-white text-lg">Holiday Planner</span>
         </div>
-        <div className="flex items-center gap-3">
-          <Link href="/about" className="text-white/80 hover:text-white text-sm font-medium transition">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <Link href="/about" className="hidden sm:block text-white/80 hover:text-white text-sm font-medium transition">
             Features
           </Link>
           <Link href="/login" className="text-white/80 hover:text-white text-sm font-medium transition">
             Sign in
           </Link>
-          <Link href="/register" className="bg-white text-indigo-700 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-indigo-50 transition">
-            Get started free
+          <Link href="/register" className="bg-white text-indigo-700 px-3 sm:px-4 py-2 rounded-lg text-sm font-semibold hover:bg-indigo-50 transition">
+            Get started
           </Link>
         </div>
       </nav>
@@ -41,7 +41,7 @@ export default function LandingPage() {
           Tell us your vacation days. We'll find the perfect window across public holidays, fetch live flight and hotel prices, and let AI suggest your top trips.
         </p>
 
-        <div className="flex gap-4 mt-10">
+        <div className="flex flex-wrap gap-4 mt-10 justify-center">
           <Link href="/register" className="bg-white text-indigo-700 px-7 py-3.5 rounded-xl font-bold text-base hover:bg-indigo-50 transition shadow-lg">
             Start planning for free
           </Link>

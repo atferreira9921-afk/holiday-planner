@@ -928,7 +928,7 @@ export default function HolidaysPage() {
 
       {/* ─── Calendar Tab ─── */}
       {activeTab === "calendar" && (
-        <div className="flex gap-6 items-start">
+        <div className="flex flex-col lg:flex-row gap-6 items-start">
         {/* ── Left: calendar + controls ── */}
         <div className="flex-1 min-w-0 space-y-4">
           {/* Controls */}
@@ -1144,7 +1144,7 @@ export default function HolidaysPage() {
 
         {/* ── Right: per-person booking summary ── */}
         {membersWithHolidays.filter(m => !m.id.startsWith("country-")).length > 0 && (
-          <div className="w-64 flex-shrink-0 sticky top-4 space-y-3">
+          <div className="w-full lg:w-64 lg:flex-shrink-0 lg:sticky lg:top-4 space-y-3">
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">{year} Bookings</p>
             {membersWithHolidays.filter(m => !m.id.startsWith("country-")).map(m => {
               const memberBookings = bookedHolidays.filter(b => b.memberId === m.id && b.start.startsWith(String(year)));

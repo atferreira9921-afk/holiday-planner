@@ -45,6 +45,11 @@ export async function PATCH(
     return NextResponse.json({ error: "Invalid status" }, { status: 400 });
   }
 
+  // Cap title length
+  if (body.title !== undefined && body.title.length > 200) {
+    return NextResponse.json({ error: "Title too long" }, { status: 400 });
+  }
+
   // Build update payload from provided fields
   const updates: Record<string, unknown> = {};
   if (body.title !== undefined) updates.title = body.title;
@@ -62,7 +67,7 @@ export async function PATCH(
     .select()
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return NextResponse.json({ error: "Failed to update trip" }, { status: 500 });
 
   return NextResponse.json({ trip: updated });
 }
@@ -76,27 +81,22 @@ export async function DELETE(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  // Verify the user is a member of the trip's group
+  // Verify the user is the creator of this trip
   const { data: trip } = await supabase
     .from("trips")
-    .select("group_id")
+    .select("group_id, created_by")
     .eq("id", tripId)
     .single();
   if (!trip) return NextResponse.json({ error: "Trip not found" }, { status: 404 });
 
+  if (trip.created_by !== user.id) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   const db = createServiceClient();
 
-  const { data: membership } = await db
-    .from("group_members")
-    .select("user_id")
-    .eq("group_id", trip.group_id)
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  if (!membership) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-
   const { error } = await db.from("trips").delete().eq("id", tripId);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return NextResponse.json({ error: "Failed to delete trip" }, { status: 500 });
 
   return NextResponse.json({ ok: true });
 }

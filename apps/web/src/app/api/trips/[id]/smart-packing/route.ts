@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { anthropic } from "@/lib/anthropic";
+
+const ALLOWED_TRIP_TYPES = ["flight", "road_trip", "train", "cruise", "backpacking", "city_break", "beach", "ski", "camping"];
 
 export async function POST(
   req: Request,
@@ -16,9 +18,17 @@ export async function POST(
     .from("trips").select("group_id").eq("id", tripId).single();
   if (!trip) return NextResponse.json({ error: "Trip not found" }, { status: 404 });
 
+  // Verify group membership
+  const db = createServiceClient();
+  const { data: membership } = await db
+    .from("group_members").select("user_id")
+    .eq("group_id", trip.group_id).eq("user_id", user.id).maybeSingle();
+  if (!membership) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
   const body = await req.json() as { destinationCountry?: string | null; tripType?: string };
-  const tripType = body.tripType ?? "flight";
-  const destination = body.destinationCountry ?? "unknown destination";
+  const rawTripType = body.tripType ?? "flight";
+  const tripType = ALLOWED_TRIP_TYPES.includes(rawTripType) ? rawTripType : "flight";
+  const destination = (body.destinationCountry ?? "unknown destination").slice(0, 100);
 
   const prompt = `You are a travel packing expert. Generate 8 smart packing suggestions for a ${tripType.replace("_", " ")} trip to ${destination}.
 

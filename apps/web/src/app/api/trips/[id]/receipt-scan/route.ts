@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { anthropic } from "@/lib/anthropic";
+
+const ALLOWED_MEDIA_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"] as const;
+type AllowedMediaType = typeof ALLOWED_MEDIA_TYPES[number];
 
 const SCHEMA_PROMPT = `Extract the following fields from this receipt and return ONLY valid JSON (no markdown):
 {
@@ -21,10 +24,21 @@ export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  await params;
+  const { id: tripId } = await params;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  // Verify group membership
+  const { data: trip } = await supabase
+    .from("trips").select("group_id").eq("id", tripId).single();
+  if (!trip) return NextResponse.json({ error: "Trip not found" }, { status: 404 });
+
+  const db = createServiceClient();
+  const { data: membership } = await db
+    .from("group_members").select("user_id")
+    .eq("group_id", trip.group_id).eq("user_id", user.id).maybeSingle();
+  if (!membership) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const contentLength = Number(req.headers.get("content-length") ?? 0);
   if (contentLength > 6 * 1024 * 1024) {
@@ -41,7 +55,10 @@ export async function POST(
     let messageContent: Parameters<typeof anthropic.messages.create>[0]["messages"][0]["content"];
 
     if (body.image_base64) {
-      const mediaType = (body.media_type ?? "image/jpeg") as "image/jpeg" | "image/png" | "image/gif" | "image/webp";
+      const rawMediaType = body.media_type ?? "image/jpeg";
+      const mediaType: AllowedMediaType = (ALLOWED_MEDIA_TYPES as readonly string[]).includes(rawMediaType)
+        ? rawMediaType as AllowedMediaType
+        : "image/jpeg";
       messageContent = [
         {
           type: "image",

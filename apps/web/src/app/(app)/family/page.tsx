@@ -315,7 +315,7 @@ export default function FamilyPage() {
 
               {/* Expanded detail */}
               {expanded === m.id && (
-                <div className="px-5 pb-4 grid grid-cols-2 gap-x-8 gap-y-2 text-sm bg-slate-50 border-t border-slate-100">
+                <div className="px-5 pb-4 grid grid-cols-2 gap-x-4 sm:gap-x-8 gap-y-2 text-sm bg-slate-50 border-t border-slate-100">
                   <Detail label="Base city" value={(() => {
                     const airportList = getAirports(m.home_country);
                     const city = m.home_city_name ?? airportList.find(a => a.iata === m.home_city)?.city ?? m.home_city;
@@ -538,7 +538,7 @@ export default function FamilyPage() {
           <section className="space-y-4">
             <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100 pb-2">Travel style</h3>
 
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {STYLES.map(s => (
                 <button key={s.value} type="button"
                   onClick={() => setF("travel_style", s.value as typeof form.travel_style)}
@@ -676,7 +676,7 @@ export default function FamilyPage() {
 
               {showCarForm && (
                 <form onSubmit={saveCar} className="bg-slate-50 rounded-xl p-4 space-y-3 border border-slate-200">
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                     <div><label className="label">Make *</label><input className="input" value={carForm.make} onChange={e => setCarForm(f => ({ ...f, make: e.target.value }))} placeholder="Volkswagen" required/></div>
                     <div><label className="label">Model *</label><input className="input" value={carForm.model} onChange={e => setCarForm(f => ({ ...f, model: e.target.value }))} placeholder="Golf" required/></div>
                     <div><label className="label">Year</label><input className="input" type="number" value={carForm.year} onChange={e => setCarForm(f => ({ ...f, year: e.target.value }))} placeholder="2021" min={1990} max={2030}/></div>

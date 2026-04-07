@@ -142,7 +142,7 @@ export default function ItinerarySection({
       {/* Add form */}
       {showForm && (
         <form onSubmit={addItem} className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="label">Day</label>
               <select className="input text-sm" value={form.day_number}
@@ -171,7 +171,7 @@ export default function ItinerarySection({
             <input className="input" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
               placeholder="e.g. Visit Sagrada Família" required autoFocus />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="label">Location (optional)</label>
               <input className="input text-sm" value={form.location}

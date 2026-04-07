@@ -38,6 +38,27 @@ export async function POST(
     .single();
 
   if (!existing) {
+    // Ensure user_profiles row exists (group_members.user_id FK references user_profiles.id)
+    const { data: existingProfile } = await db
+      .from("user_profiles")
+      .select("id")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (!existingProfile) {
+      const { error: profileError } = await db.from("user_profiles").insert({
+        id: user.id,
+        email: user.email ?? "",
+        full_name: user.user_metadata?.full_name ?? user.email?.split("@")[0] ?? null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
+      if (profileError) {
+        console.error("user_profiles insert failed:", profileError.message);
+        return NextResponse.json({ error: "Failed to set up profile. Please try again." }, { status: 500 });
+      }
+    }
+
     const { error: insertError } = await db.from("group_members").insert({
       group_id: invite.group_id,
       user_id: user.id,

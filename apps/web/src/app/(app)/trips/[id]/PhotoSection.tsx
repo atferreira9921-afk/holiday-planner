@@ -110,7 +110,7 @@ export default function PhotoSection({
           <p className="text-xs text-slate-400 mt-1">Upload memories from your trip.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           {photos.map(photo => (
             <div key={photo.id} className="relative group aspect-square overflow-hidden rounded-xl bg-slate-100 cursor-pointer"
               onClick={() => setLightbox(photo.storage_path)}>

@@ -11,10 +11,12 @@ function sse(data: object) {
 }
 
 export async function POST(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id: tripId } = await params;
+  const body = await req.json().catch(() => ({})) as { userPrompt?: string | null };
+  const userPrompt = body.userPrompt?.trim().slice(0, 500) || null;
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -163,7 +165,7 @@ Group:
 ${membersContext}
 
 ${freeStaysCtx}
-
+${userPrompt ? `\nAdditional preferences from the group: ${userPrompt}\n` : ""}
 Return ONLY a JSON array of 3 suggestions (no markdown, no explanation):
 [{"rank":1,"destination_city":"City","destination_country":"XX","destination_iata":"XXX","suggested_departure":"YYYY-MM-DD","suggested_return":"YYYY-MM-DD","total_days":7,"vacation_days_used":5,"overlap_score":0.9,"estimated_flight_price_eur":150,"estimated_hotel_price_eur":400,"estimated_total_price_eur":600,"reasoning":"2-3 sentences why","highlights":["h1","h2","h3"],"trade_offs":["t1"]}]`;
 
@@ -190,13 +192,19 @@ Return ONLY a JSON array of 3 suggestions (no markdown, no explanation):
 
         send({ progress: 90, stage: "Saving to database…" });
 
-        const { error: deleteError } = await db.from("trip_suggestions").delete().eq("trip_id", tripId);
-        if (deleteError) console.error("Delete error:", deleteError.message);
+        // Find the current max rank so new suggestions are appended, not replacing old ones
+        const { data: existingRanks } = await db
+          .from("trip_suggestions")
+          .select("rank")
+          .eq("trip_id", tripId)
+          .order("rank", { ascending: false })
+          .limit(1);
+        const rankOffset = existingRanks && existingRanks.length > 0 ? existingRanks[0].rank : 0;
 
         const now = new Date().toISOString();
         const rows = parsed.map(s => ({
           trip_id: tripId,
-          rank: Number(s.rank) || 1,
+          rank: rankOffset + (Number(s.rank) || 1),
           destination_city: String(s.destination_city ?? ""),
           destination_country: String(s.destination_country ?? "").slice(0, 2),
           destination_iata: s.destination_iata && String(s.destination_iata).length <= 3 ? String(s.destination_iata) : null,

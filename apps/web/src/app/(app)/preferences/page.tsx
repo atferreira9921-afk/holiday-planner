@@ -283,7 +283,7 @@ export default function PreferencesPage() {
         {/* Travel style */}
         <div className="card p-6 space-y-4">
           <h2 className="font-bold text-slate-900 flex items-center gap-2">🎯 Travel style</h2>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {STYLES.map(s => (
               <button key={s.value} type="button" onClick={() => setPrefs(p => ({ ...p, travel_style: s.value as UserPreferences["travel_style"] }))}
                 className={`p-4 rounded-xl border-2 text-center transition ${prefs.travel_style === s.value ? "border-indigo-500 bg-indigo-50" : "border-slate-200 hover:border-slate-300"}`}>
@@ -506,7 +506,7 @@ export default function PreferencesPage() {
           <form onSubmit={saveCar} className="bg-slate-50 rounded-xl p-5 space-y-4 border border-slate-200">
             <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Add a car</p>
 
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
                 <label className="label">Make <span className="text-red-400">*</span></label>
                 <input className="input" value={carForm.make}

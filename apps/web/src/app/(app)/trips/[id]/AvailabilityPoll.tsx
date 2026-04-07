@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
-interface Member { user_id: string; name: string; pending?: boolean; }
+interface Member { user_id: string; name: string; pending?: boolean; familyMember?: boolean; }
 interface AvailabilityEntry { trip_id: string; user_id: string; date: string; available: boolean; }
 
 function dateRange(from: string, to: string): string[] {
@@ -53,23 +53,23 @@ export default function AvailabilityPoll({
     return e ? e.available : null;
   }
 
-  async function toggle(date: string) {
-    const current = getStatus(currentUserId, date);
+  async function toggle(date: string, targetUserId: string = currentUserId) {
+    const current = getStatus(targetUserId, date);
     const next    = current === true ? false : current === false ? null : true;
-    setSaving(`${currentUserId}-${date}`);
+    setSaving(`${targetUserId}-${date}`);
     const supabase = createClient();
 
     if (next === null) {
       await supabase.from("group_availability")
-        .delete().eq("trip_id", tripId).eq("user_id", currentUserId).eq("date", date);
-      setEntries(prev => prev.filter(e => !(e.user_id === currentUserId && e.date === date)));
+        .delete().eq("trip_id", tripId).eq("user_id", targetUserId).eq("date", date);
+      setEntries(prev => prev.filter(e => !(e.user_id === targetUserId && e.date === date)));
     } else {
       const { data } = await supabase.from("group_availability").upsert({
-        trip_id: tripId, user_id: currentUserId, date, available: next,
+        trip_id: tripId, user_id: targetUserId, date, available: next,
       }, { onConflict: "trip_id,user_id,date" }).select("*").single();
       if (data) {
         setEntries(prev => [
-          ...prev.filter(e => !(e.user_id === currentUserId && e.date === date)),
+          ...prev.filter(e => !(e.user_id === targetUserId && e.date === date)),
           data as AvailabilityEntry,
         ]);
       }
@@ -77,7 +77,7 @@ export default function AvailabilityPoll({
     setSaving(null);
   }
 
-  const confirmedMembers = members.filter(m => !m.pending);
+  const confirmedMembers = members.filter(m => !m.pending && !m.familyMember);
 
   // Find dates where ALL confirmed members responded as available
   const allAvailableDates = dates.filter(date =>
@@ -152,10 +152,13 @@ export default function AvailabilityPoll({
                       <span title={member.name}>{member.name}</span>
                       {member.user_id === currentUserId && <span className="text-slate-400 font-normal ml-1">(you)</span>}
                       {member.pending && <span className="text-amber-500 font-normal ml-1 text-[10px]">invited</span>}
+                      {member.familyMember && <span className="text-indigo-400 font-normal ml-1 text-[10px]">traveller</span>}
                     </td>
                     {dates.map(date => {
                       const status        = getStatus(member.user_id, date);
                       const isCurrentUser = member.user_id === currentUserId;
+                      const isFamilyMember = !!member.familyMember;
+                      const canToggle     = isCurrentUser || isFamilyMember;
                       const isSaving      = saving === `${member.user_id}-${date}`;
                       const allFree       = members.filter(m => !m.pending).length > 1 && allAvailableDates.includes(date);
 
@@ -168,10 +171,10 @@ export default function AvailabilityPoll({
                       return (
                         <td key={date} className="p-0.5 text-center">
                           <button
-                            onClick={() => isCurrentUser ? toggle(date) : undefined}
-                            disabled={!isCurrentUser || isSaving || !!member.pending}
-                            className={`w-6 h-6 rounded transition ${bg} ${isCurrentUser ? "hover:opacity-75 cursor-pointer" : "cursor-default"} ${isSaving ? "animate-pulse" : ""}`}
-                            title={member.pending ? `${member.name} — invite pending` : isCurrentUser ? "Click to toggle" : member.name}
+                            onClick={() => canToggle ? toggle(date, member.user_id) : undefined}
+                            disabled={!canToggle || isSaving || !!member.pending}
+                            className={`w-6 h-6 rounded transition ${bg} ${canToggle ? "hover:opacity-75 cursor-pointer" : "cursor-default"} ${isSaving ? "animate-pulse" : ""}`}
+                            title={member.pending ? `${member.name} — invite pending` : canToggle ? "Click to toggle" : member.name}
                           />
                         </td>
                       );

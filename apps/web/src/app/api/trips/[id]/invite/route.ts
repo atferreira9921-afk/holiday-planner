@@ -11,7 +11,12 @@ export async function POST(
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json().catch(() => ({})) as { email?: string };
-  const invitedEmail: string | null = body.email?.trim() || null;
+  const rawEmail = body.email?.trim() || null;
+  // Basic email format validation
+  if (rawEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rawEmail)) {
+    return NextResponse.json({ error: "Invalid email address" }, { status: 400 });
+  }
+  const invitedEmail = rawEmail;
 
   // Get trip's group_id and title
   const { data: trip } = await supabase
@@ -73,7 +78,17 @@ export async function POST(
   return NextResponse.json({ token: invite.token, inviteUrl });
 }
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 function buildInviteEmail(inviteUrl: string, tripTitle: string) {
+  const safeTitle = escapeHtml(tripTitle);
   return `
 <!DOCTYPE html>
 <html>
@@ -87,7 +102,7 @@ function buildInviteEmail(inviteUrl: string, tripTitle: string) {
     <div style="padding: 32px;">
       <h2 style="color: #0f172a; margin: 0 0 12px; font-size: 18px;">You've been invited!</h2>
       <p style="color: #475569; margin: 0 0 24px; line-height: 1.6;">
-        Someone has invited you to collaborate on a trip: <strong>${tripTitle}</strong>.
+        Someone has invited you to collaborate on a trip: <strong>${safeTitle}</strong>.
         Click the button below to accept the invite and join the planning group.
       </p>
       <a href="${inviteUrl}"
