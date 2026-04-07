@@ -129,7 +129,6 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
       pending: true,
     })),
   ];
-  });
 
   const memberNames: Record<string, string> = Object.fromEntries(members.map(m => [m.user_id, m.name]));
 
