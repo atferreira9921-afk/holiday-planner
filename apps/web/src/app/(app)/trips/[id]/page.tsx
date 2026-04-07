@@ -356,8 +356,10 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
                 </>
               )}
 
-              <div className={`flex items-center gap-2 flex-wrap ${dimmed ? "" : "pt-3 border-t border-slate-100"}`}>
-                <SelectSuggestionButton tripId={trip.id} suggestionId={s.id} isSelected={isSelected} />
+              <div className={`${dimmed ? "" : "pt-3 border-t border-slate-100"}`}>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <SelectSuggestionButton tripId={trip.id} suggestionId={s.id} isSelected={isSelected} />
+                </div>
                 {!dimmed && s.suggested_departure && s.suggested_return && (
                   <>
                     <FlightSearchPanel

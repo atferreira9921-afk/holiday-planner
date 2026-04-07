@@ -10,7 +10,6 @@ interface Flight {
   to?: string;
   departs?: string;
   arrives?: string;
-  bookingToken?: string;
 }
 
 interface Props {
@@ -29,7 +28,6 @@ function fmtDuration(mins?: number) {
 
 function fmtTime(dt?: string) {
   if (!dt) return "";
-  // dt is like "2026-06-01 08:30"
   return dt.slice(11, 16);
 }
 
@@ -43,8 +41,9 @@ export default function FlightSearchPanel({ fromIata, toIata, toCity, outbound, 
   const dest = toIata ?? toCity;
 
   async function search() {
-    if (flights) { setOpen(o => !o); return; }
-    setOpen(true);
+    if (open && flights) { setOpen(false); return; }
+    if (!open) setOpen(true);
+    if (flights) return;
     setLoading(true);
     setError(null);
     try {
@@ -53,31 +52,26 @@ export default function FlightSearchPanel({ fromIata, toIata, toCity, outbound, 
       );
       const data = await res.json();
       if (res.status === 503) {
-        // SerpApi not configured — open fallback directly
         window.open(fallbackUrl, "_blank", "noopener,noreferrer");
         setOpen(false);
         setLoading(false);
         return;
       }
-      if (!res.ok || data.error) { setError(data.error ?? "Search failed"); }
+      if (!res.ok || data.error) setError(data.error ?? "Search failed");
       else { setFlights(data.flights); setSearchUrl(data.searchUrl); }
     } catch { setError("Request failed"); }
     setLoading(false);
   }
 
   return (
-    <div className="relative">
+    <div className="w-full mt-3 border-t border-slate-100 pt-3">
       <button onClick={search} className="btn-ghost text-sm">
-        ✈️ {flights ? (open ? "Hide flights" : "Show flights") : "Search flights"}
+        ✈️ {open ? "Hide flights" : "Search flights"}
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full mt-2 z-30 w-80 sm:w-96 card shadow-xl p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-bold text-slate-900">Flights {fromIata} → {dest.toUpperCase()}</p>
-            <button onClick={() => setOpen(false)} className="text-slate-400 hover:text-slate-600 text-xs">✕</button>
-          </div>
-          <p className="text-xs text-slate-400">{outbound} → {ret}</p>
+        <div className="mt-3 space-y-2">
+          <p className="text-xs text-slate-400">{fromIata.toUpperCase()} → {dest.toUpperCase()} · {outbound} → {ret}</p>
 
           {loading && (
             <div className="space-y-2">
@@ -90,7 +84,7 @@ export default function FlightSearchPanel({ fromIata, toIata, toCity, outbound, 
           )}
 
           {flights && flights.length === 0 && (
-            <p className="text-xs text-slate-400 text-center py-4">No flights found.</p>
+            <p className="text-xs text-slate-400 py-2">No flights found.</p>
           )}
 
           {flights && flights.map((f, i) => (
@@ -101,9 +95,7 @@ export default function FlightSearchPanel({ fromIata, toIata, toCity, outbound, 
                   {f.duration && <span className="text-xs text-slate-400">{fmtDuration(f.duration)}</span>}
                 </div>
                 {f.departs && f.arrives && (
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    {fmtTime(f.departs)} → {fmtTime(f.arrives)}
-                  </p>
+                  <p className="text-xs text-slate-500 mt-0.5">{fmtTime(f.departs)} → {fmtTime(f.arrives)}</p>
                 )}
               </div>
               {f.price != null && (
@@ -112,20 +104,12 @@ export default function FlightSearchPanel({ fromIata, toIata, toCity, outbound, 
             </div>
           ))}
 
-          <div className="flex gap-2 pt-1">
-            {searchUrl && (
-              <a href={searchUrl} target="_blank" rel="noopener noreferrer"
-                className="btn-primary text-xs flex-1 text-center">
-                View all on Google Flights →
-              </a>
-            )}
-            {!searchUrl && (
-              <a href={fallbackUrl} target="_blank" rel="noopener noreferrer"
-                className="btn-ghost text-xs flex-1 text-center">
-                Search on Skyscanner →
-              </a>
-            )}
-          </div>
+          {(flights || error) && (
+            <a href={searchUrl ?? fallbackUrl} target="_blank" rel="noopener noreferrer"
+              className="btn-primary text-xs inline-block mt-1">
+              View all on {searchUrl ? "Google Flights" : "Skyscanner"} →
+            </a>
+          )}
         </div>
       )}
     </div>

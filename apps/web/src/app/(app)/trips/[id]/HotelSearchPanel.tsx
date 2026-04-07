@@ -4,7 +4,6 @@ import { useState } from "react";
 
 interface Hotel {
   name?: string;
-  description?: string;
   rating?: number;
   reviews?: number;
   pricePerNight?: string;
@@ -12,7 +11,6 @@ interface Hotel {
   link?: string;
   thumbnail?: string;
   amenities?: string[];
-  type?: string;
 }
 
 interface Props {
@@ -31,8 +29,9 @@ export default function HotelSearchPanel({ city, country, checkin, checkout, fal
   const [error, setError] = useState<string | null>(null);
 
   async function search() {
-    if (hotels) { setOpen(o => !o); return; }
-    setOpen(true);
+    if (open && hotels) { setOpen(false); return; }
+    if (!open) setOpen(true);
+    if (hotels) return;
     setLoading(true);
     setError(null);
     try {
@@ -41,34 +40,29 @@ export default function HotelSearchPanel({ city, country, checkin, checkout, fal
       );
       const data = await res.json();
       if (res.status === 503) {
-        // SerpApi not configured — open Booking.com directly
         window.open(fallbackUrl, "_blank", "noopener,noreferrer");
         setOpen(false);
         setLoading(false);
         return;
       }
-      if (!res.ok || data.error) { setError(data.error ?? "Search failed"); }
+      if (!res.ok || data.error) setError(data.error ?? "Search failed");
       else { setHotels(data.hotels); setNights(data.nights); }
     } catch { setError("Request failed"); }
     setLoading(false);
   }
 
   return (
-    <div className="relative">
+    <div className="w-full mt-3">
       <button onClick={search} className="btn-ghost text-sm">
-        🏨 {hotels ? (open ? "Hide hotels" : "Show hotels") : "Search hotels"}
+        🏨 {open ? "Hide hotels" : "Search hotels"}
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full mt-2 z-30 w-80 sm:w-[420px] card shadow-xl p-4 space-y-3 max-h-[480px] overflow-y-auto">
-          <div className="flex items-center justify-between sticky top-0 bg-white pb-1">
-            <p className="text-sm font-bold text-slate-900">Hotels in {city}</p>
-            <button onClick={() => setOpen(false)} className="text-slate-400 hover:text-slate-600 text-xs">✕</button>
-          </div>
-          <p className="text-xs text-slate-400">{checkin} → {checkout} · {nights} night{nights !== 1 ? "s" : ""}</p>
+        <div className="mt-3 space-y-2">
+          <p className="text-xs text-slate-400">{city}, {country} · {checkin} → {checkout} · {nights} night{nights !== 1 ? "s" : ""}</p>
 
           {loading && (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {[1, 2, 3].map(i => <div key={i} className="h-20 rounded-xl bg-slate-100 animate-pulse" />)}
             </div>
           )}
@@ -78,12 +72,12 @@ export default function HotelSearchPanel({ city, country, checkin, checkout, fal
           )}
 
           {hotels && hotels.length === 0 && (
-            <p className="text-xs text-slate-400 text-center py-4">No hotels found.</p>
+            <p className="text-xs text-slate-400 py-2">No hotels found.</p>
           )}
 
           {hotels && hotels.map((h, i) => (
             <a key={i} href={h.link ?? fallbackUrl} target="_blank" rel="noopener noreferrer"
-              className="flex gap-3 p-3 bg-purple-50 border border-purple-100 rounded-xl hover:bg-purple-100 transition block">
+              className="flex gap-3 p-3 bg-purple-50 border border-purple-100 rounded-xl hover:bg-purple-100 transition">
               {h.thumbnail && (
                 <img src={h.thumbnail} alt={h.name} className="w-14 h-14 rounded-lg object-cover flex-shrink-0" />
               )}
@@ -100,7 +94,7 @@ export default function HotelSearchPanel({ city, country, checkin, checkout, fal
                 {h.rating != null && (
                   <div className="flex items-center gap-1 mt-0.5">
                     <span className="text-xs font-bold text-amber-600">★ {h.rating.toFixed(1)}</span>
-                    {h.reviews != null && <span className="text-xs text-slate-400">({h.reviews.toLocaleString()} reviews)</span>}
+                    {h.reviews != null && <span className="text-xs text-slate-400">({h.reviews.toLocaleString()})</span>}
                   </div>
                 )}
                 {(h.amenities ?? []).length > 0 && (
@@ -113,10 +107,12 @@ export default function HotelSearchPanel({ city, country, checkin, checkout, fal
             </a>
           ))}
 
-          <a href={fallbackUrl} target="_blank" rel="noopener noreferrer"
-            className="btn-ghost text-xs w-full text-center block pt-1">
-            View all on Booking.com →
-          </a>
+          {(hotels || error) && (
+            <a href={fallbackUrl} target="_blank" rel="noopener noreferrer"
+              className="btn-ghost text-xs inline-block mt-1">
+              View all on Booking.com →
+            </a>
+          )}
         </div>
       )}
     </div>
