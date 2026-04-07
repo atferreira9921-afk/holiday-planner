@@ -44,6 +44,7 @@ const emptyForm: Omit<FamilyMember, "id" | "owner_user_id" | "linked_user_id" | 
   vacation_days_per_year: 22,
   gender: "prefer_not_to_say",
   birthday: null,
+  birthday_is_vacation_day: false,
   on_parental_leave: false,
   parental_leave_end_date: null,
   travel_style: "mid-range",
@@ -54,6 +55,7 @@ const emptyForm: Omit<FamilyMember, "id" | "owner_user_id" | "linked_user_id" | 
   preferred_countries: [],
   home_region: null,
   home_city_name: null,
+  loyalty_programs: [],
   avatar_config: { hair: 0, glasses: 0, face: 0, shirt: 0, bottom: 0, clothesColor: 0 },
 };
 
@@ -83,7 +85,21 @@ export default function FamilyPage() {
   const [error, setError] = useState<string | null>(null);
   const [avatarConfig, setAvatarConfig] = useState<AvatarConfig>(DEFAULT_AVATAR_CONFIG);
 
-  // Cars
+  // My own cars (family_member_id = null)
+  const [myCars, setMyCars] = useState<Car[]>([]);
+  const [showMyCarForm, setShowMyCarForm] = useState(false);
+  const [savingMyCar, setSavingMyCar] = useState(false);
+  const [deletingMyCarId, setDeletingMyCarId] = useState<string | null>(null);
+  const [myCarForm, setMyCarForm] = useState({ make: "", model: "", year: "", name: "", fuel_consumption_per_100km: "", fuel_cost_per_liter: "" });
+  const [myAiEstimate, setMyAiEstimate] = useState<{ l_per_100km: number; note: string } | null>(null);
+  const [myAiLoading, setMyAiLoading] = useState(false);
+  const [myAiError, setMyAiError] = useState<string | null>(null);
+
+  // Loyalty programs (inline state for the edit form)
+  const [newLoyaltyAirline, setNewLoyaltyAirline] = useState("");
+  const [newLoyaltyNumber, setNewLoyaltyNumber] = useState("");
+
+  // Cars (attached to a family member)
   const [memberCars, setMemberCars] = useState<Car[]>([]);
   const [showCarForm, setShowCarForm] = useState(false);
   const [savingCar, setSavingCar] = useState(false);
@@ -97,10 +113,12 @@ export default function FamilyPage() {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-    const { data } = await supabase
-      .from("family_members").select("*")
-      .eq("owner_user_id", user.id).order("created_at");
-    setMembers(data ?? []);
+    const [{ data: membersData }, { data: carsData }] = await Promise.all([
+      supabase.from("family_members").select("*").eq("owner_user_id", user.id).order("created_at"),
+      supabase.from("user_cars").select("*").eq("owner_user_id", user.id).is("family_member_id", null).order("created_at"),
+    ]);
+    setMembers(membersData ?? []);
+    setMyCars(carsData ?? []);
     setLoading(false);
   }
 
@@ -170,6 +188,8 @@ export default function FamilyPage() {
 
   function startEdit(m: FamilyMember) {
     setEditId(m.id);
+    setNewLoyaltyAirline("");
+    setNewLoyaltyNumber("");
     setForm({
       ...emptyForm,
       display_name: m.display_name,
@@ -179,6 +199,7 @@ export default function FamilyPage() {
       vacation_days_per_year: m.vacation_days_per_year ?? 22,
       gender: m.gender ?? "prefer_not_to_say",
       birthday: m.birthday ?? null,
+      birthday_is_vacation_day: m.birthday_is_vacation_day ?? false,
       on_parental_leave: m.on_parental_leave ?? false,
       parental_leave_end_date: m.parental_leave_end_date ?? null,
       travel_style: m.travel_style ?? "mid-range",
@@ -189,6 +210,7 @@ export default function FamilyPage() {
       preferred_countries: m.preferred_countries ?? [],
       home_region: m.home_region ?? null,
       home_city_name: m.home_city_name ?? null,
+      loyalty_programs: m.loyalty_programs ?? [],
       avatar_config: m.avatar_config ?? DEFAULT_AVATAR_CONFIG,
     });
     setAvatarConfig(m.avatar_config ?? DEFAULT_AVATAR_CONFIG);
@@ -201,7 +223,68 @@ export default function FamilyPage() {
     load();
   }
 
-  function cancelEdit() { setEditId(null); setForm(emptyForm); setAvatarConfig(DEFAULT_AVATAR_CONFIG); setError(null); setShowCarForm(false); setMemberCars([]); }
+  function cancelEdit() { setEditId(null); setForm(emptyForm); setAvatarConfig(DEFAULT_AVATAR_CONFIG); setError(null); setShowCarForm(false); setMemberCars([]); setNewLoyaltyAirline(""); setNewLoyaltyNumber(""); }
+
+  function addLoyalty() {
+    const airline = newLoyaltyAirline.trim();
+    const number  = newLoyaltyNumber.trim();
+    if (!airline || !number) return;
+    setF("loyalty_programs", [...(form.loyalty_programs ?? []), { airline, number }]);
+    setNewLoyaltyAirline("");
+    setNewLoyaltyNumber("");
+  }
+
+  function removeLoyalty(idx: number) {
+    setF("loyalty_programs", (form.loyalty_programs ?? []).filter((_, i) => i !== idx));
+  }
+
+  async function saveMycar(e: React.FormEvent) {
+    e.preventDefault();
+    if (!myCarForm.make || !myCarForm.model || !myCarForm.fuel_consumption_per_100km) return;
+    setSavingMyCar(true);
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setSavingMyCar(false); return; }
+    const displayName = myCarForm.name.trim() || `${myCarForm.make} ${myCarForm.model}${myCarForm.year ? ` (${myCarForm.year})` : ""}`;
+    const { data } = await supabase.from("user_cars").insert({
+      owner_user_id: user.id,
+      family_member_id: null,
+      make: myCarForm.make.trim(),
+      model: myCarForm.model.trim(),
+      year: myCarForm.year ? parseInt(myCarForm.year) : null,
+      name: displayName,
+      fuel_consumption_per_100km: parseFloat(myCarForm.fuel_consumption_per_100km),
+      fuel_cost_per_liter: parseFloat(myCarForm.fuel_cost_per_liter || "1.70"),
+    }).select("*").single();
+    if (data) setMyCars(prev => [...prev, data as Car]);
+    setMyCarForm({ make: "", model: "", year: "", name: "", fuel_consumption_per_100km: "", fuel_cost_per_liter: "" });
+    setMyAiEstimate(null);
+    setShowMyCarForm(false);
+    setSavingMyCar(false);
+  }
+
+  async function deleteMycar(id: string) {
+    setDeletingMyCarId(id);
+    const supabase = createClient();
+    await supabase.from("user_cars").delete().eq("id", id);
+    setMyCars(prev => prev.filter(c => c.id !== id));
+    setDeletingMyCarId(null);
+  }
+
+  async function estimateMyCons() {
+    if (!myCarForm.make || !myCarForm.model) return;
+    setMyAiLoading(true); setMyAiError(null); setMyAiEstimate(null);
+    try {
+      const res = await fetch("/api/cars/estimate-consumption", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ make: myCarForm.make, model: myCarForm.model, year: myCarForm.year ? parseInt(myCarForm.year) : undefined }),
+      });
+      const data = await res.json();
+      if (data.error) setMyAiError(data.error);
+      else { setMyAiEstimate(data); setMyCarForm(f => ({ ...f, fuel_consumption_per_100km: String(data.l_per_100km) })); }
+    } catch { setMyAiError("Request failed"); }
+    setMyAiLoading(false);
+  }
 
   async function saveCar(e: React.FormEvent) {
     e.preventDefault();
@@ -356,6 +439,86 @@ export default function FamilyPage() {
           ))}
         </div>
       )}
+
+      {/* ── My Cars ── */}
+      <div className="card p-6 space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="font-bold text-slate-900">My Cars 🚗</h2>
+            <p className="text-slate-500 text-xs mt-0.5">Your own vehicles used for road trip cost estimates.</p>
+          </div>
+          <button type="button" onClick={() => {
+            if (!showMyCarForm) {
+              const avg = getFuelPrice("PT");
+              setMyCarForm(f => ({ ...f, fuel_cost_per_liter: avg ? String(avg) : "1.70" }));
+            }
+            setShowMyCarForm(f => !f); setMyAiEstimate(null); setMyAiError(null);
+          }} className="btn-ghost text-sm">
+            {showMyCarForm ? "Cancel" : "+ Add car"}
+          </button>
+        </div>
+
+        {myCars.length === 0 && !showMyCarForm && (
+          <p className="text-sm text-slate-400">No cars added yet.</p>
+        )}
+
+        <div className="space-y-2">
+          {myCars.map(car => {
+            const costPer100 = (car.fuel_consumption_per_100km * car.fuel_cost_per_liter).toFixed(2);
+            return (
+              <div key={car.id} className="flex items-center gap-3 p-3 bg-amber-50 border border-amber-100 rounded-xl">
+                <span className="text-xl">🚗</span>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-slate-800 text-sm">{car.make} {car.model}{car.year && <span className="text-slate-400 font-normal ml-1">({car.year})</span>}</p>
+                  {car.name && car.name !== `${car.make} ${car.model}` && car.name !== `${car.make} ${car.model} (${car.year})` && (
+                    <p className="text-xs text-slate-400 italic">{car.name}</p>
+                  )}
+                  <p className="text-xs text-slate-500">{car.fuel_consumption_per_100km}L/100km · €{car.fuel_cost_per_liter}/L · <span className="text-amber-700 font-semibold">~€{costPer100}/100km</span></p>
+                </div>
+                <button type="button" onClick={() => deleteMycar(car.id)} disabled={deletingMyCarId === car.id}
+                  className="text-xs text-red-400 hover:text-red-600 transition">{deletingMyCarId === car.id ? "…" : "✕"}</button>
+              </div>
+            );
+          })}
+        </div>
+
+        {showMyCarForm && (
+          <form onSubmit={saveMycar} className="bg-slate-50 rounded-xl p-4 space-y-3 border border-slate-200">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <div><label className="label">Make *</label><input className="input" value={myCarForm.make} onChange={e => setMyCarForm(f => ({ ...f, make: e.target.value }))} placeholder="Volkswagen" required /></div>
+              <div><label className="label">Model *</label><input className="input" value={myCarForm.model} onChange={e => setMyCarForm(f => ({ ...f, model: e.target.value }))} placeholder="Golf" required /></div>
+              <div><label className="label">Year</label><input className="input" type="number" value={myCarForm.year} onChange={e => setMyCarForm(f => ({ ...f, year: e.target.value }))} placeholder="2021" min={1990} max={2030} /></div>
+            </div>
+            <div><label className="label">Nickname</label><input className="input" value={myCarForm.name} onChange={e => setMyCarForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. My daily driver" /></div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="label mb-0">Consumption (L/100km) *</label>
+                  <button type="button" onClick={estimateMyCons} disabled={!myCarForm.make || !myCarForm.model || myAiLoading}
+                    className="text-xs text-indigo-600 hover:text-indigo-800 disabled:text-slate-300 transition">
+                    {myAiLoading ? "⏳ Estimating…" : "🤖 AI estimate"}
+                  </button>
+                </div>
+                <input className="input" type="number" step="0.1" min="1" max="30" value={myCarForm.fuel_consumption_per_100km}
+                  onChange={e => setMyCarForm(f => ({ ...f, fuel_consumption_per_100km: e.target.value }))} placeholder="6.5" required />
+                {myAiEstimate && <p className="text-xs text-indigo-600 mt-1">🤖 {myAiEstimate.l_per_100km}L/100km — {myAiEstimate.note}</p>}
+                {myAiError && <p className="text-xs text-red-500 mt-1">⚠️ {myAiError}</p>}
+              </div>
+              <div>
+                <label className="label">Fuel cost (€/L)</label>
+                <input className="input" type="number" step="0.01" min="0" value={myCarForm.fuel_cost_per_liter}
+                  onChange={e => setMyCarForm(f => ({ ...f, fuel_cost_per_liter: e.target.value }))} placeholder="1.70" />
+                {myCarForm.fuel_consumption_per_100km && myCarForm.fuel_cost_per_liter && (
+                  <p className="text-xs text-amber-700 font-semibold mt-1">
+                    ~€{(parseFloat(myCarForm.fuel_consumption_per_100km) * parseFloat(myCarForm.fuel_cost_per_liter)).toFixed(2)}/100km
+                  </p>
+                )}
+              </div>
+            </div>
+            <button type="submit" disabled={savingMyCar} className="btn-primary text-sm">{savingMyCar ? "Saving…" : "Save car"}</button>
+          </form>
+        )}
+      </div>
 
       {/* Add / Edit form — two-column on large screens */}
       <div className="flex flex-col lg:flex-row gap-6 items-start">
@@ -514,6 +677,20 @@ export default function FamilyPage() {
               <p className="text-xs text-slate-400 mt-1">Shown on calendar. Trip suggestions near their birthday get special ideas.</p>
             </div>
 
+            {form.birthday && (
+              <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+                <div>
+                  <p className="text-sm font-semibold text-slate-700">Birthday is a vacation day</p>
+                  <p className="text-xs text-slate-400 mt-0.5">Count birthday as a taken vacation day each year</p>
+                </div>
+                <button type="button"
+                  onClick={() => setF("birthday_is_vacation_day", !form.birthday_is_vacation_day)}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${form.birthday_is_vacation_day ? "bg-indigo-500" : "bg-slate-200"}`}>
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${form.birthday_is_vacation_day ? "translate-x-6" : "translate-x-1"}`} />
+                </button>
+              </div>
+            )}
+
             <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
               <div>
                 <p className="text-sm font-semibold text-slate-700">{leaveLabel(form.gender)}</p>
@@ -637,6 +814,38 @@ export default function FamilyPage() {
                     }
                   }
                 }}/>
+            </div>
+          </section>
+
+          {/* ── Loyalty programs ── */}
+          <section className="space-y-3">
+            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100 pb-2">Loyalty & Frequent Flyer</h3>
+            <p className="text-xs text-slate-400">Airline loyalty / frequent flyer numbers for this person.</p>
+            <div className="space-y-2">
+              {(form.loyalty_programs ?? []).map((lp, idx) => (
+                <div key={idx} className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-100 rounded-xl">
+                  <span className="text-lg">✈️</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-slate-800">{lp.airline}</p>
+                    <p className="text-xs text-slate-500 font-mono">{lp.number}</p>
+                  </div>
+                  <button type="button" onClick={() => removeLoyalty(idx)}
+                    className="text-xs text-red-400 hover:text-red-600 transition">✕</button>
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-2 items-end">
+              <div className="flex-1">
+                <label className="label">Airline</label>
+                <input className="input" value={newLoyaltyAirline} onChange={e => setNewLoyaltyAirline(e.target.value)} placeholder="e.g. TAP Air Portugal" />
+              </div>
+              <div className="flex-1">
+                <label className="label">Number / ID</label>
+                <input className="input" value={newLoyaltyNumber} onChange={e => setNewLoyaltyNumber(e.target.value)} placeholder="e.g. TP123456789" />
+              </div>
+              <button type="button" onClick={addLoyalty} className="btn-ghost text-sm mb-0.5" disabled={!newLoyaltyAirline.trim() || !newLoyaltyNumber.trim()}>
+                + Add
+              </button>
             </div>
           </section>
 

@@ -278,6 +278,10 @@ export interface FamilyMember {
   // Residential location (may differ from airport city)
   home_region: string | null; // ISO 3166-2, e.g. "PT-06" for Coimbra
   home_city_name: string | null; // human-readable city name, e.g. "Coimbra"
+  // Birthday behaviour
+  birthday_is_vacation_day?: boolean;
+  // Loyalty / frequent-flyer programs
+  loyalty_programs?: { airline: string; number: string }[] | null;
   // Avatar customization
   avatar_config: { hair: number; glasses: number; face: number; shirt: number; bottom: number; clothesColor: number } | null;
 }
