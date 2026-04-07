@@ -1,8 +1,12 @@
-import { NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { anthropic } from "@/lib/anthropic";
 import { createNotification } from "@/lib/notifications";
 import type { MemberCalendar, UserPreferences } from "@holiday-planner/shared-types";
+
+// Helper to encode an SSE event
+function sse(data: object) {
+  return new TextEncoder().encode(`data: ${JSON.stringify(data)}\n\n`);
+}
 
 export async function POST(
   _req: Request,
@@ -10,135 +14,140 @@ export async function POST(
 ) {
   const { id: tripId } = await params;
 
-  // Auth check with regular client (respects RLS)
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const stream = new ReadableStream({
+    async start(controller) {
+      const send = (data: object) => controller.enqueue(sse(data));
 
-  // Use service client for all DB reads (bypasses RLS safely on server)
-  const db = await createServiceClient();
-
-  // Load trip
-  const { data: trip } = await db
-    .from("trips")
-    .select("*")
-    .eq("id", tripId)
-    .single();
-
-  if (!trip) return NextResponse.json({ error: "Trip not found" }, { status: 404 });
-
-  // Verify the authenticated user is a member of this trip's group
-  const { data: membership } = await db
-    .from("group_members")
-    .select("user_id")
-    .eq("group_id", trip.group_id)
-    .eq("user_id", user.id)
-    .maybeSingle();
-  if (!membership) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-
-  // Load group members + their preferences
-  const { data: members } = await db
-    .from("group_members")
-    .select("user_id")
-    .eq("group_id", trip.group_id);
-
-  if (!members?.length) {
-    return NextResponse.json({ error: "No group members found" }, { status: 400 });
-  }
-
-  // Load preferences for each member separately
-  const membersWithPrefs = await Promise.all(
-    members.map(async (m) => {
-      const { data: prefs } = await db
-        .from("user_preferences")
-        .select("*")
-        .eq("user_id", m.user_id)
-        .single();
-      return { user_id: m.user_id, preferences: prefs };
-    })
-  );
-
-  // Load booked holidays for all members at once
-  const memberUserIds = members.map(m => m.user_id);
-  const { data: allBookings } = await db
-    .from("booked_holidays")
-    .select("owner_user_id, start_date, end_date")
-    .in("owner_user_id", memberUserIds)
-    .is("family_member_id", null)
-    .lte("start_date", trip.latest_return)
-    .gte("end_date", trip.earliest_departure);
-
-  // Build member calendar objects
-  const groupMembers: MemberCalendar[] = membersWithPrefs.map((m) => {
-    const prefs = m.preferences;
-    const blockedDates: string[] = [];
-
-    // Block parental leave dates
-    if (prefs?.on_parental_leave && prefs?.parental_leave_end_date) {
-      let d = new Date(trip.earliest_departure + "T00:00:00");
-      const end = new Date(prefs.parental_leave_end_date + "T00:00:00");
-      while (d <= end) {
-        blockedDates.push(d.toISOString().slice(0, 10));
-        d.setDate(d.getDate() + 1);
-      }
-    }
-
-    // Block already-booked holiday dates + count used vacation days
-    const memberBookings = (allBookings ?? []).filter(b => b.owner_user_id === m.user_id);
-    let usedVacationDays = 0;
-    const tripYear = new Date(trip.earliest_departure + "T00:00:00").getFullYear();
-
-    for (const booking of memberBookings) {
-      let d = new Date(booking.start_date + "T00:00:00");
-      const end = new Date(booking.end_date + "T00:00:00");
-      while (d <= end) {
-        const iso = d.toISOString().slice(0, 10);
-        blockedDates.push(iso);
-        // Count working days as used vacation (rough estimate, ignores public holidays)
-        if (d.getFullYear() === tripYear && d.getDay() !== 0 && d.getDay() !== 6) {
-          usedVacationDays++;
+      try {
+        // ── Auth ────────────────────────────────────────────────────────────
+        send({ progress: 5, stage: "Authenticating…" });
+        const supabase = await createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          send({ error: "Unauthorized" });
+          controller.close();
+          return;
         }
-        d.setDate(d.getDate() + 1);
-      }
-    }
 
-    const totalVacationDays = prefs?.vacation_days_per_year ?? 22;
-    const vacationDaysRemaining = Math.max(0, totalVacationDays - usedVacationDays);
+        const db = await createServiceClient();
 
-    return {
-      user_id: m.user_id,
-      home_country: prefs?.home_country ?? "PT",
-      home_city: prefs?.home_city ?? "LIS",
-      vacation_days_remaining: vacationDaysRemaining,
-      blocked_dates: [...new Set(blockedDates)], // deduplicate
-      public_holidays: [],
-      preferences: prefs ?? defaultPreferences(),
-    };
-  });
+        // ── Trip + membership (parallel) ────────────────────────────────────
+        send({ progress: 10, stage: "Loading trip…" });
+        const [{ data: trip }, ] = await Promise.all([
+          db.from("trips").select("*").eq("id", tripId).single(),
+        ]);
 
-  // Load free stays for all members (hotel cost = €0 at these destinations)
-  const { data: rawFreeStays } = await db
-    .from("free_stays")
-    .select("destination_city, destination_country, host_name, owner_user_id")
-    .in("owner_user_id", memberUserIds);
+        if (!trip) {
+          send({ error: "Trip not found" });
+          controller.close();
+          return;
+        }
 
-  const freeStays = (rawFreeStays ?? []).map(fs => ({
-    destination_city: fs.destination_city,
-    destination_country: fs.destination_country,
-    host_name: fs.host_name ?? null,
-  }));
+        const { data: membership } = await db
+          .from("group_members").select("user_id")
+          .eq("group_id", trip.group_id).eq("user_id", user.id).maybeSingle();
+        if (!membership) {
+          send({ error: "Forbidden" });
+          controller.close();
+          return;
+        }
 
-  // Build context for Claude
-  const membersContext = groupMembers.map((m, i) => {
-    const prefs = m.preferences;
-    return `Member ${i + 1}: home=${m.home_country}/${m.home_city}, vacation_days_left=${m.vacation_days_remaining}, blocked=${m.blocked_dates.length} days, style=${prefs.travel_style}, budget=${prefs.budget_min_eur}-${prefs.budget_max_eur}EUR, interests=${(prefs.interests ?? []).join(",")||"general"}, avoid=${(prefs.avoid_destinations ?? []).join(",")||"none"}`;
-  }).join("\n");
+        // ── Group members ───────────────────────────────────────────────────
+        send({ progress: 20, stage: "Loading group calendars…" });
+        const { data: members } = await db
+          .from("group_members").select("user_id").eq("group_id", trip.group_id);
 
-  const freeStaysContext = freeStays.length > 0
-    ? `Free stays available: ${freeStays.map(f => `${f.destination_city}, ${f.destination_country}${f.host_name ? ` (host: ${f.host_name})` : ""}`).join("; ")}`
-    : "No free stays available.";
+        if (!members?.length) {
+          send({ error: "No group members found" });
+          controller.close();
+          return;
+        }
 
-  const prompt = `You are a travel planning AI. Generate 3 ranked trip destination suggestions based on this data.
+        const memberUserIds = members.map(m => m.user_id);
+
+        // ── Preferences + bookings + free stays (all parallel) ──────────────
+        send({ progress: 30, stage: "Fetching calendars and preferences…" });
+        const [membersWithPrefs, { data: allBookings }, { data: rawFreeStays }] =
+          await Promise.all([
+            Promise.all(
+              members.map(async (m) => {
+                const { data: prefs } = await db
+                  .from("user_preferences").select("*").eq("user_id", m.user_id).single();
+                return { user_id: m.user_id, preferences: prefs };
+              })
+            ),
+            db.from("booked_holidays")
+              .select("owner_user_id, start_date, end_date")
+              .in("owner_user_id", memberUserIds)
+              .is("family_member_id", null)
+              .lte("start_date", trip.latest_return)
+              .gte("end_date", trip.earliest_departure),
+            db.from("free_stays")
+              .select("destination_city, destination_country, host_name, owner_user_id")
+              .in("owner_user_id", memberUserIds),
+          ]);
+
+        // ── Build calendar objects ──────────────────────────────────────────
+        const tripYear = new Date(trip.earliest_departure + "T00:00:00").getFullYear();
+
+        const groupMembers: MemberCalendar[] = membersWithPrefs.map((m) => {
+          const prefs = m.preferences;
+          const blockedDates: string[] = [];
+
+          if (prefs?.on_parental_leave && prefs?.parental_leave_end_date) {
+            let d = new Date(trip.earliest_departure + "T00:00:00");
+            const end = new Date(prefs.parental_leave_end_date + "T00:00:00");
+            while (d <= end) {
+              blockedDates.push(d.toISOString().slice(0, 10));
+              d.setDate(d.getDate() + 1);
+            }
+          }
+
+          const memberBookings = (allBookings ?? []).filter(b => b.owner_user_id === m.user_id);
+          let usedVacationDays = 0;
+          for (const booking of memberBookings) {
+            let d = new Date(booking.start_date + "T00:00:00");
+            const end = new Date(booking.end_date + "T00:00:00");
+            while (d <= end) {
+              const iso = d.toISOString().slice(0, 10);
+              blockedDates.push(iso);
+              if (d.getFullYear() === tripYear && d.getDay() !== 0 && d.getDay() !== 6) {
+                usedVacationDays++;
+              }
+              d.setDate(d.getDate() + 1);
+            }
+          }
+
+          return {
+            user_id: m.user_id,
+            home_country: prefs?.home_country ?? "PT",
+            home_city: prefs?.home_city ?? "LIS",
+            vacation_days_remaining: Math.max(0, (prefs?.vacation_days_per_year ?? 22) - usedVacationDays),
+            blocked_dates: [...new Set(blockedDates)],
+            public_holidays: [],
+            preferences: prefs ?? defaultPreferences(),
+          };
+        });
+
+        const freeStays = (rawFreeStays ?? []).map(fs => ({
+          destination_city: fs.destination_city,
+          destination_country: fs.destination_country,
+          host_name: fs.host_name ?? null,
+        }));
+
+        // ── Build prompt ────────────────────────────────────────────────────
+        send({ progress: 40, stage: "Asking Claude for suggestions…" });
+
+        const membersContext = groupMembers.map((m, i) => {
+          const p = m.preferences;
+          return `Member ${i + 1}: home=${m.home_country}/${m.home_city}, vacation_days_left=${m.vacation_days_remaining}, blocked=${m.blocked_dates.length} days, style=${p.travel_style}, budget=${p.budget_min_eur}-${p.budget_max_eur}EUR, interests=${(p.interests ?? []).join(",") || "general"}, avoid=${(p.avoid_destinations ?? []).join(",") || "none"}`;
+        }).join("\n");
+
+        const freeStaysCtx = freeStays.length > 0
+          ? `Free stays: ${freeStays.map(f => `${f.destination_city}, ${f.destination_country}${f.host_name ? ` (${f.host_name})` : ""}`).join("; ")}`
+          : "No free stays.";
+
+        const prompt = `You are a travel planning AI. Generate 3 ranked trip destination suggestions.
 
 Trip constraints:
 - Duration: ${trip.desired_duration_days ?? "flexible"} days
@@ -146,97 +155,99 @@ Trip constraints:
 - Budget per person: ${trip.budget_per_person_eur ?? "flexible"} EUR
 - Destination hint: ${trip.destination_hint ?? "none"}
 - Mode: ${trip.planning_mode ?? "days_first"}
-${trip.destination_city ? `- Fixed destination: ${trip.destination_city}, ${trip.destination_country}` : ""}
+${trip.destination_city ? `- Fixed: ${trip.destination_city}, ${trip.destination_country}` : ""}
 
-Group members:
+Group:
 ${membersContext}
 
-${freeStaysContext}
+${freeStaysCtx}
 
-Return ONLY a JSON array of 3 suggestions (no markdown):
-[
-  {
-    "rank": 1,
-    "destination_city": "City",
-    "destination_country": "XX",
-    "destination_iata": "XXX",
-    "suggested_departure": "YYYY-MM-DD",
-    "suggested_return": "YYYY-MM-DD",
-    "total_days": <number>,
-    "vacation_days_used": <number, exclude weekends and public holidays>,
-    "overlap_score": <0.0-1.0, how well calendars align>,
-    "estimated_flight_price_eur": <number or null>,
-    "estimated_hotel_price_eur": <total for stay or null>,
-    "estimated_total_price_eur": <per person total or null>,
-    "reasoning": "2-3 sentence explanation of why this is a good choice",
-    "highlights": ["highlight 1", "highlight 2", "highlight 3"],
-    "trade_offs": ["trade-off 1"]
-  }
-]`;
+Return ONLY a JSON array of 3 suggestions (no markdown, no explanation):
+[{"rank":1,"destination_city":"City","destination_country":"XX","destination_iata":"XXX","suggested_departure":"YYYY-MM-DD","suggested_return":"YYYY-MM-DD","total_days":7,"vacation_days_used":5,"overlap_score":0.9,"estimated_flight_price_eur":150,"estimated_hotel_price_eur":400,"estimated_total_price_eur":600,"reasoning":"2-3 sentences why","highlights":["h1","h2","h3"],"trade_offs":["t1"]}]`;
 
-  try {
-    const message = await anthropic.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 2048,
-      messages: [{ role: "user", content: prompt }],
-    });
+        // ── Stream Claude response ──────────────────────────────────────────
+        let accumulated = "";
+        const claudeStream = anthropic.messages.stream({
+          model: "claude-sonnet-4-6",
+          max_tokens: 2048,
+          messages: [{ role: "user", content: prompt }],
+        });
 
-    const raw = message.content[0].type === "text" ? message.content[0].text : "[]";
-    const suggestions: Record<string, unknown>[] = JSON.parse(
-      raw.trim().replace(/^```json?\n?/, "").replace(/\n?```$/, "")
-    );
+        // Estimate ~800 tokens for the response; map to 40-80% progress range
+        let inputTokensSeen = 0;
+        for await (const event of claudeStream) {
+          if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
+            accumulated += event.delta.text;
+            inputTokensSeen += event.delta.text.length;
+            // Rough: 800 chars ≈ full response; clamp to 80%
+            const claudeProgress = Math.min(40 + Math.floor((inputTokensSeen / 800) * 40), 80);
+            send({ progress: claudeProgress, stage: "Claude is writing suggestions…" });
+          }
+        }
 
-    // Delete old suggestions for this trip, then insert new ones
-    await db.from("trip_suggestions").delete().eq("trip_id", tripId);
+        // ── Parse + save ────────────────────────────────────────────────────
+        send({ progress: 85, stage: "Processing suggestions…" });
 
-    const now = new Date().toISOString();
-    const rows = suggestions.map(s => ({
-      trip_id: tripId,
-      rank: s.rank,
-      destination_city: s.destination_city,
-      destination_country: s.destination_country,
-      destination_iata: s.destination_iata ?? "",
-      suggested_departure: s.suggested_departure,
-      suggested_return: s.suggested_return,
-      total_days: s.total_days,
-      vacation_days_used: s.vacation_days_used,
-      overlap_score: s.overlap_score,
-      estimated_flight_price_eur: s.estimated_flight_price_eur ?? null,
-      estimated_hotel_price_eur: s.estimated_hotel_price_eur ?? null,
-      estimated_total_price_eur: s.estimated_total_price_eur ?? null,
-      flight_data: null,
-      hotel_data: null,
-      reasoning: s.reasoning,
-      highlights: s.highlights,
-      trade_offs: s.trade_offs,
-      ai_model_version: "claude-sonnet-4-6",
-      created_at: now,
-    }));
+        const raw = accumulated.trim().replace(/^```json?\n?/, "").replace(/\n?```$/, "");
+        const suggestions: Record<string, unknown>[] = JSON.parse(raw);
 
-    await db.from("trip_suggestions").insert(rows);
+        send({ progress: 90, stage: "Saving to database…" });
 
-    // Notify all group members that suggestions are ready
-    await Promise.all(
-      memberUserIds.map(uid =>
-        createNotification(
-          db,
-          uid,
-          "suggestion_ready",
-          `Trip suggestions ready: ${trip.title}`,
-          "The AI has generated travel suggestions for your trip. Vote on your favourites!",
-          `/trips/${tripId}`
-        )
-      )
-    );
+        await db.from("trip_suggestions").delete().eq("trip_id", tripId);
 
-    return NextResponse.json({ trip_id: tripId, suggestions: rows, generated_at: now });
-  } catch (err) {
-    console.error("AI suggestions error:", err instanceof Error ? err.message : String(err));
-    return NextResponse.json(
-      { error: "Failed to generate suggestions. Please try again." },
-      { status: 502 }
-    );
-  }
+        const now = new Date().toISOString();
+        const rows = suggestions.map(s => ({
+          trip_id: tripId,
+          rank: s.rank,
+          destination_city: s.destination_city,
+          destination_country: s.destination_country,
+          destination_iata: s.destination_iata ?? "",
+          suggested_departure: s.suggested_departure,
+          suggested_return: s.suggested_return,
+          total_days: s.total_days,
+          vacation_days_used: s.vacation_days_used,
+          overlap_score: s.overlap_score,
+          estimated_flight_price_eur: s.estimated_flight_price_eur ?? null,
+          estimated_hotel_price_eur: s.estimated_hotel_price_eur ?? null,
+          estimated_total_price_eur: s.estimated_total_price_eur ?? null,
+          flight_data: null,
+          hotel_data: null,
+          reasoning: s.reasoning,
+          highlights: s.highlights,
+          trade_offs: s.trade_offs,
+          ai_model_version: "claude-sonnet-4-6",
+          created_at: now,
+        }));
+
+        await db.from("trip_suggestions").insert(rows);
+
+        send({ progress: 95, stage: "Notifying group members…" });
+        await Promise.all(
+          memberUserIds.map(uid =>
+            createNotification(db, uid, "suggestion_ready",
+              `Trip suggestions ready: ${trip.title}`,
+              "The AI has generated travel suggestions for your trip. Vote on your favourites!",
+              `/trips/${tripId}`)
+          )
+        );
+
+        send({ progress: 100, stage: "Done!" });
+      } catch (err) {
+        console.error("AI suggestions error:", err instanceof Error ? err.message : String(err));
+        send({ error: "Failed to generate suggestions. Please try again." });
+      } finally {
+        controller.close();
+      }
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      "Connection": "keep-alive",
+    },
+  });
 }
 
 function defaultPreferences(): UserPreferences {
