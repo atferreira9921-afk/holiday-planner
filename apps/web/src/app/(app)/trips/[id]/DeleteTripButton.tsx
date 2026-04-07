@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import ConfirmDialog from "@/lib/ConfirmDialog";
 
 interface Props {
   tripId: string;
@@ -9,12 +10,11 @@ interface Props {
 
 export default function DeleteTripButton({ tripId }: Props) {
   const [loading, setLoading] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const router = useRouter();
 
   async function handleDelete() {
-    const confirmed = window.confirm("Are you sure you want to delete this trip? This action cannot be undone.");
-    if (!confirmed) return;
-
+    setConfirmOpen(false);
     setLoading(true);
     const res = await fetch(`/api/trips/${tripId}`, { method: "DELETE" });
     if (res.ok) {
@@ -27,12 +27,23 @@ export default function DeleteTripButton({ tripId }: Props) {
   }
 
   return (
-    <button
-      className="btn-ghost text-sm text-red-600 hover:text-red-700"
-      onClick={handleDelete}
-      disabled={loading}
-    >
-      {loading ? "Deleting…" : "🗑️ Delete"}
-    </button>
+    <>
+      <button
+        className="btn-ghost text-sm text-red-600 hover:text-red-700"
+        onClick={() => setConfirmOpen(true)}
+        disabled={loading}
+      >
+        {loading ? "Deleting…" : "🗑️ Delete"}
+      </button>
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Delete this trip?"
+        description="This will permanently delete the trip and all its data."
+        confirmLabel="Delete trip"
+        danger
+        onConfirm={handleDelete}
+        onCancel={() => setConfirmOpen(false)}
+      />
+    </>
   );
 }

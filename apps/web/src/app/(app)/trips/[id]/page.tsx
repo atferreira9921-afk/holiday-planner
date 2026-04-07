@@ -28,6 +28,7 @@ import EditTripModal from "./EditTripModal";
 import DeleteTripButton from "./DeleteTripButton";
 import TripRealtimeUpdater from "./TripRealtimeUpdater";
 import TripFamilyMembers from "./TripFamilyMembers";
+import DuplicateTripButton from "./DuplicateTripButton";
 
 export default async function TripDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -187,6 +188,7 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
           <div className="flex items-center gap-2 flex-wrap">
             <StatusBadge status={trip.status} />
             <EditTripModal trip={{ id: trip.id, title: trip.title, earliest_departure: trip.earliest_departure, latest_return: trip.latest_return, desired_duration_days: trip.desired_duration_days, budget_per_person_eur: trip.budget_per_person_eur ?? null, destination_hint: trip.destination_hint ?? null }} />
+            <DuplicateTripButton tripId={trip.id} />
             <DeleteTripButton tripId={trip.id} />
             <TripReportExport
               tripTitle={trip.title}

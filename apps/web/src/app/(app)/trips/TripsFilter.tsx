@@ -31,6 +31,7 @@ const STATUS_MAP: Record<string, { cls: string; label: string; emoji: string }> 
   booked:    { cls: "bg-green-100 text-green-700",   label: "Booked",    emoji: "✅" },
   completed: { cls: "bg-slate-100 text-slate-600",   label: "Completed", emoji: "🏁" },
   cancelled: { cls: "bg-red-100 text-red-700",       label: "Cancelled", emoji: "✕" },
+  archived:  { cls: "bg-slate-200 text-slate-500",   label: "Archived",  emoji: "📦" },
 };
 
 const STATUS_PILLS = [
@@ -40,6 +41,7 @@ const STATUS_PILLS = [
   { value: "booked",    label: "Booked" },
   { value: "completed", label: "Completed" },
   { value: "cancelled", label: "Cancelled" },
+  { value: "archived",  label: "Archived" },
 ];
 
 // ─── Helper ────────────────────────────────────────────────────────────────────

@@ -16,6 +16,7 @@ const statusStyles: Record<string, string> = {
   booked:    "bg-green-100 text-green-700",
   completed: "bg-slate-100 text-slate-600",
   cancelled: "bg-red-100 text-red-700",
+  archived:  "bg-slate-200 text-slate-500",
 };
 
 export default function TripStatusControl({ tripId, currentStatus, selectedSuggestionId }: Props) {
@@ -58,7 +59,13 @@ export default function TripStatusControl({ tripId, currentStatus, selectedSugge
           </button>
         )}
 
-        {!isTerminal && (
+        {currentStatus === "archived" && (
+          <button className="btn-ghost text-sm" onClick={() => updateStatus("planning")} disabled={saving}>
+            ↩ Unarchive
+          </button>
+        )}
+
+        {!isTerminal && currentStatus !== "archived" && (
           <>
             {(currentStatus === "planning" && selectedSuggestionId) && (
               <button
@@ -97,6 +104,12 @@ export default function TripStatusControl({ tripId, currentStatus, selectedSugge
                 disabled={saving}
               >
                 Cancel trip
+              </button>
+            )}
+
+            {(currentStatus === "planning" || currentStatus === "suggested" || currentStatus === "booked") && (
+              <button className="btn-ghost text-sm text-slate-400" onClick={() => updateStatus("archived")} disabled={saving}>
+                Archive
               </button>
             )}
           </>

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import ConfirmDialog from "@/lib/ConfirmDialog";
 
 export default function AccountPage() {
   const supabase = createClient();
@@ -19,6 +20,12 @@ export default function AccountPage() {
 
   const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const [newEmail, setNewEmail] = useState("");
+  const [savingEmail, setSavingEmail] = useState(false);
+  const [emailMsg, setEmailMsg] = useState<{ text: string; ok: boolean } | null>(null);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [deleteMsg, setDeleteMsg] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -108,6 +115,27 @@ export default function AccountPage() {
 
     flash("Password changed successfully!", true);
     setCurrentPw(""); setNewPw(""); setConfirmPw("");
+  }
+
+  async function handleChangeEmail(e: React.FormEvent) {
+    e.preventDefault();
+    setSavingEmail(true);
+    const { error } = await supabase.auth.updateUser({ email: newEmail });
+    setSavingEmail(false);
+    if (error) { setEmailMsg({ text: error.message, ok: false }); return; }
+    setEmailMsg({ text: "Confirmation sent! Check your new email inbox.", ok: true });
+    setNewEmail("");
+  }
+
+  async function handleDeleteAccount() {
+    setConfirmDeleteOpen(false);
+    const res = await fetch("/api/account/delete", { method: "DELETE" });
+    if (!res.ok) {
+      const j = await res.json().catch(() => ({}));
+      setDeleteMsg(j.error ?? "Failed to delete account.");
+      return;
+    }
+    window.location.href = "/login";
   }
 
   const initials = (fullName || email).slice(0, 2).toUpperCase();
@@ -226,6 +254,51 @@ export default function AccountPage() {
             {savingPw ? "Saving…" : "Change password"}
           </button>
         </form>
+      </div>
+
+      {/* ── Change email ── */}
+      <div className="card p-6 space-y-4">
+        <h2 className="font-bold text-slate-900">Change email</h2>
+        <form onSubmit={handleChangeEmail} className="space-y-4">
+          <div>
+            <label className="label">Current email</label>
+            <input className="input" value={email} readOnly style={{ opacity: 0.6, cursor: "not-allowed" }} />
+          </div>
+          <div>
+            <label className="label">New email</label>
+            <input className="input" type="email" value={newEmail} onChange={e => setNewEmail(e.target.value)} placeholder="new@example.com" required />
+          </div>
+          {emailMsg && (
+            <div className={`rounded-xl px-4 py-3 text-sm font-medium ${emailMsg.ok ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
+              {emailMsg.text}
+            </div>
+          )}
+          <button type="submit" className="btn-primary" disabled={savingEmail}>
+            {savingEmail ? "Sending…" : "Send confirmation"}
+          </button>
+          <p className="text-xs text-slate-400">A confirmation link will be sent to your new email address.</p>
+        </form>
+      </div>
+
+      {/* ── Danger zone ── */}
+      <div className="card p-6 space-y-4 border border-red-200">
+        <h2 className="font-bold text-red-700">Danger zone</h2>
+        <p className="text-sm text-slate-500">Permanently delete your account and all data. This cannot be undone.</p>
+        {deleteMsg && (
+          <div className="bg-red-50 text-red-700 border border-red-200 rounded-xl px-4 py-3 text-sm font-medium">{deleteMsg}</div>
+        )}
+        <button className="text-sm px-4 py-2 rounded-xl font-semibold text-white bg-red-500 hover:bg-red-600 transition" onClick={() => setConfirmDeleteOpen(true)}>
+          Delete my account
+        </button>
+        <ConfirmDialog
+          open={confirmDeleteOpen}
+          title="Delete your account?"
+          description="This will permanently delete your account and all your data. This cannot be undone."
+          confirmLabel="Yes, delete my account"
+          danger
+          onConfirm={handleDeleteAccount}
+          onCancel={() => setConfirmDeleteOpen(false)}
+        />
       </div>
     </div>
   );

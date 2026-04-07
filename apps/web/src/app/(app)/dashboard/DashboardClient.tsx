@@ -246,6 +246,56 @@ function AddBookingForm({
   );
 }
 
+// ─── Onboarding Checklist ─────────────────────────────────────────────────────
+
+function OnboardingChecklist({
+  hasBookedHoliday,
+  hasTrip,
+  hasFamilyMember,
+}: {
+  hasBookedHoliday: boolean;
+  hasTrip: boolean;
+  hasFamilyMember: boolean;
+}) {
+  const [dismissed, setDismissed] = useState(false);
+  if (dismissed) return null;
+
+  const items = [
+    { done: true,             label: "Preferences set", href: "/preferences" },
+    { done: hasBookedHoliday, label: "Add a vacation booking", href: "/holidays" },
+    { done: hasTrip,          label: "Create your first trip", href: "/trips/new" },
+    { done: hasFamilyMember,  label: "Add a family member", href: "/family" },
+  ];
+
+  const completedCount = items.filter(i => i.done).length;
+
+  return (
+    <div className="card p-5 border border-indigo-100 bg-indigo-50/40">
+      <div className="flex items-start justify-between gap-3 mb-3">
+        <div>
+          <h2 className="font-bold text-slate-900 text-sm">Getting started</h2>
+          <p className="text-xs text-slate-500 mt-0.5">{completedCount} of {items.length} steps complete</p>
+        </div>
+        <button onClick={() => setDismissed(true)} className="text-slate-400 hover:text-slate-600 text-xs transition flex-shrink-0">Dismiss</button>
+      </div>
+      <div className="space-y-2">
+        {items.map((item, i) => (
+          <div key={i} className="flex items-center gap-3">
+            <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold ${item.done ? "bg-emerald-500 text-white" : "bg-white border-2 border-slate-200"}`}>
+              {item.done ? "✓" : ""}
+            </div>
+            {item.done ? (
+              <span className="text-sm text-slate-400 line-through">{item.label}</span>
+            ) : (
+              <Link href={item.href} className="text-sm text-indigo-600 hover:text-indigo-800 font-medium transition">{item.label}</Link>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Client Component ────────────────────────────────────────────────────
 
 export default function DashboardClient({
@@ -399,6 +449,16 @@ export default function DashboardClient({
           )}
         </div>
       </div>
+
+      {/* ── Onboarding checklist ────────────────────────────────────────────── */}
+      {isYou && (() => {
+        const hasBookedHoliday = allBookings.length > 0;
+        const hasTrip = (activeTrips.length + completedTrips.length) > 0;
+        const hasFamilyMember = familyMembers.length > 0;
+        const allDone = hasBookedHoliday && hasTrip && hasFamilyMember;
+        if (allDone) return null;
+        return <OnboardingChecklist hasBookedHoliday={hasBookedHoliday} hasTrip={hasTrip} hasFamilyMember={hasFamilyMember} />;
+      })()}
 
       {/* ── Member switcher ─────────────────────────────────────────────────── */}
       {familyMembers.length > 0 && (
