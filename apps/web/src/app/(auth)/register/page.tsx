@@ -2,7 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
-import { Suspense, useState } from "react";
+import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
@@ -101,9 +101,7 @@ export default function RegisterPage() {
 
       {/* Right panel */}
       <div className="flex-1 flex items-center justify-center p-4 sm:p-8">
-        <Suspense fallback={<div className="w-full max-w-sm animate-pulse h-64 bg-slate-100 rounded-xl" />}>
-          <RegisterForm />
-        </Suspense>
+        <RegisterForm />
       </div>
     </div>
   );
