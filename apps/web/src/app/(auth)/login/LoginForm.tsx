@@ -49,6 +49,12 @@ export default function LoginForm() {
           </div>
         )}
 
+        <div className="flex justify-end">
+          <Link href="/forgot-password" className="text-xs text-indigo-500 hover:underline">
+            Forgot your password?
+          </Link>
+        </div>
+
         <button type="submit" className="btn-primary w-full justify-center py-3" disabled={loading}>
           {loading ? "Signing in..." : "Sign in →"}
         </button>
