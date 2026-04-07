@@ -126,13 +126,11 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
   // Confirmed + pending — used only for availability poll
   const availabilityMembers = [
     ...members,
-    ...(pendingInvites ?? [])
-      .filter(inv => inv.invited_email)
-      .map(inv => ({
-        user_id: `pending-${inv.id}`,
-        name: inv.invited_email as string,
-        pending: true,
-      })),
+    ...(pendingInvites ?? []).map((inv, i) => ({
+      user_id: `pending-${inv.id}`,
+      name: inv.invited_email ?? `Invited person ${i + 1}`,
+      pending: true,
+    })),
   ];
 
   const memberNames: Record<string, string> = Object.fromEntries(members.map(m => [m.user_id, m.name]));
