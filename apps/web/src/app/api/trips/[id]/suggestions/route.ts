@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
-import { aiApi } from "@/lib/api/fastapi-client";
+import { anthropic } from "@/lib/anthropic";
 import { createNotification } from "@/lib/notifications";
 import type { MemberCalendar, UserPreferences } from "@holiday-planner/shared-types";
 
@@ -128,23 +128,92 @@ export async function POST(
     host_name: fs.host_name ?? null,
   }));
 
-  // Call FastAPI
+  // Build context for Claude
+  const membersContext = groupMembers.map((m, i) => {
+    const prefs = m.preferences;
+    return `Member ${i + 1}: home=${m.home_country}/${m.home_city}, vacation_days_left=${m.vacation_days_remaining}, blocked=${m.blocked_dates.length} days, style=${prefs.travel_style}, budget=${prefs.budget_min_eur}-${prefs.budget_max_eur}EUR, interests=${(prefs.interests ?? []).join(",")||"general"}, avoid=${(prefs.avoid_destinations ?? []).join(",")||"none"}`;
+  }).join("\n");
+
+  const freeStaysContext = freeStays.length > 0
+    ? `Free stays available: ${freeStays.map(f => `${f.destination_city}, ${f.destination_country}${f.host_name ? ` (host: ${f.host_name})` : ""}`).join("; ")}`
+    : "No free stays available.";
+
+  const prompt = `You are a travel planning AI. Generate 3 ranked trip destination suggestions based on this data.
+
+Trip constraints:
+- Duration: ${trip.desired_duration_days ?? "flexible"} days
+- Window: ${trip.earliest_departure} to ${trip.latest_return}
+- Budget per person: ${trip.budget_per_person_eur ?? "flexible"} EUR
+- Destination hint: ${trip.destination_hint ?? "none"}
+- Mode: ${trip.planning_mode ?? "days_first"}
+${trip.destination_city ? `- Fixed destination: ${trip.destination_city}, ${trip.destination_country}` : ""}
+
+Group members:
+${membersContext}
+
+${freeStaysContext}
+
+Return ONLY a JSON array of 3 suggestions (no markdown):
+[
+  {
+    "rank": 1,
+    "destination_city": "City",
+    "destination_country": "XX",
+    "destination_iata": "XXX",
+    "suggested_departure": "YYYY-MM-DD",
+    "suggested_return": "YYYY-MM-DD",
+    "total_days": <number>,
+    "vacation_days_used": <number, exclude weekends and public holidays>,
+    "overlap_score": <0.0-1.0, how well calendars align>,
+    "estimated_flight_price_eur": <number or null>,
+    "estimated_hotel_price_eur": <total for stay or null>,
+    "estimated_total_price_eur": <per person total or null>,
+    "reasoning": "2-3 sentence explanation of why this is a good choice",
+    "highlights": ["highlight 1", "highlight 2", "highlight 3"],
+    "trade_offs": ["trade-off 1"]
+  }
+]`;
+
   try {
-    const result = await aiApi.generateSuggestions({
-      trip_id: tripId,
-      group_members: groupMembers,
-      trip_constraints: {
-        desired_duration_days: trip.desired_duration_days,
-        earliest_departure: trip.earliest_departure,
-        latest_return: trip.latest_return,
-        budget_per_person_eur: trip.budget_per_person_eur,
-        destination_hint: trip.destination_hint,
-        planning_mode: trip.planning_mode ?? "days_first",
-        destination_city: trip.destination_city ?? null,
-        destination_country: trip.destination_country ?? null,
-      },
-      free_stays: freeStays,
+    const message = await anthropic.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 2048,
+      messages: [{ role: "user", content: prompt }],
     });
+
+    const raw = message.content[0].type === "text" ? message.content[0].text : "[]";
+    const suggestions: Record<string, unknown>[] = JSON.parse(
+      raw.trim().replace(/^```json?\n?/, "").replace(/\n?```$/, "")
+    );
+
+    // Delete old suggestions for this trip, then insert new ones
+    await db.from("trip_suggestions").delete().eq("trip_id", tripId);
+
+    const now = new Date().toISOString();
+    const rows = suggestions.map(s => ({
+      trip_id: tripId,
+      rank: s.rank,
+      destination_city: s.destination_city,
+      destination_country: s.destination_country,
+      destination_iata: s.destination_iata ?? "",
+      suggested_departure: s.suggested_departure,
+      suggested_return: s.suggested_return,
+      total_days: s.total_days,
+      vacation_days_used: s.vacation_days_used,
+      overlap_score: s.overlap_score,
+      estimated_flight_price_eur: s.estimated_flight_price_eur ?? null,
+      estimated_hotel_price_eur: s.estimated_hotel_price_eur ?? null,
+      estimated_total_price_eur: s.estimated_total_price_eur ?? null,
+      flight_data: null,
+      hotel_data: null,
+      reasoning: s.reasoning,
+      highlights: s.highlights,
+      trade_offs: s.trade_offs,
+      ai_model_version: "claude-sonnet-4-6",
+      created_at: now,
+    }));
+
+    await db.from("trip_suggestions").insert(rows);
 
     // Notify all group members that suggestions are ready
     await Promise.all(
@@ -160,10 +229,9 @@ export async function POST(
       )
     );
 
-    return NextResponse.json(result);
+    return NextResponse.json({ trip_id: tripId, suggestions: rows, generated_at: now });
   } catch (err) {
-    // Log internally but never expose raw error details to the client
-    console.error("FastAPI error:", err instanceof Error ? err.message : String(err));
+    console.error("AI suggestions error:", err instanceof Error ? err.message : String(err));
     return NextResponse.json(
       { error: "Failed to generate suggestions. Please try again." },
       { status: 502 }

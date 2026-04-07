@@ -29,13 +29,17 @@ export default function GenerateSuggestionsButton({ tripId }: { tripId: string }
   return (
     <div className="space-y-2">
       <button
-        disabled
-        className="bg-slate-100 text-slate-400 px-5 py-2 rounded-lg font-medium cursor-not-allowed transition"
-        title="AI features are temporarily disabled"
+        onClick={handleGenerate}
+        disabled={loading}
+        className={`px-5 py-2 rounded-lg font-medium transition ${
+          loading
+            ? "bg-indigo-400 text-white cursor-not-allowed"
+            : "bg-indigo-600 text-white hover:bg-indigo-700"
+        }`}
       >
-        🤖 AI suggestions — coming soon
+        {loading ? "🤖 Generating…" : "🤖 Generate AI suggestions"}
       </button>
-      <p className="text-xs text-slate-400">AI features are temporarily unavailable.</p>
+      {error && <p className="text-sm text-red-600">{error}</p>}
     </div>
   );
 }

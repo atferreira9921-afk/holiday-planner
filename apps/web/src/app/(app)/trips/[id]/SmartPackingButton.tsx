@@ -18,10 +18,10 @@ export default function SmartPackingButton({
   destinationCountry: string | null;
   tripType: string;
 }) {
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading]         = useState(false);
   const [suggestions, setSuggestions] = useState<PackingSuggestion[] | null>(null);
-  const [added, setAdded] = useState<Set<number>>(new Set());
-  const [error, setError] = useState<string | null>(null);
+  const [added, setAdded]             = useState<Set<number>>(new Set());
+  const [error, setError]             = useState<string | null>(null);
 
   async function fetchSuggestions() {
     setLoading(true);
@@ -65,13 +65,16 @@ export default function SmartPackingButton({
   return (
     <div className="space-y-3">
       <button
-        disabled
-        className="px-4 py-2 rounded-lg text-sm bg-slate-100 text-slate-400 cursor-not-allowed"
-        title="AI features are temporarily disabled"
+        onClick={fetchSuggestions}
+        disabled={loading}
+        className="px-4 py-2 rounded-lg text-sm bg-indigo-600 text-white font-medium hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed transition"
       >
-        🤖 Suggest items — coming soon
+        {loading ? "Thinking…" : "🤖 Suggest packing items"}
       </button>
-      <p className="text-xs text-slate-400">AI features are temporarily unavailable.</p>
+
+      {error && (
+        <p className="text-sm text-red-600">{error}</p>
+      )}
 
       {suggestions && suggestions.length > 0 && (
         <div className="card p-4 space-y-3">

@@ -17,12 +17,12 @@ export default function ReceiptScanner({
   tripId: string;
   onResult?: (receipt: ParsedReceipt) => void;
 }) {
-  const [mode, setMode]       = useState<"text" | "image">("text");
-  const [text, setText]       = useState("");
+  const [mode, setMode]         = useState<"text" | "image">("text");
+  const [text, setText]         = useState("");
   const [scanning, setScanning] = useState(false);
-  const [error, setError]     = useState<string | null>(null);
-  const [result, setResult]   = useState<ParsedReceipt | null>(null);
-  const fileRef               = useRef<HTMLInputElement>(null);
+  const [error, setError]       = useState<string | null>(null);
+  const [result, setResult]     = useState<ParsedReceipt | null>(null);
+  const fileRef                 = useRef<HTMLInputElement>(null);
 
   async function scanText() {
     if (!text.trim()) return;
@@ -36,6 +36,7 @@ export default function ReceiptScanner({
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       setResult(data);
+      onResult?.(data);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Scan failed");
     }
@@ -56,8 +57,10 @@ export default function ReceiptScanner({
         const data = await res.json();
         if (data.error) throw new Error(data.error);
         setResult(data);
+        onResult?.(data);
         setScanning(false);
       };
+      reader.onerror = () => { setError("Failed to read file"); setScanning(false); };
       reader.readAsDataURL(file);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Scan failed");
@@ -66,15 +69,89 @@ export default function ReceiptScanner({
   }
 
   return (
-    <div className="card p-5 space-y-3">
-      <h3 className="font-bold text-slate-800 flex items-center gap-2">🧾 Receipt scanner</h3>
-      <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3">
-        <span className="text-slate-400 text-lg">🤖</span>
-        <div>
-          <p className="text-sm font-semibold text-slate-500">AI features coming soon</p>
-          <p className="text-xs text-slate-400">Receipt scanning is temporarily unavailable.</p>
-        </div>
+    <div className="card p-5 space-y-4">
+      <h3 className="font-bold text-slate-800">🧾 Receipt scanner</h3>
+
+      {/* Mode toggle */}
+      <div className="flex gap-2">
+        {(["text", "image"] as const).map(m => (
+          <button
+            key={m}
+            onClick={() => setMode(m)}
+            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+              mode === m
+                ? "bg-indigo-600 text-white"
+                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+            }`}
+          >
+            {m === "text" ? "📝 Paste text" : "📷 Upload photo"}
+          </button>
+        ))}
       </div>
+
+      {mode === "text" ? (
+        <div className="space-y-2">
+          <textarea
+            value={text}
+            onChange={e => setText(e.target.value)}
+            placeholder="Paste receipt text here..."
+            rows={5}
+            className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-mono resize-none focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          />
+          <button
+            onClick={scanText}
+            disabled={scanning || !text.trim()}
+            className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+          >
+            {scanning ? "Scanning…" : "Scan receipt"}
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={e => { const f = e.target.files?.[0]; if (f) scanImage(f); }}
+          />
+          <button
+            onClick={() => fileRef.current?.click()}
+            disabled={scanning}
+            className="w-full border-2 border-dashed border-slate-200 rounded-xl py-8 text-slate-400 hover:border-indigo-300 hover:text-indigo-500 transition disabled:opacity-50"
+          >
+            {scanning ? "Scanning…" : "Click to upload receipt photo"}
+          </button>
+        </div>
+      )}
+
+      {error && (
+        <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</p>
+      )}
+
+      {result && (
+        <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2">
+          <div className="flex items-center justify-between">
+            <p className="font-semibold text-slate-800">{result.description}</p>
+            <p className="font-bold text-indigo-700 text-lg">
+              {result.currency !== "EUR" ? `${result.currency} ` : "€"}{result.total_eur.toFixed(2)}
+            </p>
+          </div>
+          <span className="inline-block text-[11px] px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 font-medium capitalize">
+            {result.category}
+          </span>
+          {result.items && result.items.length > 0 && (
+            <ul className="mt-2 space-y-1 text-sm text-slate-600">
+              {result.items.map((item, i) => (
+                <li key={i} className="flex justify-between">
+                  <span>{item.name}</span>
+                  <span className="font-medium">{item.price.toFixed(2)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
     </div>
   );
 }
