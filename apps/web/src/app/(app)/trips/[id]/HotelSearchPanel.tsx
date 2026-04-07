@@ -40,6 +40,13 @@ export default function HotelSearchPanel({ city, country, checkin, checkout, fal
         `/api/hotels/search?city=${encodeURIComponent(city)}&country=${encodeURIComponent(country)}&checkin=${checkin}&checkout=${checkout}`
       );
       const data = await res.json();
+      if (res.status === 503) {
+        // SerpApi not configured — open Booking.com directly
+        window.open(fallbackUrl, "_blank", "noopener,noreferrer");
+        setOpen(false);
+        setLoading(false);
+        return;
+      }
       if (!res.ok || data.error) { setError(data.error ?? "Search failed"); }
       else { setHotels(data.hotels); setNights(data.nights); }
     } catch { setError("Request failed"); }

@@ -52,6 +52,13 @@ export default function FlightSearchPanel({ fromIata, toIata, toCity, outbound, 
         `/api/flights/search?from=${encodeURIComponent(fromIata)}&to=${encodeURIComponent(dest)}&outbound=${outbound}&return=${ret}`
       );
       const data = await res.json();
+      if (res.status === 503) {
+        // SerpApi not configured — open fallback directly
+        window.open(fallbackUrl, "_blank", "noopener,noreferrer");
+        setOpen(false);
+        setLoading(false);
+        return;
+      }
       if (!res.ok || data.error) { setError(data.error ?? "Search failed"); }
       else { setFlights(data.flights); setSearchUrl(data.searchUrl); }
     } catch { setError("Request failed"); }
