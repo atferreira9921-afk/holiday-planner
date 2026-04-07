@@ -33,6 +33,9 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   transpilePackages: ["@holiday-planner/shared-types"],
+  // Always start from a clean .next on each build — prevents stale
+  // TypeScript incremental cache (.tsbuildinfo) from causing false errors
+  cleanDistDir: true,
   async headers() {
     return [
       {

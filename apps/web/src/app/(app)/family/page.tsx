@@ -171,6 +171,7 @@ export default function FamilyPage() {
   function startEdit(m: FamilyMember) {
     setEditId(m.id);
     setForm({
+      ...emptyForm,
       display_name: m.display_name,
       home_country: m.home_country,
       home_city: m.home_city,
