@@ -138,7 +138,14 @@ export async function POST(
           const memberCountry = prefs?.home_country ?? "PT";
           const memberHolidays = (allPublicHolidays ?? [])
             .filter(h => h.country_code === memberCountry)
-            .map(h => ({ date: h.date, name: h.name }));
+            .map(h => ({
+              country_code: h.country_code,
+              year: tripYear,
+              date: h.date,
+              name: h.name,
+              local_name: h.name,
+              is_fixed: false,
+            }));
 
           return {
             user_id: m.user_id,
@@ -163,7 +170,7 @@ export async function POST(
         const membersContext = groupMembers.map((m, i) => {
           const p = m.preferences;
           const holidaysStr = m.public_holidays.length > 0
-            ? `, public_holidays=[${m.public_holidays.map((h: { date: string; name: string }) => `${h.date}:${h.name}`).join(",")}]`
+            ? `, public_holidays=[${m.public_holidays.map(h => `${h.date}:${h.name}`).join(",")}]`
             : ", public_holidays=none";
           return `Member ${i + 1}: home=${m.home_country}/${m.home_city}, vacation_days_left=${m.vacation_days_remaining}, blocked=${m.blocked_dates.length} days, style=${p.travel_style}, budget=${p.budget_min_eur}-${p.budget_max_eur}EUR, interests=${(p.interests ?? []).join(",") || "general"}, avoid=${(p.avoid_destinations ?? []).join(",") || "none"}${holidaysStr}`;
         }).join("\n");
