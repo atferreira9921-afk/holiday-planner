@@ -56,6 +56,33 @@ export async function POST(
           return;
         }
 
+        // ── Rate limiting ───────────────────────────────────────────────────
+        const { data: rateLimitRows, count: suggestionCount } = await db
+          .from("trip_suggestions")
+          .select("created_at", { count: "exact" })
+          .eq("trip_id", tripId)
+          .order("created_at", { ascending: false })
+          .limit(1);
+
+        // Max 15 suggestions per trip (5 generations × 3)
+        if ((suggestionCount ?? 0) >= 15) {
+          send({ error: "This trip has reached the maximum of 15 suggestions. Delete some before generating more." });
+          controller.close();
+          return;
+        }
+
+        // 5-minute cooldown between generations per trip
+        if (rateLimitRows?.[0]?.created_at) {
+          const lastGenMs = new Date(rateLimitRows[0].created_at).getTime();
+          const cooldownMs = 5 * 60 * 1000;
+          const waitSecs = Math.ceil((cooldownMs - (Date.now() - lastGenMs)) / 1000);
+          if (waitSecs > 0) {
+            send({ error: `Please wait ${waitSecs}s before generating more suggestions.` });
+            controller.close();
+            return;
+          }
+        }
+
         // ── Group members ───────────────────────────────────────────────────
         send({ progress: 20, stage: "Loading group calendars…" });
         const { data: members } = await db
