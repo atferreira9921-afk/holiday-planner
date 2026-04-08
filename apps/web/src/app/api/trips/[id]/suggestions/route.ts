@@ -1,6 +1,7 @@
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { anthropic } from "@/lib/anthropic";
 import { createNotification } from "@/lib/notifications";
+import { checkAndConsumeAiLimit } from "@/lib/ai-rate-limit";
 import type { MemberCalendar, UserPreferences } from "@holiday-planner/shared-types";
 
 export const maxDuration = 60; // Vercel: allow up to 60s for AI generation
@@ -62,7 +63,15 @@ export async function POST(
           return;
         }
 
-        // ── Rate limiting ───────────────────────────────────────────────────
+        // ── Daily AI limit (per user) ───────────────────────────────────────
+        const aiLimit = await checkAndConsumeAiLimit(db, user.id);
+        if (!aiLimit.allowed) {
+          send({ error: `You have reached the daily limit of ${aiLimit.limit} AI calls. Resets at midnight.` });
+          controller.close();
+          return;
+        }
+
+        // ── Rate limiting (per trip) ────────────────────────────────────────
         const { data: rateLimitRows, count: suggestionCount } = await db
           .from("trip_suggestions")
           .select("created_at", { count: "exact" })

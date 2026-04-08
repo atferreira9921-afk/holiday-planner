@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { anthropic } from "@/lib/anthropic";
+import { checkAndConsumeAiLimit } from "@/lib/ai-rate-limit";
 
 export const maxDuration = 30;
 
@@ -41,6 +42,14 @@ export async function POST(
     .from("group_members").select("user_id")
     .eq("group_id", trip.group_id).eq("user_id", user.id).maybeSingle();
   if (!membership) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+  const aiLimit = await checkAndConsumeAiLimit(db, user.id);
+  if (!aiLimit.allowed) {
+    return NextResponse.json(
+      { error: `Daily AI limit of ${aiLimit.limit} calls reached. Resets at midnight.` },
+      { status: 429 }
+    );
+  }
 
   const contentLength = Number(req.headers.get("content-length") ?? 0);
   if (contentLength > 6 * 1024 * 1024) {
