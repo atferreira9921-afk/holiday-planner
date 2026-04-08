@@ -87,8 +87,8 @@ export default function PreferencesPage() {
     });
   }
 
-  async function handleSave(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleSave(e?: React.FormEvent) {
+    e?.preventDefault();
     setSaving(true);
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -186,7 +186,7 @@ export default function PreferencesPage() {
         </div>
 
         {/* Form */}
-        <div className="flex-1">
+        <div className="flex-1 space-y-5">
       <form onSubmit={handleSave} className="space-y-5">
 
         {/* Home base */}
@@ -436,10 +436,6 @@ export default function PreferencesPage() {
           </div>
         </div>
 
-        {/* Save */}
-        <button type="submit" className="btn-primary w-full justify-center py-3" disabled={saving}>
-          {saving ? "Saving..." : saved ? "✓ Saved!" : "Save preferences"}
-        </button>
       </form>
 
       {/* Loyalty numbers */}
@@ -606,6 +602,15 @@ export default function PreferencesPage() {
           </form>
         )}
       </div>
+      {/* Bottom save button — visible after Loyalty and Cars sections */}
+      <button
+        type="button"
+        onClick={handleSave}
+        className="btn-primary w-full justify-center py-3"
+        disabled={saving}
+      >
+        {saving ? "Saving..." : saved ? "✓ Saved!" : "Save preferences"}
+      </button>
       </div> {/* end flex-1 */}
       </div> {/* end two-column */}
     </div>

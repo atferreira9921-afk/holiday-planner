@@ -152,8 +152,8 @@ export default function FamilyPage() {
     }));
   }
 
-  async function handleSave(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleSave(e?: React.FormEvent) {
+    e?.preventDefault();
     setError(null);
     if (!form.display_name.trim() || !form.home_country) {
       setError("Name and country are required.");
@@ -439,86 +439,6 @@ export default function FamilyPage() {
           ))}
         </div>
       )}
-
-      {/* ── My Cars ── */}
-      <div className="card p-6 space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="font-bold text-slate-900">My Cars 🚗</h2>
-            <p className="text-slate-500 text-xs mt-0.5">Your own vehicles used for road trip cost estimates.</p>
-          </div>
-          <button type="button" onClick={() => {
-            if (!showMyCarForm) {
-              const avg = getFuelPrice("PT");
-              setMyCarForm(f => ({ ...f, fuel_cost_per_liter: avg ? String(avg) : "1.70" }));
-            }
-            setShowMyCarForm(f => !f); setMyAiEstimate(null); setMyAiError(null);
-          }} className="btn-ghost text-sm">
-            {showMyCarForm ? "Cancel" : "+ Add car"}
-          </button>
-        </div>
-
-        {myCars.length === 0 && !showMyCarForm && (
-          <p className="text-sm text-slate-400">No cars added yet.</p>
-        )}
-
-        <div className="space-y-2">
-          {myCars.map(car => {
-            const costPer100 = (car.fuel_consumption_per_100km * car.fuel_cost_per_liter).toFixed(2);
-            return (
-              <div key={car.id} className="flex items-center gap-3 p-3 bg-amber-50 border border-amber-100 rounded-xl">
-                <span className="text-xl">🚗</span>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-slate-800 text-sm">{car.make} {car.model}{car.year && <span className="text-slate-400 font-normal ml-1">({car.year})</span>}</p>
-                  {car.name && car.name !== `${car.make} ${car.model}` && car.name !== `${car.make} ${car.model} (${car.year})` && (
-                    <p className="text-xs text-slate-400 italic">{car.name}</p>
-                  )}
-                  <p className="text-xs text-slate-500">{car.fuel_consumption_per_100km}L/100km · €{car.fuel_cost_per_liter}/L · <span className="text-amber-700 font-semibold">~€{costPer100}/100km</span></p>
-                </div>
-                <button type="button" onClick={() => deleteMycar(car.id)} disabled={deletingMyCarId === car.id}
-                  className="text-xs text-red-400 hover:text-red-600 transition">{deletingMyCarId === car.id ? "…" : "✕"}</button>
-              </div>
-            );
-          })}
-        </div>
-
-        {showMyCarForm && (
-          <form onSubmit={saveMycar} className="bg-slate-50 rounded-xl p-4 space-y-3 border border-slate-200">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-              <div><label className="label">Make *</label><input className="input" value={myCarForm.make} onChange={e => setMyCarForm(f => ({ ...f, make: e.target.value }))} placeholder="Volkswagen" required /></div>
-              <div><label className="label">Model *</label><input className="input" value={myCarForm.model} onChange={e => setMyCarForm(f => ({ ...f, model: e.target.value }))} placeholder="Golf" required /></div>
-              <div><label className="label">Year</label><input className="input" type="number" value={myCarForm.year} onChange={e => setMyCarForm(f => ({ ...f, year: e.target.value }))} placeholder="2021" min={1990} max={2030} /></div>
-            </div>
-            <div><label className="label">Nickname</label><input className="input" value={myCarForm.name} onChange={e => setMyCarForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. My daily driver" /></div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="label mb-0">Consumption (L/100km) *</label>
-                  <button type="button" onClick={estimateMyCons} disabled={!myCarForm.make || !myCarForm.model || myAiLoading}
-                    className="text-xs text-indigo-600 hover:text-indigo-800 disabled:text-slate-300 transition">
-                    {myAiLoading ? "⏳ Estimating…" : "🤖 AI estimate"}
-                  </button>
-                </div>
-                <input className="input" type="number" step="0.1" min="1" max="30" value={myCarForm.fuel_consumption_per_100km}
-                  onChange={e => setMyCarForm(f => ({ ...f, fuel_consumption_per_100km: e.target.value }))} placeholder="6.5" required />
-                {myAiEstimate && <p className="text-xs text-indigo-600 mt-1">🤖 {myAiEstimate.l_per_100km}L/100km — {myAiEstimate.note}</p>}
-                {myAiError && <p className="text-xs text-red-500 mt-1">⚠️ {myAiError}</p>}
-              </div>
-              <div>
-                <label className="label">Fuel cost (€/L)</label>
-                <input className="input" type="number" step="0.01" min="0" value={myCarForm.fuel_cost_per_liter}
-                  onChange={e => setMyCarForm(f => ({ ...f, fuel_cost_per_liter: e.target.value }))} placeholder="1.70" />
-                {myCarForm.fuel_consumption_per_100km && myCarForm.fuel_cost_per_liter && (
-                  <p className="text-xs text-amber-700 font-semibold mt-1">
-                    ~€{(parseFloat(myCarForm.fuel_consumption_per_100km) * parseFloat(myCarForm.fuel_cost_per_liter)).toFixed(2)}/100km
-                  </p>
-                )}
-              </div>
-            </div>
-            <button type="submit" disabled={savingMyCar} className="btn-primary text-sm">{savingMyCar ? "Saving…" : "Save car"}</button>
-          </form>
-        )}
-      </div>
 
       {/* Add / Edit form — two-column on large screens */}
       <div className="flex flex-col lg:flex-row gap-6 items-start">
@@ -930,17 +850,99 @@ export default function FamilyPage() {
             </section>
           )}
 
-          {error && <p className="text-red-500 text-sm">{error}</p>}
-
-          <div className="flex gap-2 pt-2">
-            <button type="submit" className="btn-primary" disabled={saving}>
-              {saving ? "Saving..." : editId ? "Save changes" : "Add person"}
-            </button>
-            {editId && (
-              <button type="button" onClick={cancelEdit} className="btn-ghost">Cancel</button>
-            )}
-          </div>
         </form>
+
+        {/* ── My Cars ── */}
+        <section className="space-y-3 pt-2 border-t border-slate-100">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide">My Cars 🚗</h3>
+              <p className="text-xs text-slate-400 mt-0.5">Your own vehicles used for road trip cost estimates.</p>
+            </div>
+            <button type="button" onClick={() => {
+              if (!showMyCarForm) {
+                const avg = getFuelPrice("PT");
+                setMyCarForm(f => ({ ...f, fuel_cost_per_liter: avg ? String(avg) : "1.70" }));
+              }
+              setShowMyCarForm(f => !f); setMyAiEstimate(null); setMyAiError(null);
+            }} className="btn-ghost text-xs px-2 py-1">
+              {showMyCarForm ? "Cancel" : "+ Add car"}
+            </button>
+          </div>
+
+          {myCars.length === 0 && !showMyCarForm && (
+            <p className="text-xs text-slate-400">No cars added yet.</p>
+          )}
+
+          <div className="space-y-2">
+            {myCars.map(car => {
+              const costPer100 = (car.fuel_consumption_per_100km * car.fuel_cost_per_liter).toFixed(2);
+              return (
+                <div key={car.id} className="flex items-center gap-3 p-3 bg-amber-50 border border-amber-100 rounded-xl">
+                  <span className="text-xl">🚗</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-slate-800 text-sm">{car.make} {car.model}{car.year && <span className="text-slate-400 font-normal ml-1">({car.year})</span>}</p>
+                    {car.name && car.name !== `${car.make} ${car.model}` && car.name !== `${car.make} ${car.model} (${car.year})` && (
+                      <p className="text-xs text-slate-400 italic">{car.name}</p>
+                    )}
+                    <p className="text-xs text-slate-500">{car.fuel_consumption_per_100km}L/100km · €{car.fuel_cost_per_liter}/L · <span className="text-amber-700 font-semibold">~€{costPer100}/100km</span></p>
+                  </div>
+                  <button type="button" onClick={() => deleteMycar(car.id)} disabled={deletingMyCarId === car.id}
+                    className="text-xs text-red-400 hover:text-red-600 transition">{deletingMyCarId === car.id ? "…" : "✕"}</button>
+                </div>
+              );
+            })}
+          </div>
+
+          {showMyCarForm && (
+            <form onSubmit={saveMycar} className="bg-slate-50 rounded-xl p-4 space-y-3 border border-slate-200">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <div><label className="label">Make *</label><input className="input" value={myCarForm.make} onChange={e => setMyCarForm(f => ({ ...f, make: e.target.value }))} placeholder="Volkswagen" required /></div>
+                <div><label className="label">Model *</label><input className="input" value={myCarForm.model} onChange={e => setMyCarForm(f => ({ ...f, model: e.target.value }))} placeholder="Golf" required /></div>
+                <div><label className="label">Year</label><input className="input" type="number" value={myCarForm.year} onChange={e => setMyCarForm(f => ({ ...f, year: e.target.value }))} placeholder="2021" min={1990} max={2030} /></div>
+              </div>
+              <div><label className="label">Nickname</label><input className="input" value={myCarForm.name} onChange={e => setMyCarForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. My daily driver" /></div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="label mb-0">Consumption (L/100km) *</label>
+                    <button type="button" onClick={estimateMyCons} disabled={!myCarForm.make || !myCarForm.model || myAiLoading}
+                      className="text-xs text-indigo-600 hover:text-indigo-800 disabled:text-slate-300 transition">
+                      {myAiLoading ? "⏳ Estimating…" : "🤖 AI estimate"}
+                    </button>
+                  </div>
+                  <input className="input" type="number" step="0.1" min="1" max="30" value={myCarForm.fuel_consumption_per_100km}
+                    onChange={e => setMyCarForm(f => ({ ...f, fuel_consumption_per_100km: e.target.value }))} placeholder="6.5" required />
+                  {myAiEstimate && <p className="text-xs text-indigo-600 mt-1">🤖 {myAiEstimate.l_per_100km}L/100km — {myAiEstimate.note}</p>}
+                  {myAiError && <p className="text-xs text-red-500 mt-1">⚠️ {myAiError}</p>}
+                </div>
+                <div>
+                  <label className="label">Fuel cost (€/L)</label>
+                  <input className="input" type="number" step="0.01" min="0" value={myCarForm.fuel_cost_per_liter}
+                    onChange={e => setMyCarForm(f => ({ ...f, fuel_cost_per_liter: e.target.value }))} placeholder="1.70" />
+                  {myCarForm.fuel_consumption_per_100km && myCarForm.fuel_cost_per_liter && (
+                    <p className="text-xs text-amber-700 font-semibold mt-1">
+                      ~€{(parseFloat(myCarForm.fuel_consumption_per_100km) * parseFloat(myCarForm.fuel_cost_per_liter)).toFixed(2)}/100km
+                    </p>
+                  )}
+                </div>
+              </div>
+              <button type="submit" disabled={savingMyCar} className="btn-primary text-sm">{savingMyCar ? "Saving…" : "Save car"}</button>
+            </form>
+          )}
+        </section>
+
+        {error && <p className="text-red-500 text-sm">{error}</p>}
+
+        <div className="flex gap-2 pt-2 border-t border-slate-100">
+          <button type="button" onClick={handleSave} className="btn-primary" disabled={saving}>
+            {saving ? "Saving..." : editId ? "Save changes" : "Add person"}
+          </button>
+          {editId && (
+            <button type="button" onClick={cancelEdit} className="btn-ghost">Cancel</button>
+          )}
+        </div>
+
         </div> {/* end form card */}
       </div> {/* end two-column */}
     </div>

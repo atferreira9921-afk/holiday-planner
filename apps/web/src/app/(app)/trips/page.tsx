@@ -441,7 +441,7 @@ export default async function TripsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">My Trips</h1>
-          <p className="text-slate-500 text-sm mt-1">{trips.length} trips planned</p>
+          <p className="text-slate-500 text-sm mt-1">{trips.filter(t => !["cancelled", "archived"].includes(t.status)).length} active trip{trips.filter(t => !["cancelled", "archived"].includes(t.status)).length !== 1 ? "s" : ""}</p>
         </div>
         <Link href="/trips/new" className="btn-primary">✈️ New trip</Link>
       </div>

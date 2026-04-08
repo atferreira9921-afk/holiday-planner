@@ -220,7 +220,7 @@ export default function AccountPage() {
             <label className="label">Email</label>
             <input className="input" value={email} readOnly
               style={{ opacity: 0.6, cursor: "not-allowed" }} />
-            <p className="text-xs text-slate-400 mt-1">Email cannot be changed here.</p>
+            <p className="text-xs text-slate-400 mt-1">To change your email, use the section below.</p>
           </div>
           <button type="submit" className="btn-primary" disabled={savingName}>
             {savingName ? "Saving…" : "Save name"}

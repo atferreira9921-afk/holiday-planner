@@ -97,7 +97,7 @@ export default function TripStatusControl({ tripId, currentStatus, selectedSugge
               </button>
             )}
 
-            {(currentStatus === "planning" || currentStatus === "booked") && (
+            {(currentStatus === "planning" || currentStatus === "suggested" || currentStatus === "booked") && (
               <button
                 className="btn-ghost text-sm"
                 onClick={() => updateStatus("cancelled")}

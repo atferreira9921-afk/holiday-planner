@@ -21,6 +21,7 @@ interface Props {
 export default function EditTripModal({ trip }: Props) {
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [form, setForm] = useState({
     title: trip.title,
     earliest_departure: trip.earliest_departure,
@@ -40,7 +41,8 @@ export default function EditTripModal({ trip }: Props) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
-    await supabase.from("trips").update({
+    setSaveError(null);
+    const { error } = await supabase.from("trips").update({
       title: form.title,
       earliest_departure: form.earliest_departure,
       latest_return: form.latest_return,
@@ -49,6 +51,7 @@ export default function EditTripModal({ trip }: Props) {
       destination_hint: form.destination_hint !== "" ? form.destination_hint : null,
     }).eq("id", trip.id);
     setSaving(false);
+    if (error) { setSaveError("Failed to save. Please try again."); return; }
     setIsEditing(false);
     router.refresh();
   }
@@ -137,6 +140,8 @@ export default function EditTripModal({ trip }: Props) {
           className="input w-full"
         />
       </div>
+
+      {saveError && <p className="text-xs text-red-500">{saveError}</p>}
 
       <div className="flex items-center gap-2">
         <button type="submit" className="btn-primary text-sm" disabled={saving}>
