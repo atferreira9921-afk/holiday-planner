@@ -570,7 +570,7 @@ export default function HolidaysPage() {
       // Skip if country code is missing or not a valid 2-letter ISO code
       if (!country || country.length !== 2) continue;
       setLoadingKeys(prev => new Set(prev).add(key));
-      fetch(`https://date.nager.at/api/v3/PublicHolidays/${year}/${country}`)
+      fetch(`/api/holidays/${country}/${year}`)
         .then(r => r.ok ? r.json() : []).catch(() => [])
         .then((data: PublicHoliday[]) => {
           // Merge in municipal holidays for members in this country/year
