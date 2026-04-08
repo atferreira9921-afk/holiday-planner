@@ -47,10 +47,11 @@ export async function proxy(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Redirect unauthenticated users to login
+  // Redirect unauthenticated users to login, preserving the intended destination
   if (!user && !isAuthRoute && request.nextUrl.pathname !== "/") {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
+    url.searchParams.set("redirect", request.nextUrl.pathname);
     return NextResponse.redirect(url);
   }
 
