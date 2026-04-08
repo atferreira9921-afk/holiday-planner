@@ -1,10 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 
 export default function AcceptButton({ token }: { token: string }) {
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState<string | null>(null);
 
@@ -18,7 +16,10 @@ export default function AcceptButton({ token }: { token: string }) {
       setLoading(false);
       return;
     }
-    router.push("/trips");
+    // Hard redirect so the trips page is fetched fresh from the server
+    // with the new group membership already committed to the DB.
+    // router.push() can serve a stale RSC cache that doesn't include the new trip.
+    window.location.href = "/trips";
   }
 
   return (
