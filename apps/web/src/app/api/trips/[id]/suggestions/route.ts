@@ -95,9 +95,18 @@ export async function POST(
               .eq("trip_id", tripId),
           ]);
 
-        // ── Build calendar objects ──────────────────────────────────────────
+        // ── Fetch public holidays for all member countries ──────────────────
         const tripYear = new Date(trip.earliest_departure + "T00:00:00").getFullYear();
+        const memberCountries = [...new Set(membersWithPrefs.map(m => m.preferences?.home_country ?? "PT"))];
+        const { data: allPublicHolidays } = await db
+          .from("public_holidays")
+          .select("country_code, date, name")
+          .in("country_code", memberCountries)
+          .eq("year", tripYear)
+          .gte("date", trip.earliest_departure)
+          .lte("date", trip.latest_return);
 
+        // ── Build calendar objects ──────────────────────────────────────────
         const groupMembers: MemberCalendar[] = membersWithPrefs.map((m) => {
           const prefs = m.preferences;
           const blockedDates: string[] = [];
@@ -126,13 +135,18 @@ export async function POST(
             }
           }
 
+          const memberCountry = prefs?.home_country ?? "PT";
+          const memberHolidays = (allPublicHolidays ?? [])
+            .filter(h => h.country_code === memberCountry)
+            .map(h => ({ date: h.date, name: h.name }));
+
           return {
             user_id: m.user_id,
-            home_country: prefs?.home_country ?? "PT",
+            home_country: memberCountry,
             home_city: prefs?.home_city ?? "LIS",
             vacation_days_remaining: Math.max(0, (prefs?.vacation_days_per_year ?? 22) - usedVacationDays),
             blocked_dates: [...new Set(blockedDates)],
-            public_holidays: [],
+            public_holidays: memberHolidays,
             preferences: prefs ?? defaultPreferences(),
           };
         });
@@ -148,7 +162,10 @@ export async function POST(
 
         const membersContext = groupMembers.map((m, i) => {
           const p = m.preferences;
-          return `Member ${i + 1}: home=${m.home_country}/${m.home_city}, vacation_days_left=${m.vacation_days_remaining}, blocked=${m.blocked_dates.length} days, style=${p.travel_style}, budget=${p.budget_min_eur}-${p.budget_max_eur}EUR, interests=${(p.interests ?? []).join(",") || "general"}, avoid=${(p.avoid_destinations ?? []).join(",") || "none"}`;
+          const holidaysStr = m.public_holidays.length > 0
+            ? `, public_holidays=[${m.public_holidays.map((h: { date: string; name: string }) => `${h.date}:${h.name}`).join(",")}]`
+            : ", public_holidays=none";
+          return `Member ${i + 1}: home=${m.home_country}/${m.home_city}, vacation_days_left=${m.vacation_days_remaining}, blocked=${m.blocked_dates.length} days, style=${p.travel_style}, budget=${p.budget_min_eur}-${p.budget_max_eur}EUR, interests=${(p.interests ?? []).join(",") || "general"}, avoid=${(p.avoid_destinations ?? []).join(",") || "none"}${holidaysStr}`;
         }).join("\n");
 
         const freeStaysCtx = freeStays.length > 0
