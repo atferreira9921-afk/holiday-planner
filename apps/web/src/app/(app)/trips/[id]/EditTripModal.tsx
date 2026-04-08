@@ -12,6 +12,8 @@ interface TripData {
   desired_duration_days: number;
   budget_per_person_eur: number | null;
   destination_hint: string | null;
+  return_origin_city: string | null;
+  return_origin_country: string | null;
 }
 
 interface Props {
@@ -29,6 +31,8 @@ export default function EditTripModal({ trip }: Props) {
     desired_duration_days: trip.desired_duration_days,
     budget_per_person_eur: trip.budget_per_person_eur ?? "",
     destination_hint: trip.destination_hint ?? "",
+    return_origin_city: trip.return_origin_city ?? "",
+    return_origin_country: trip.return_origin_country ?? "",
   });
   const router = useRouter();
   const supabase = createClient();
@@ -49,6 +53,8 @@ export default function EditTripModal({ trip }: Props) {
       desired_duration_days: Number(form.desired_duration_days),
       budget_per_person_eur: form.budget_per_person_eur !== "" ? Number(form.budget_per_person_eur) : null,
       destination_hint: form.destination_hint !== "" ? form.destination_hint : null,
+      return_origin_city: form.return_origin_city !== "" ? form.return_origin_city : null,
+      return_origin_country: form.return_origin_country !== "" ? form.return_origin_country.toUpperCase().slice(0, 2) : null,
     }).eq("id", trip.id);
     setSaving(false);
     if (error) { setSaveError("Failed to save. Please try again."); return; }
@@ -139,6 +145,32 @@ export default function EditTripModal({ trip }: Props) {
           onChange={handleChange}
           className="input w-full"
         />
+      </div>
+
+      <div>
+        <label className="block text-xs font-medium text-slate-600 mb-1">
+          Return from different city <span className="text-slate-400">(optional — for open-jaw trips)</span>
+        </label>
+        <p className="text-xs text-slate-400 mb-1.5">Leave blank to return from your destination. Set this if your itinerary ends in a different city.</p>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            name="return_origin_city"
+            value={form.return_origin_city}
+            onChange={handleChange}
+            placeholder="e.g. Rome"
+            className="input flex-1"
+          />
+          <input
+            type="text"
+            name="return_origin_country"
+            value={form.return_origin_country}
+            onChange={handleChange}
+            placeholder="IT"
+            maxLength={2}
+            className="input w-16 text-center uppercase"
+          />
+        </div>
       </div>
 
       {saveError && <p className="text-xs text-red-500">{saveError}</p>}

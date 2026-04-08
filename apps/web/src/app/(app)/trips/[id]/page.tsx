@@ -317,6 +317,7 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
             outbound={trip.earliest_departure}
             ret={destFirstReturn}
             fallbackUrl={buildFlightFallbackUrl(null, trip.destination_city as string, trip.earliest_departure, destFirstReturn)}
+            returnFromCity={trip.return_origin_city as string | null}
           />
           <HotelSearchPanel
             city={trip.destination_city as string}
@@ -458,6 +459,7 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
                       outbound={s.suggested_departure}
                       ret={s.suggested_return}
                       fallbackUrl={s.flight_data?.booking_url ?? buildFlightFallbackUrl(s.destination_iata ?? null, s.destination_city, s.suggested_departure, s.suggested_return)}
+                      returnFromCity={trip.return_origin_city as string | null}
                     />
                     <HotelSearchPanel
                       city={s.destination_city}

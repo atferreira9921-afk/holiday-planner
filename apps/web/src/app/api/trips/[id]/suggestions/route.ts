@@ -232,7 +232,8 @@ Trip constraints:
 - Budget per person: ${trip.budget_per_person_eur ?? "flexible"} EUR
 - Destination hint: ${trip.destination_hint ?? "none"}
 - Mode: ${trip.planning_mode ?? "days_first"}
-${trip.destination_city ? `- Fixed: ${trip.destination_city}, ${trip.destination_country}` : ""}
+${trip.destination_city ? `- Fixed destination: ${trip.destination_city}, ${trip.destination_country}` : ""}
+${(trip as Record<string, unknown>).return_origin_city ? `- Open-jaw: group plans to return from ${(trip as Record<string, unknown>).return_origin_city}, ${(trip as Record<string, unknown>).return_origin_country ?? ""} (not from the destination). Factor this into routing and destination selection — nearby cities make good multi-stop itineraries.` : ""}
 
 Group:
 ${membersContext}
