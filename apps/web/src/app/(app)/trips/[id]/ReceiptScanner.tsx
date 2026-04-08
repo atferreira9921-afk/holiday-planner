@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { isAiEnabled } from "@/lib/config";
 
 interface ParsedReceipt {
   description: string;
@@ -67,6 +68,8 @@ export default function ReceiptScanner({
       setScanning(false);
     }
   }
+
+  if (!isAiEnabled) return null;
 
   return (
     <div className="card p-5 space-y-4">

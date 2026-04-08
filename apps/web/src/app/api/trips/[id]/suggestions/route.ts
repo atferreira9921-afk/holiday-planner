@@ -2,6 +2,7 @@ import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { anthropic } from "@/lib/anthropic";
 import { createNotification } from "@/lib/notifications";
 import { checkAndConsumeAiLimit } from "@/lib/ai-rate-limit";
+import { isAiEnabled } from "@/lib/config";
 import type { MemberCalendar, UserPreferences } from "@holiday-planner/shared-types";
 
 export const maxDuration = 60; // Vercel: allow up to 60s for AI generation
@@ -21,6 +22,13 @@ export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  if (!isAiEnabled) {
+    return new Response(
+      `data: ${JSON.stringify({ error: "AI features are disabled." })}\n\n`,
+      { headers: { "Content-Type": "text/event-stream" } }
+    );
+  }
+
   const { id: tripId } = await params;
   const body = await req.json().catch(() => ({})) as { userPrompt?: string | null };
   const userPrompt = body.userPrompt?.trim().slice(0, 500) || null;

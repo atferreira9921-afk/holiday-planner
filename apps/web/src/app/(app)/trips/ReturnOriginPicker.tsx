@@ -30,13 +30,13 @@ export default function ReturnOriginPicker({ vehicleType, city, country, onChang
   useEffect(() => {
     if (vehicleType !== "car" && selectedCountry) {
       const airports = AIRPORTS_BY_COUNTRY[selectedCountry] ?? [];
-      // If currently selected airport is not in new country, reset
-      const stillValid = airports.some(a => a.city === selectedAirport);
+      // If currently selected airport (IATA) is not in new country, reset
+      const stillValid = airports.some(a => a.iata === selectedAirport);
       if (!stillValid) {
         const first = airports[0];
-        const newCity = first?.city ?? "";
-        setSelectedAirport(newCity);
-        onChange(newCity, selectedCountry);
+        const newIata = first?.iata ?? "";
+        setSelectedAirport(newIata);
+        onChange(newIata, selectedCountry);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -120,7 +120,7 @@ export default function ReturnOriginPicker({ vehicleType, city, country, onChang
               >
                 <option value="">Airport…</option>
                 {airports.map(a => (
-                  <option key={a.iata} value={a.city}>
+                  <option key={a.iata} value={a.iata}>
                     {a.city} ({a.iata}) — {a.name}
                   </option>
                 ))}

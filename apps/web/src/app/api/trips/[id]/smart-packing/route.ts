@@ -2,12 +2,21 @@ import { NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { anthropic } from "@/lib/anthropic";
 import { checkAndConsumeAiLimit } from "@/lib/ai-rate-limit";
+import { isAiEnabled } from "@/lib/config";
 
 export const maxDuration = 30;
 
 const ALLOWED_TRIP_TYPES = ["flight", "road_trip", "train", "cruise", "backpacking", "city_break", "beach", "ski", "camping"];
 
 export async function POST(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  if (!isAiEnabled) return NextResponse.json({ error: "AI features are disabled." }, { status: 503 });
+  return _POST(req, { params });
+}
+
+async function _POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {

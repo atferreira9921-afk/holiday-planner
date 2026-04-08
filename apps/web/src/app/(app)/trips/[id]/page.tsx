@@ -33,6 +33,7 @@ import DuplicateTripButton from "./DuplicateTripButton";
 import FlightSearchPanel from "./FlightSearchPanel";
 import HotelSearchPanel from "./HotelSearchPanel";
 import CarRentalPanel from "./CarRentalPanel";
+import { isAiEnabled } from "@/lib/config";
 
 export default async function TripDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -75,6 +76,7 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
     { data: pollOptions },
     { data: pollVotes },
     { data: tripDocuments },
+    { data: predepartureChecks },
   ] = await Promise.all([
     db.from("trip_suggestions").select("*").eq("trip_id", id).order("rank"),
     db.from("group_members").select("user_id, role").eq("group_id", trip.group_id),
@@ -96,6 +98,7 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
     db.from("trip_poll_options").select("*").in("poll_id", ["00000000-0000-0000-0000-000000000000"]),
     db.from("trip_poll_votes").select("*").in("poll_id", ["00000000-0000-0000-0000-000000000000"]),
     db.from("trip_documents").select("*").eq("trip_id", id).order("created_at"),
+    db.from("trip_predeparture_checks").select("item_id, is_checked, is_shared, is_removed, label, user_id").eq("trip_id", id),
   ]);
 
   const homeCountry = (userPrefs as { home_country?: string; home_city?: string } | null)?.home_country ?? "PT";
@@ -314,6 +317,7 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
             fromIata={homeIata}
             toIata={null}
             toCity={trip.destination_city as string}
+            toCountry={trip.destination_country as string | null}
             outbound={trip.earliest_departure}
             ret={destFirstReturn}
             fallbackUrl={buildFlightFallbackUrl(null, trip.destination_city as string, trip.earliest_departure, destFirstReturn)}
@@ -338,7 +342,7 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
       )}
 
       {/* Generate suggestions — only for AI-suggest mode */}
-      {trip.status === "planning" && !isDestinationFirst && (
+      {isAiEnabled && trip.status === "planning" && !isDestinationFirst && (
         <div className="card p-6">
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 rounded-xl gradient-card flex items-center justify-center text-2xl flex-shrink-0">🤖</div>
@@ -354,7 +358,7 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
       )}
 
       {/* Suggestions — only for AI-suggest mode */}
-      {!isDestinationFirst && suggestions && suggestions.length > 0 && (() => {
+      {isAiEnabled && !isDestinationFirst && suggestions && suggestions.length > 0 && (() => {
         const selectedSuggestion = trip.selected_suggestion_id
           ? suggestions.find(s => s.id === trip.selected_suggestion_id) ?? null
           : null;
@@ -541,7 +545,7 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
       })()}
 
       {/* Regenerate suggestions */}
-      {!isDestinationFirst && suggestions && suggestions.length > 0 && !trip.selected_suggestion_id && (
+      {isAiEnabled && !isDestinationFirst && suggestions && suggestions.length > 0 && !trip.selected_suggestion_id && (
         <div className="card p-5">
           <details className="group">
             <summary className="flex items-center gap-2 cursor-pointer list-none text-sm font-medium text-slate-500 hover:text-slate-700 transition">
@@ -556,7 +560,7 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
       )}
 
       {/* Voting — hidden once a destination is selected or in destination-first mode */}
-      {!isDestinationFirst && suggestions && suggestions.length > 0 && !trip.selected_suggestion_id && (
+      {isAiEnabled && !isDestinationFirst && suggestions && suggestions.length > 0 && !trip.selected_suggestion_id && (
         <VotingSection
           suggestions={suggestions.map(s => ({ id: s.id, rank: s.rank, destination_city: s.destination_city, destination_country: s.destination_country }))}
           members={members}
@@ -615,6 +619,8 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
       {/* Packing list */}
       <PackingSection
         tripId={trip.id}
+        currentUserId={user.id}
+        members={members}
         initialItems={(packingItems ?? []) as Parameters<typeof PackingSection>[0]["initialItems"]}
       />
 
@@ -655,7 +661,12 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
       />
 
       {/* Pre-departure checklist */}
-      <PreDepartureChecklist tripId={trip.id} />
+      <PreDepartureChecklist
+        tripId={trip.id}
+        currentUserId={user.id}
+        members={members}
+        initialChecks={(predepartureChecks ?? []) as Parameters<typeof PreDepartureChecklist>[0]["initialChecks"]}
+      />
 
       {/* Invite */}
       <InviteSection tripId={trip.id} members={members} />

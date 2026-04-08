@@ -54,7 +54,7 @@ export default function HotelSearchPanel({ city, country, checkin, checkout, fal
   return (
     <div className="w-full mt-3">
       <button onClick={search} className="btn-ghost text-sm">
-        🏨 {open ? "Hide hotels" : "Search hotels"}
+        {open ? "Hide hotels" : "Search hotels"}
       </button>
 
       {open && (

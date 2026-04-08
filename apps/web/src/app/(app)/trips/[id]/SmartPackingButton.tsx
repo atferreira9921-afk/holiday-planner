@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { isAiEnabled } from "@/lib/config";
 
 interface PackingSuggestion {
   item: string;
@@ -61,6 +62,8 @@ export default function SmartPackingButton({
 
     setAdded(prev => new Set([...prev, index]));
   }
+
+  if (!isAiEnabled) return null;
 
   return (
     <div className="space-y-3">
