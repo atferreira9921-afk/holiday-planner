@@ -88,7 +88,8 @@ export async function POST(
               .gte("end_date", trip.earliest_departure),
             db.from("free_stays")
               .select("destination_city, destination_country, host_name, owner_user_id")
-              .in("owner_user_id", memberUserIds),
+              .in("owner_user_id", memberUserIds)
+              .eq("is_active", true),
           ]);
 
         // ── Build calendar objects ──────────────────────────────────────────
@@ -166,8 +167,10 @@ ${membersContext}
 
 ${freeStaysCtx}
 ${userPrompt ? `\nAdditional preferences from the group: ${userPrompt}\n` : ""}
+For each suggestion, also decide whether renting a car is recommended (e.g. rural areas, islands, destinations with poor public transport). Set suggest_car_rental to true/false, provide a brief car_rental_reasoning (1 sentence), and estimate estimated_car_rental_price_eur for the trip duration if applicable (null otherwise).
+
 Return ONLY a JSON array of 3 suggestions (no markdown, no explanation):
-[{"rank":1,"destination_city":"City","destination_country":"XX","destination_iata":"XXX","suggested_departure":"YYYY-MM-DD","suggested_return":"YYYY-MM-DD","total_days":7,"vacation_days_used":5,"overlap_score":0.9,"estimated_flight_price_eur":150,"estimated_hotel_price_eur":400,"estimated_total_price_eur":600,"reasoning":"2-3 sentences why","highlights":["h1","h2","h3"],"trade_offs":["t1"]}]`;
+[{"rank":1,"destination_city":"City","destination_country":"XX","destination_iata":"XXX","suggested_departure":"YYYY-MM-DD","suggested_return":"YYYY-MM-DD","total_days":7,"vacation_days_used":5,"overlap_score":0.9,"estimated_flight_price_eur":150,"estimated_hotel_price_eur":400,"estimated_total_price_eur":600,"reasoning":"2-3 sentences why","highlights":["h1","h2","h3"],"trade_offs":["t1"],"suggest_car_rental":false,"car_rental_reasoning":"Good public transport, no car needed.","estimated_car_rental_price_eur":null}]`;
 
         // ── Call Claude (non-streaming for proxy compatibility) ─────────────
         const message = await anthropic.messages.create({
@@ -221,6 +224,9 @@ Return ONLY a JSON array of 3 suggestions (no markdown, no explanation):
           reasoning: String(s.reasoning ?? ""),
           highlights: Array.isArray(s.highlights) ? s.highlights.map(String) : [],
           trade_offs: Array.isArray(s.trade_offs) ? s.trade_offs.map(String) : [],
+          suggest_car_rental: s.suggest_car_rental === true,
+          car_rental_reasoning: s.car_rental_reasoning ? String(s.car_rental_reasoning) : null,
+          estimated_car_rental_price_eur: s.estimated_car_rental_price_eur ? Number(s.estimated_car_rental_price_eur) : null,
           ai_model_version: "claude-sonnet-4-6",
           created_at: now,
         }));

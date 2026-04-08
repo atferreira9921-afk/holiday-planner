@@ -31,6 +31,7 @@ import TripFamilyMembers from "./TripFamilyMembers";
 import DuplicateTripButton from "./DuplicateTripButton";
 import FlightSearchPanel from "./FlightSearchPanel";
 import HotelSearchPanel from "./HotelSearchPanel";
+import CarRentalPanel from "./CarRentalPanel";
 
 export default async function TripDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -377,6 +378,16 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
                       checkout={s.suggested_return}
                       fallbackUrl={s.hotel_data?.booking_url ?? buildHotelSearchUrl(s.destination_city, s.destination_country, s.suggested_departure, s.suggested_return)}
                     />
+                    {s.suggest_car_rental && (
+                      <CarRentalPanel
+                        city={s.destination_city}
+                        country={s.destination_country}
+                        pickupDate={s.suggested_departure}
+                        dropoffDate={s.suggested_return}
+                        reasoning={s.car_rental_reasoning ?? null}
+                        estimatedPriceEur={s.estimated_car_rental_price_eur ?? null}
+                      />
+                    )}
                   </>
                 )}
               </div>

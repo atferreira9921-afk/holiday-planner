@@ -26,6 +26,7 @@ interface FreeStay {
   destination_country: string;
   host_name: string | null;
   notes: string | null;
+  is_active: boolean;
   created_at: string;
 }
 
@@ -135,7 +136,7 @@ export default function WishlistPage() {
   const [showStayForm, setShowStayForm] = useState(false);
   const [savingStay, setSavingStay] = useState(false);
   const [stayForm, setStayForm] = useState({
-    destination_country: "PT", destination_city: "", host_name: "", notes: "",
+    destination_country: "PT", destination_city: "", host_name: "", notes: "", is_active: true,
   });
 
   // Globe
@@ -273,8 +274,9 @@ export default function WishlistPage() {
       destination_country: stayForm.destination_country,
       host_name: stayForm.host_name.trim() || null,
       notes: stayForm.notes.trim() || null,
+      is_active: stayForm.is_active,
     });
-    setStayForm({ destination_country: "PT", destination_city: "", host_name: "", notes: "" });
+    setStayForm({ destination_country: "PT", destination_city: "", host_name: "", notes: "", is_active: true });
     setShowStayForm(false);
     setSavingStay(false);
     const stays = await loadFreeStays(user.id);
@@ -287,6 +289,13 @@ export default function WishlistPage() {
     const next = freeStays.filter(x => x.id !== id);
     setFreeStays(next);
     geocodeCities(items, next);
+  }
+
+  async function handleToggleStay(id: string, is_active: boolean) {
+    const supabase = createClient();
+    await supabase.from("free_stays").update({ is_active }).eq("id", id);
+    const next = freeStays.map(x => x.id === id ? { ...x, is_active } : x);
+    setFreeStays(next);
   }
 
   const stayCountryName = (code: string) => COUNTRIES.find(c => c.code === code)?.name ?? code;
@@ -450,6 +459,19 @@ export default function WishlistPage() {
                 onChange={e => setStayForm(f => ({ ...f, notes: e.target.value }))}
                 placeholder="e.g. Spare room, available in summer" />
             </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <label className="text-sm font-medium text-slate-700">Use in suggestions</label>
+                <p className="text-xs text-slate-400 mt-0.5">When active, the AI will factor in the €0 hotel cost for this stay.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setStayForm(f => ({ ...f, is_active: !f.is_active }))}
+                className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none ${stayForm.is_active ? "bg-emerald-500" : "bg-slate-200"}`}
+              >
+                <span className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transition-transform duration-200 ${stayForm.is_active ? "translate-x-5" : "translate-x-0"}`} />
+              </button>
+            </div>
             <div className="flex items-start gap-3 p-3 bg-emerald-50 rounded-xl border border-emerald-100 text-xs text-emerald-800">
               <span className="text-base flex-shrink-0">💡</span>
               <p>Hotel cost for this destination will be set to <strong>€0</strong> when generating AI trip suggestions.</p>
@@ -480,14 +502,20 @@ export default function WishlistPage() {
                   && w.destination_country === stay.destination_country
               );
               return (
-                <div key={stay.id} className="card p-5 flex items-center gap-4" style={{ borderColor: "#a7f3d0" }}>
-                  <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-xl flex-shrink-0">🏠</div>
+                <div key={stay.id} className={`card p-5 flex items-center gap-4 transition ${stay.is_active ? "" : "opacity-60"}`} style={{ borderColor: stay.is_active ? "#a7f3d0" : "#e2e8f0" }}>
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0 ${stay.is_active ? "bg-emerald-50" : "bg-slate-100"}`}>🏠</div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="font-bold text-slate-900">{stay.destination_city}, {countryName}</h3>
-                      <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-emerald-100 text-emerald-700">
-                        🏨 Hotel: €0
-                      </span>
+                      {stay.is_active ? (
+                        <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-emerald-100 text-emerald-700">
+                          🏨 Hotel: €0
+                        </span>
+                      ) : (
+                        <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-slate-100 text-slate-500">
+                          Inactive
+                        </span>
+                      )}
                     </div>
                     {stay.host_name && (
                       <p className="text-xs text-slate-600 mt-0.5 font-medium">Staying with: {stay.host_name}</p>
@@ -504,7 +532,15 @@ export default function WishlistPage() {
                       </button>
                     )}
                   </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => handleToggleStay(stay.id, !stay.is_active)}
+                      title={stay.is_active ? "Deactivate (exclude from suggestions)" : "Activate (include in suggestions)"}
+                      className={`relative inline-flex h-5 w-9 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ${stay.is_active ? "bg-emerald-500" : "bg-slate-200"}`}
+                    >
+                      <span className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow transition-transform duration-200 ${stay.is_active ? "translate-x-4" : "translate-x-0"}`} />
+                    </button>
                     <button
                       onClick={() => router.push(`/trips/new?destination_city=${encodeURIComponent(stay.destination_city)}&destination_country=${stay.destination_country}`)}
                       className="btn-ghost text-xs px-3">Plan trip →</button>
