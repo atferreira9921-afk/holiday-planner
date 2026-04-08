@@ -252,6 +252,30 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
         </div>
       </div>
 
+      {/* Destination-first: city summary card (mirrors AI suggestion card) */}
+      {isDestinationFirst && (
+        <div className="card ring-2 ring-emerald-400 p-6">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center text-white text-lg flex-shrink-0">📍</div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-lg font-bold text-slate-900">{trip.destination_city}, {trip.destination_country}</h3>
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">✅ Destination set</span>
+              </div>
+              <p className="text-sm text-slate-500">
+                {trip.earliest_departure} → {destFirstReturn} · {trip.desired_duration_days} days
+              </p>
+              <SuggestionWeather
+                city={trip.destination_city as string}
+                country={trip.destination_country as string}
+                fromDate={trip.earliest_departure}
+                toDate={destFirstReturn}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Local info + currency (shown when destination is known) */}
       {destinationCountry && (
         <>
