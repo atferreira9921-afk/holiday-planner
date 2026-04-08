@@ -71,7 +71,7 @@ export async function POST(
 
         // ── Preferences + bookings + free stays (all parallel) ──────────────
         send({ progress: 30, stage: "Fetching calendars and preferences…" });
-        const [membersWithPrefs, { data: allBookings }, { data: rawFreeStays }] =
+        const [membersWithPrefs, { data: allBookings }, { data: rawFreeStays }, { data: existingSuggestions }] =
           await Promise.all([
             Promise.all(
               members.map(async (m) => {
@@ -90,6 +90,9 @@ export async function POST(
               .select("destination_city, destination_country, host_name, owner_user_id")
               .in("owner_user_id", memberUserIds)
               .eq("is_active", true),
+            db.from("trip_suggestions")
+              .select("destination_city, destination_country, rank")
+              .eq("trip_id", tripId),
           ]);
 
         // ── Build calendar objects ──────────────────────────────────────────
@@ -152,6 +155,11 @@ export async function POST(
           ? `Free stays: ${freeStays.map(f => `${f.destination_city}, ${f.destination_country}${f.host_name ? ` (${f.host_name})` : ""}`).join("; ")}`
           : "No free stays.";
 
+        const alreadySuggested = (existingSuggestions ?? []);
+        const alreadySuggestedCtx = alreadySuggested.length > 0
+          ? `Already suggested (do NOT repeat these): ${alreadySuggested.map(s => `${s.destination_city}, ${s.destination_country}`).join("; ")}`
+          : "";
+
         const prompt = `You are a travel planning AI. Generate 3 ranked trip destination suggestions.
 
 Trip constraints:
@@ -166,7 +174,7 @@ Group:
 ${membersContext}
 
 ${freeStaysCtx}
-${userPrompt ? `\nAdditional preferences from the group: ${userPrompt}\n` : ""}
+${alreadySuggestedCtx ? `\n${alreadySuggestedCtx}\n` : ""}${userPrompt ? `\nAdditional preferences from the group: ${userPrompt}\n` : ""}
 For each suggestion, also decide whether renting a car is recommended (e.g. rural areas, islands, destinations with poor public transport). Set suggest_car_rental to true/false, provide a brief car_rental_reasoning (1 sentence), and estimate estimated_car_rental_price_eur for the trip duration if applicable (null otherwise).
 
 Return ONLY a JSON array of 3 suggestions (no markdown, no explanation):
@@ -195,17 +203,29 @@ Return ONLY a JSON array of 3 suggestions (no markdown, no explanation):
 
         send({ progress: 90, stage: "Saving to database…" });
 
+        // Deduplicate: skip any city+country already in the DB for this trip
+        const existingKeys = new Set(
+          (existingSuggestions ?? []).map(s =>
+            `${s.destination_city.toLowerCase()}|${s.destination_country.toLowerCase()}`
+          )
+        );
+        const deduped = parsed.filter(s =>
+          !existingKeys.has(`${String(s.destination_city ?? "").toLowerCase()}|${String(s.destination_country ?? "").toLowerCase()}`)
+        );
+
+        if (deduped.length === 0) {
+          send({ error: "All generated suggestions were duplicates. Try again for fresh ideas." });
+          controller.close();
+          return;
+        }
+
         // Find the current max rank so new suggestions are appended, not replacing old ones
-        const { data: existingRanks } = await db
-          .from("trip_suggestions")
-          .select("rank")
-          .eq("trip_id", tripId)
-          .order("rank", { ascending: false })
-          .limit(1);
-        const rankOffset = existingRanks && existingRanks.length > 0 ? existingRanks[0].rank : 0;
+        const rankOffset = alreadySuggested.length > 0
+          ? Math.max(...alreadySuggested.map(s => (s as { rank: number }).rank))
+          : 0;
 
         const now = new Date().toISOString();
-        const rows = parsed.map(s => ({
+        const rows = deduped.map(s => ({
           trip_id: tripId,
           rank: rankOffset + (Number(s.rank) || 1),
           destination_city: String(s.destination_city ?? ""),
