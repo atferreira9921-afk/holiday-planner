@@ -19,7 +19,8 @@ export async function POST(
     .single();
   if (!suggestion) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const groupId = (suggestion.trips as { group_id: string } | null)?.group_id;
+  const tripsData = suggestion.trips as { group_id: string }[] | { group_id: string } | null;
+  const groupId = Array.isArray(tripsData) ? tripsData[0]?.group_id : tripsData?.group_id;
   if (groupId) {
     const { data: membership } = await db
       .from("group_members").select("user_id")
