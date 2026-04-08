@@ -219,7 +219,7 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             <StatusBadge status={trip.status} />
-            <EditTripModal trip={{ id: trip.id, title: trip.title, earliest_departure: trip.earliest_departure, latest_return: trip.latest_return, desired_duration_days: trip.desired_duration_days, budget_per_person_eur: trip.budget_per_person_eur ?? null, destination_hint: trip.destination_hint ?? null, return_origin_city: (trip.return_origin_city as string | null) ?? null, return_origin_country: (trip.return_origin_country as string | null) ?? null, vehicle_type: trip.vehicle_type as string | null }} />
+            <EditTripModal trip={{ id: trip.id, title: trip.title, earliest_departure: trip.earliest_departure, latest_return: trip.latest_return, desired_duration_days: trip.desired_duration_days, budget_per_person_eur: trip.budget_per_person_eur ?? null, destination_hint: trip.destination_hint ?? null, destination_city: (trip.destination_city as string | null) ?? null, destination_country: (trip.destination_country as string | null) ?? null, return_origin_city: (trip.return_origin_city as string | null) ?? null, return_origin_country: (trip.return_origin_country as string | null) ?? null, vehicle_type: trip.vehicle_type as string | null, planning_mode: trip.planning_mode as string | null }} />
             <DuplicateTripButton tripId={trip.id} />
             <DeleteTripButton tripId={trip.id} />
             <TripReportExport

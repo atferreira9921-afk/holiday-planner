@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import ReturnOriginPicker from "../ReturnOriginPicker";
+import { COUNTRIES } from "@/lib/data/geo";
 
 interface TripData {
   id: string;
@@ -13,9 +14,12 @@ interface TripData {
   desired_duration_days: number;
   budget_per_person_eur: number | null;
   destination_hint: string | null;
+  destination_city: string | null;
+  destination_country: string | null;
   return_origin_city: string | null;
   return_origin_country: string | null;
   vehicle_type: string | null;
+  planning_mode: string | null;
 }
 
 interface Props {
@@ -33,9 +37,13 @@ export default function EditTripModal({ trip }: Props) {
     desired_duration_days: trip.desired_duration_days,
     budget_per_person_eur: trip.budget_per_person_eur ?? "",
     destination_hint: trip.destination_hint ?? "",
+    destination_city: trip.destination_city ?? "",
+    destination_country: trip.destination_country ?? "",
     return_origin_city: trip.return_origin_city ?? "",
     return_origin_country: trip.return_origin_country ?? "",
   });
+
+  const isDestinationFirst = trip.planning_mode === "destination_first" || !!trip.destination_city;
   const router = useRouter();
   const supabase = createClient();
 
@@ -55,6 +63,8 @@ export default function EditTripModal({ trip }: Props) {
       desired_duration_days: Number(form.desired_duration_days),
       budget_per_person_eur: form.budget_per_person_eur !== "" ? Number(form.budget_per_person_eur) : null,
       destination_hint: form.destination_hint !== "" ? form.destination_hint : null,
+      destination_city: isDestinationFirst && form.destination_city !== "" ? form.destination_city : undefined,
+      destination_country: isDestinationFirst && form.destination_country !== "" ? form.destination_country.toUpperCase() : undefined,
       return_origin_city: form.return_origin_city !== "" ? form.return_origin_city : null,
       return_origin_country: form.return_origin_country !== "" ? form.return_origin_country.toUpperCase().slice(0, 2) : null,
     }).eq("id", trip.id);
@@ -138,16 +148,46 @@ export default function EditTripModal({ trip }: Props) {
         />
       </div>
 
-      <div>
-        <label className="block text-xs font-medium text-slate-600 mb-1">Destination hint <span className="text-slate-400">(optional)</span></label>
-        <input
-          type="text"
-          name="destination_hint"
-          value={form.destination_hint}
-          onChange={handleChange}
-          className="input w-full"
-        />
-      </div>
+      {isDestinationFirst ? (
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs font-medium text-slate-600 mb-1">Destination city</label>
+            <input
+              type="text"
+              name="destination_city"
+              value={form.destination_city}
+              onChange={handleChange}
+              placeholder="e.g. Barcelona"
+              className="input w-full"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-600 mb-1">Destination country</label>
+            <select
+              name="destination_country"
+              value={form.destination_country}
+              onChange={e => setForm(prev => ({ ...prev, destination_country: e.target.value }))}
+              className="input w-full"
+            >
+              <option value="">Select country…</option>
+              {COUNTRIES.map(c => (
+                <option key={c.code} value={c.code}>{c.name}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+      ) : (
+        <div>
+          <label className="block text-xs font-medium text-slate-600 mb-1">Destination hint <span className="text-slate-400">(optional)</span></label>
+          <input
+            type="text"
+            name="destination_hint"
+            value={form.destination_hint}
+            onChange={handleChange}
+            className="input w-full"
+          />
+        </div>
+      )}
 
       <div>
         <label className="block text-xs font-medium text-slate-600 mb-2">
