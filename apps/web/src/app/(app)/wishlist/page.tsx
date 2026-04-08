@@ -300,14 +300,11 @@ export default function WishlistPage() {
 
   const stayCountryName = (code: string) => COUNTRIES.find(c => c.code === code)?.name ?? code;
   const totalPins = markers.length;
-  const hasAny = items.length > 0 || freeStays.length > 0;
-
   if (loadingWishlist && loadingStays) return <WishlistLoading />;
 
   return (
-    // Wider container when globe is shown, normal otherwise
-    <div className={hasAny ? "" : "max-w-2xl mx-auto"}>
-      <div className={hasAny ? "flex flex-col lg:flex-row gap-8 items-start" : ""}>
+    <div className="">
+      <div className="flex flex-col lg:flex-row gap-8 items-start">
 
         {/* ─── Left: all content ─── */}
         <div className="flex-1 min-w-0 space-y-10">
@@ -557,8 +554,7 @@ export default function WishlistPage() {
         </div>
 
         {/* ─── Right: sticky globe ─── */}
-        {hasAny && (
-          <div className="w-full lg:w-[440px] flex-shrink-0 lg:sticky lg:top-[88px] space-y-3">
+        <div className="w-full lg:w-[440px] flex-shrink-0 lg:sticky lg:top-[88px] space-y-3">
             <div>
               <h2 className="text-sm font-bold text-slate-700">Your travel map</h2>
               <p className="text-xs text-slate-400 mt-0.5">
@@ -589,7 +585,6 @@ export default function WishlistPage() {
 
             <p className="text-xs text-slate-400 text-center">Drag to rotate · hover pins for city name</p>
           </div>
-        )}
 
       </div>
     </div>
