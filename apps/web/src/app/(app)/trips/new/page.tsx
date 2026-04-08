@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { COUNTRIES } from "@/lib/data/geo";
+import ReturnOriginPicker from "../ReturnOriginPicker";
 
 type PlanningMode = "days_first" | "destination_first";
 type VehicleType = "flight" | "car" | "bus";
@@ -60,6 +61,8 @@ export default function NewTripPage() {
     destination_hint: "",
     destination_city: "",
     destination_country: "",
+    return_origin_city: "",
+    return_origin_country: "",
   });
 
   // Load booked holidays and cars
@@ -152,6 +155,8 @@ export default function NewTripPage() {
         destination_hint: form.destination_hint || null,
         destination_city: mode === "destination_first" ? (form.destination_city || null) : null,
         destination_country: mode === "destination_first" ? (form.destination_country.toUpperCase() || null) : null,
+        return_origin_city: form.return_origin_city || null,
+        return_origin_country: form.return_origin_country ? form.return_origin_country.toUpperCase() : null,
         vehicle_type: vehicleType,
         vehicle_car_id: vehicleType === "car" && selectedCarId ? selectedCarId : null,
         created_by: user.id,
@@ -387,6 +392,20 @@ export default function NewTripPage() {
                 placeholder="e.g. warm beach, not too far from Lisbon..." />
             </Field>
           )}
+        </div>
+
+        {/* Return origin */}
+        <div className="card p-6 space-y-3">
+          <div>
+            <h2 className="font-bold text-slate-900">🔀 Return journey</h2>
+            <p className="text-xs text-slate-400 mt-0.5">Planning a multi-city itinerary? Set where you'll be flying/travelling back from.</p>
+          </div>
+          <ReturnOriginPicker
+            vehicleType={vehicleType}
+            city={form.return_origin_city}
+            country={form.return_origin_country}
+            onChange={(city, country) => setForm(f => ({ ...f, return_origin_city: city, return_origin_country: country }))}
+          />
         </div>
 
         {/* Budget */}

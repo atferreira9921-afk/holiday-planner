@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import ReturnOriginPicker from "../ReturnOriginPicker";
 
 interface TripData {
   id: string;
@@ -14,6 +15,7 @@ interface TripData {
   destination_hint: string | null;
   return_origin_city: string | null;
   return_origin_country: string | null;
+  vehicle_type: string | null;
 }
 
 interface Props {
@@ -148,29 +150,15 @@ export default function EditTripModal({ trip }: Props) {
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-slate-600 mb-1">
-          Return from different city <span className="text-slate-400">(optional — for open-jaw trips)</span>
+        <label className="block text-xs font-medium text-slate-600 mb-2">
+          Return journey <span className="text-slate-400">(optional — for open-jaw trips)</span>
         </label>
-        <p className="text-xs text-slate-400 mb-1.5">Leave blank to return from your destination. Set this if your itinerary ends in a different city.</p>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            name="return_origin_city"
-            value={form.return_origin_city}
-            onChange={handleChange}
-            placeholder="e.g. Rome"
-            className="input flex-1"
-          />
-          <input
-            type="text"
-            name="return_origin_country"
-            value={form.return_origin_country}
-            onChange={handleChange}
-            placeholder="IT"
-            maxLength={2}
-            className="input w-16 text-center uppercase"
-          />
-        </div>
+        <ReturnOriginPicker
+          vehicleType={(trip.vehicle_type as "flight" | "car" | "bus") ?? "flight"}
+          city={form.return_origin_city}
+          country={form.return_origin_country}
+          onChange={(city, country) => setForm(prev => ({ ...prev, return_origin_city: city, return_origin_country: country }))}
+        />
       </div>
 
       {saveError && <p className="text-xs text-red-500">{saveError}</p>}
