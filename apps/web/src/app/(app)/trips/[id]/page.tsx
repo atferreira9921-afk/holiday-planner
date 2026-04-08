@@ -23,6 +23,7 @@ import GroupPolls from "./GroupPolls";
 import DocumentVault from "./DocumentVault";
 import SmartPackingButton from "./SmartPackingButton";
 import SuggestionWeather from "./SuggestionWeather";
+import CityDescription from "./CityDescription";
 import TripStatusControl from "./TripStatusControl";
 import EditTripModal from "./EditTripModal";
 import DeleteTripButton from "./DeleteTripButton";
@@ -284,6 +285,10 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
               />
             </div>
           </div>
+          <CityDescription
+            city={trip.destination_city as string}
+            country={trip.destination_country as string}
+          />
         </div>
       )}
 
@@ -301,7 +306,7 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
           <div className="flex items-center gap-3 mb-5">
             <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-xl flex-shrink-0">🔍</div>
             <div>
-              <h2 className="font-bold text-slate-900">Find flights &amp; hotels</h2>
+              <h2 className="font-bold text-slate-900">Find flights, hotels &amp; car rentals</h2>
               <p className="text-sm text-slate-500">Search options for {trip.destination_city}, {trip.destination_country}</p>
             </div>
           </div>
@@ -320,16 +325,14 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
             checkout={destFirstReturn}
             fallbackUrl={buildHotelSearchUrl(trip.destination_city as string, trip.destination_country as string, trip.earliest_departure, destFirstReturn)}
           />
-          {trip.vehicle_type === "car" && (
-            <CarRentalPanel
-              city={trip.destination_city as string}
-              country={trip.destination_country as string}
-              pickupDate={trip.earliest_departure}
-              dropoffDate={destFirstReturn}
-              reasoning={null}
-              estimatedPriceEur={null}
-            />
-          )}
+          <CarRentalPanel
+            city={trip.destination_city as string}
+            country={trip.destination_country as string}
+            pickupDate={trip.earliest_departure}
+            dropoffDate={destFirstReturn}
+            reasoning={null}
+            estimatedPriceEur={null}
+          />
         </div>
       )}
 
