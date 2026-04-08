@@ -5,6 +5,7 @@ import Link from "next/link";
 import DarkModeToggle from "./DarkModeToggle";
 import MobileMenuButton from "./MobileMenuButton";
 import NotificationBell from "./NotificationBell";
+import BottomNav from "./BottomNav";
 
 const navItems = [
   { href: "/dashboard", icon: "🏠", label: "Dashboard" },
@@ -112,10 +113,12 @@ export default async function AppLayout({
             </button>
           </form>
         </div>
-        <div className="flex-1 px-4 py-4 sm:px-6 sm:py-6 lg:px-10 xl:px-14 overflow-x-hidden min-w-0">
+        <div className="flex-1 px-4 py-4 sm:px-6 sm:py-6 lg:px-10 xl:px-14 overflow-x-hidden min-w-0 pb-24 md:pb-6">
           {children}
         </div>
       </main>
+
+      <BottomNav />
     </div>
   );
 }
