@@ -17,25 +17,33 @@ export default function InviteSection({
   const [email, setEmail]           = useState("");
   const [emailSent, setEmailSent]   = useState(false);
   const [showEmailForm, setShowEmailForm] = useState(false);
+  const [genError, setGenError]     = useState<string | null>(null);
 
   async function generateInvite(invitedEmail?: string) {
     setLoading(true);
-    const res = await fetch(`/api/trips/${tripId}/invite`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: invitedEmail ?? null }),
-    });
-    const data = await res.json();
-    if (data.inviteUrl) {
-      setInviteUrl(data.inviteUrl);
-    } else if (data.token) {
-      // Fallback: build URL client-side
-      setInviteUrl(`${window.location.origin}/invite/${data.token}`);
+    setGenError(null);
+    try {
+      const res = await fetch(`/api/trips/${tripId}/invite`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: invitedEmail ?? null }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setGenError(data.error ?? "Failed to generate invite link.");
+        return;
+      }
+      if (data.inviteUrl) {
+        setInviteUrl(data.inviteUrl);
+      } else if (data.token) {
+        setInviteUrl(`${window.location.origin}/invite/${data.token}`);
+      }
+      if (invitedEmail) setEmailSent(true);
+      setEmail("");
+      setShowEmailForm(false);
+    } finally {
+      setLoading(false);
     }
-    if (invitedEmail) setEmailSent(true);
-    setEmail("");
-    setShowEmailForm(false);
-    setLoading(false);
   }
 
   async function handleEmailSend(e: React.FormEvent) {
@@ -76,6 +84,14 @@ export default function InviteSection({
           ))}
         </div>
       </div>
+
+      {/* Generation error */}
+      {genError && (
+        <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-red-50 border border-red-200 text-sm text-red-700">
+          <span>⚠️</span>
+          <span>{genError}</span>
+        </div>
+      )}
 
       {/* Email sent confirmation */}
       {emailSent && (

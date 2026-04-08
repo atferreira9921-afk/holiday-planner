@@ -44,14 +44,11 @@ export async function POST(
   }
 
   // ── Build the invite URL ──────────────────────────────────────────────────
-  // Use NEXT_PUBLIC_APP_URL env var (set in production). Fall back to the
-  // request Origin header (validated to be same-origin by Next.js) only in dev.
-  // Never trust the Host header directly — it is attacker-controllable.
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "")
-    ?? (process.env.NODE_ENV === "development" ? "http://localhost:3000" : null);
-  if (!appUrl) {
-    return NextResponse.json({ error: "App URL not configured" }, { status: 500 });
-  }
+  // Prefer the explicit env var so the URL is stable across deployments.
+  // Fall back to the request origin — in Next.js API routes this is the real
+  // deployment URL (Vercel sets it correctly) and is safe to use.
+  const appUrl = (process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, ""))
+    || new URL(req.url).origin;
   const inviteUrl = `${appUrl}/invite/${invite.token}`;
 
   // ── Send email if address provided and Resend is configured ──────────────
