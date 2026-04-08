@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import TripsFilter from "./TripsFilter";
 
@@ -260,15 +260,18 @@ const TARGET_DURATIONS = [1, 2, 3, 4, 5, 7, 10, 14];
 export default async function TripsPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+  const db = createServiceClient();
 
-  // Fetch trips (filtered to user's groups)
+  // Fetch trips (filtered to user's groups).
+  // Use the service client so RLS auth.uid() mismatches never silently hide memberships.
+  // Security: user.id comes from server-validated auth.getUser(), so explicit filtering is safe.
   const { data: memberships } = user
-    ? await supabase.from("group_members").select("group_id").eq("user_id", user.id)
+    ? await db.from("group_members").select("group_id").eq("user_id", user.id)
     : { data: [] };
   const groupIds = (memberships ?? []).map((g: { group_id: string }) => g.group_id);
 
   const { data: tripsRaw } = groupIds.length > 0
-    ? await supabase.from("trips")
+    ? await db.from("trips")
         .select("id, title, status, desired_duration_days, earliest_departure, latest_return, budget_per_person_eur, created_at")
         .in("group_id", groupIds)
         .order("created_at", { ascending: false })

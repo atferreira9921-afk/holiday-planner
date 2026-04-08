@@ -20,7 +20,10 @@ export async function POST(
     .eq("token", token)
     .single();
 
-  if (!invite) return NextResponse.json({ error: "Invite not found" }, { status: 404 });
+  if (!invite) {
+    console.error(`[accept-invite] Invite not found for token ${token}`);
+    return NextResponse.json({ error: "Invite not found" }, { status: 404 });
+  }
   if (invite.accepted_at) return NextResponse.json({ error: "Invite already used" }, { status: 400 });
   if (new Date(invite.expires_at) < new Date()) return NextResponse.json({ error: "Invite expired" }, { status: 400 });
 
@@ -35,7 +38,7 @@ export async function POST(
     .select("user_id")
     .eq("group_id", invite.group_id)
     .eq("user_id", user.id)
-    .single();
+    .maybeSingle();
 
   if (!existing) {
     // Ensure user_profiles row exists (group_members.user_id FK references user_profiles.id)

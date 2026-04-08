@@ -14,9 +14,13 @@ export default function LoginForm() {
 
   async function handleFacebook() {
     const supabase = createClient();
+    const redirectParam = searchParams.get("redirect");
+    const next = redirectParam?.startsWith("/") && !redirectParam.startsWith("//")
+      ? redirectParam
+      : "/dashboard";
     await supabase.auth.signInWithOAuth({
       provider: "facebook",
-      options: { redirectTo: `${window.location.origin}/auth/callback?next=/dashboard` },
+      options: { redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}` },
     });
   }
 

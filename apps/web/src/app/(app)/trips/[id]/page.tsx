@@ -39,10 +39,21 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) notFound();
 
-  const { data: trip } = await supabase.from("trips").select("*").eq("id", id).single();
+  const db = createServiceClient();
+
+  // Use service client to fetch the trip — avoids auth.uid() RLS mismatch for invited members.
+  // Authorization is enforced below by verifying the user is in group_members.
+  const { data: trip } = await db.from("trips").select("*").eq("id", id).single();
   if (!trip) notFound();
 
-  const db = createServiceClient();
+  // Verify the user is actually a member of this trip's group
+  const { data: userMembership } = await db
+    .from("group_members")
+    .select("user_id")
+    .eq("group_id", trip.group_id)
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (!userMembership) notFound();
 
   // Fetch everything in parallel
   const [
