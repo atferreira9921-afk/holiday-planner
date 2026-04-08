@@ -29,16 +29,14 @@ export default async function AcceptInvitePage({
   if (!invite) {
     return <ErrorPage message="This invite link is invalid or has been removed." />;
   }
-  if (invite.accepted_at) {
-    return <ErrorPage message="This invite link has already been used." />;
-  }
   if (new Date(invite.expires_at) < new Date()) {
     return <ErrorPage message="This invite link has expired. Ask the trip owner to generate a new one." />;
   }
 
   const groupName = (invite.travel_groups as unknown as { name: string } | null)?.name ?? "a travel group";
 
-  // If already a member, redirect to dashboard
+  // Check membership BEFORE checking accepted_at — if this user already joined
+  // (even via a link that was later marked used) send them straight to their trips.
   const { data: existing } = await db
     .from("group_members")
     .select("user_id")
@@ -47,7 +45,12 @@ export default async function AcceptInvitePage({
     .maybeSingle();
 
   if (existing) {
-    redirect("/dashboard");
+    redirect("/trips");
+  }
+
+  // Only block re-use if THIS user hasn't joined yet
+  if (invite.accepted_at) {
+    return <ErrorPage message="This invite link has already been used. Ask the trip owner to generate a new one." />;
   }
 
   return (
