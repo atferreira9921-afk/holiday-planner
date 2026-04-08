@@ -52,7 +52,7 @@ const FEATURES = [
     tagline: "From idea to booked — with AI doing the heavy lifting",
     color: "sky",
     description:
-      "Create a trip by choosing transport mode and AI or destination-first planning. The trip list shows shared vacation windows where all members are free, overlap detection, and bridge-day opportunity cards. The AI engine (FastAPI + Claude) generates ranked destination suggestions with live flight and hotel prices.",
+      "Create a trip by choosing transport mode and AI or destination-first planning. The trip list shows shared vacation windows where all members are free, overlap detection, and bridge-day opportunity cards. The AI engine (Claude via Next.js API routes) generates ranked destination suggestions with live flight and hotel prices.",
     bullets: [
       "Transport modes: flight, car (road trip), bus",
       "AI-suggest mode: describe preferences, get ranked destinations",
@@ -61,6 +61,7 @@ const FEATURES = [
       "Bridge-day opportunities surfaced directly in the trip list",
       "Budget setting with per-person cost estimates",
       "Trip statuses: planning → suggested → booked → completed / cancelled",
+      "Past smart windows automatically hidden from suggestions",
     ],
   },
   {
@@ -74,7 +75,11 @@ const FEATURES = [
       "The richest page in the app. Once created, a trip becomes a shared workspace for your travel group. Members can vote on AI suggestions, track expenses, build a day-by-day itinerary, scan receipts with the camera, check off a packing list, upload documents, share photos, create polls, and write collaborative notes — all in real-time.",
     bullets: [
       "AI destination suggestions with flight + hotel price estimates",
+      "Car rental recommendations — AI flags destinations needing a car, with reasoning and price estimate",
+      "Car rental search panel (pre-filled Rentalcars.com links)",
       "Group voting on suggestions (up / down votes)",
+      "Suggestion deduplication — AI never repeats a destination already proposed",
+      "Rate limiting: max 15 suggestions per trip, 5-minute cooldown between generations",
       "Availability poll — members mark which dates they can make it",
       "Shared expense tracker with cost splitting",
       "AI receipt scanner (OCR via camera or photo upload)",
@@ -102,13 +107,15 @@ const FEATURES = [
     tagline: "Dream destinations and zero-cost accommodation",
     color: "amber",
     description:
-      "Save destinations you want to visit, rated 1–5 stars, with personal notes. The AI suggestion engine automatically considers your wishlist when proposing trips. Free Stays lets you log cities where you can stay for free (friends, family, own property) — the AI factors in €0 hotel cost when estimating trip prices.",
+      "Save destinations you want to visit, rated 1–5 stars, with personal notes. The AI suggestion engine automatically considers your wishlist when proposing trips. Free Stays lets you log cities where you can stay for free (friends, family, own property) — the AI factors in €0 hotel cost when estimating trip prices. Toggle free stays active or inactive to control whether each one is considered by the AI.",
     bullets: [
       "Destination wishlist with priority (1–5 stars) and notes",
       "AI suggestions automatically factor in wishlist preferences",
       "Free Stays: cities with free accommodation (friends, family)",
+      "Active / inactive toggle per free stay — only active ones are used by AI",
       "Free stays surface as zero hotel-cost options in AI suggestions",
       "Interactive 3D globe showing all pins colour-coded by priority",
+      "Globe always visible — even when the wishlist is empty",
     ],
   },
   {
@@ -170,25 +177,44 @@ const FEATURES = [
   },
   {
     id: "ai-engine",
-    route: "AI API (FastAPI)",
+    route: "AI API (Next.js)",
     emoji: "🤖",
     title: "AI Engine",
     tagline: "Claude-powered travel intelligence",
     color: "purple",
     description:
-      "A separate Python FastAPI service wraps the Anthropic Claude API. It receives trip preferences, calendar data, wishlist, family profiles, public holidays, and free stays, then returns ranked destination suggestions with estimated costs, highlights, trade-offs, and weather previews.",
+      "Built directly into the Next.js API routes, the AI engine wraps the Anthropic Claude API. It receives trip preferences, calendar data, wishlist, family profiles, public holidays, and free stays, then returns ranked destination suggestions with estimated costs, highlights, trade-offs, and car rental recommendations — streamed live to the UI.",
     bullets: [
       "Destination suggestions ranked by fit score",
-      "Live flight price estimates (Skyscanner deep-links)",
-      "Live hotel price estimates (Booking.com deep-links)",
-      "Weather preview for the destination window",
-      "Accounts for all members' vacation windows",
+      "Live flight price estimates via SerpApi (Google Flights)",
+      "Live hotel price estimates via SerpApi (Google Hotels)",
+      "Car rental recommendation with reasoning and estimated cost",
+      "Accounts for all members' vacation windows and public holidays",
       "Considers wishlist preferences and avoided destinations",
-      "Factors in free stays (€0 hotel cost)",
-      "Public holiday awareness (avoids wasting vacation days on holidays)",
+      "Factors in free stays (€0 hotel cost, active ones only)",
+      "Public holiday awareness — avoids wasting vacation days on holidays",
+      "Suggestion deduplication — never repeats already-proposed destinations",
+      "Rate limiting: 15 suggestions per trip max, 5-minute cooldown",
       "Smart packing list generation",
       "Receipt OCR parsing",
       "Car fuel consumption estimation",
+    ],
+  },
+  {
+    id: "auth",
+    route: "/login · /signup",
+    emoji: "🔐",
+    title: "Authentication",
+    tagline: "Secure, flexible sign-in options",
+    color: "rose",
+    description:
+      "Full authentication stack built on Supabase Auth with PKCE flow. Supports email/password, magic links, and Facebook OAuth. Password reset emails redirect to the correct deployed URL, not localhost.",
+    bullets: [
+      "Email/password sign-up and login",
+      "Facebook OAuth (one-click sign in)",
+      "Forgot password flow with correct redirect URL",
+      "PKCE auth callback route for secure code exchange",
+      "Session persisted across page reloads via SSR cookies",
     ],
   },
 ];
@@ -254,7 +280,7 @@ export default function AboutPage() {
       {/* Summary stats */}
       <section className="px-6 py-12 max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { value: "9", label: "App sections", emoji: "📱" },
+          { value: "10", label: "App sections", emoji: "📱" },
           { value: "100+", label: "Countries supported", emoji: "🌍" },
           { value: "AI", label: "Powered by Claude", emoji: "🤖" },
           { value: "Live", label: "Real-time updates", emoji: "⚡" },
@@ -312,14 +338,14 @@ export default function AboutPage() {
           <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-8 text-center">Tech stack</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { name: "Next.js 15", role: "Web app", emoji: "▲" },
-              { name: "Supabase", role: "Database & Auth", emoji: "⚡" },
-              { name: "FastAPI", role: "AI backend", emoji: "🐍" },
+              { name: "Next.js 16", role: "Web app + API routes", emoji: "▲" },
+              { name: "Supabase", role: "Database, Auth & Realtime", emoji: "⚡" },
               { name: "Claude (Anthropic)", role: "AI model", emoji: "🤖" },
-              { name: "Expo 52", role: "Mobile app", emoji: "📱" },
+              { name: "SerpApi", role: "Flight & hotel prices", emoji: "🔍" },
               { name: "Three.js", role: "3D globe", emoji: "🌐" },
               { name: "Nager.Date", role: "Public holidays", emoji: "📅" },
               { name: "Tailwind CSS", role: "Styling", emoji: "🎨" },
+              { name: "TypeScript", role: "Type safety", emoji: "🔷" },
             ].map(t => (
               <div key={t.name} className="flex items-center gap-3 p-4 rounded-xl border border-slate-100 bg-slate-50">
                 <span className="text-xl">{t.emoji}</span>
