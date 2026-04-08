@@ -20,7 +20,7 @@ const securityHeaders = [
       // Images: self + Supabase storage + weather API icons
       "img-src 'self' data: blob: https://*.supabase.co https://openweathermap.org",
       // Fetch/XHR: self + Supabase + Anthropic proxy + external APIs
-      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://cst-ai-proxy.azurewebsites.net https://api.exchangerate-api.com https://api.open-meteo.com https://api.resend.com https://unpkg.com https://nominatim.openstreetmap.org https://serpapi.com",
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.anthropic.com https://cst-ai-proxy.azurewebsites.net https://api.exchangerate-api.com https://api.open-meteo.com https://api.resend.com https://unpkg.com https://nominatim.openstreetmap.org https://serpapi.com",
       "font-src 'self'",
       "frame-src 'none'",
       "object-src 'none'",

@@ -5,6 +5,12 @@ import type { MemberCalendar, UserPreferences } from "@holiday-planner/shared-ty
 
 export const maxDuration = 60; // Vercel: allow up to 60s for AI generation
 
+// Fail fast if the Anthropic key is missing — gives a clear error instead of a
+// cryptic SDK throw buried in the stream.
+if (!process.env.ANTHROPIC_API_KEY) {
+  console.error("ANTHROPIC_API_KEY is not set — AI suggestions will not work");
+}
+
 // Helper to encode an SSE event
 function sse(data: object) {
   return new TextEncoder().encode(`data: ${JSON.stringify(data)}\n\n`);
@@ -319,8 +325,14 @@ Return ONLY a JSON array of 3 suggestions (no markdown, no explanation):
 
         send({ progress: 100, stage: "Done!" });
       } catch (err) {
-        console.error("AI suggestions error:", err instanceof Error ? err.message : String(err));
-        send({ error: "Failed to generate suggestions. Please try again." });
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error("AI suggestions error:", msg);
+        // Surface the real error in dev / staging so it's visible in the UI;
+        // in production keep it brief but still actionable.
+        const userMsg = process.env.NODE_ENV === "production"
+          ? `Failed to generate suggestions (${msg.slice(0, 120)})`
+          : `Error: ${msg}`;
+        send({ error: userMsg });
       } finally {
         controller.close();
       }
