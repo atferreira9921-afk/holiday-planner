@@ -16,6 +16,13 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Missing params" }, { status: 400 });
   }
 
+  if (!/^[A-Za-z0-9]{2,4}$/.test(from) || !/^[A-Za-z0-9]{2,4}$/.test(to)) {
+    return NextResponse.json({ error: "Invalid airport code" }, { status: 400 });
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(outbound) || !/^\d{4}-\d{2}-\d{2}$/.test(ret)) {
+    return NextResponse.json({ error: "Invalid date format" }, { status: 400 });
+  }
+
   const apiKey = process.env.SERPAPI_KEY;
   if (!apiKey) return NextResponse.json({ error: "SERPAPI_KEY not configured" }, { status: 503 });
 

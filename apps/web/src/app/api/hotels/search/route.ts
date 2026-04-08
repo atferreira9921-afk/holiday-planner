@@ -11,10 +11,14 @@ export async function GET(request: Request) {
   const country  = searchParams.get("country");
   const checkin  = searchParams.get("checkin");
   const checkout = searchParams.get("checkout");
-  const adults   = searchParams.get("adults") ?? "2";
+  const rawAdults = parseInt(searchParams.get("adults") ?? "2", 10);
+  const adults = String(isNaN(rawAdults) || rawAdults < 1 || rawAdults > 9 ? 2 : rawAdults);
 
   if (!city || !checkin || !checkout) {
     return NextResponse.json({ error: "Missing params" }, { status: 400 });
+  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(checkin) || !/^\d{4}-\d{2}-\d{2}$/.test(checkout)) {
+    return NextResponse.json({ error: "Invalid date format" }, { status: 400 });
   }
 
   const apiKey = process.env.SERPAPI_KEY;

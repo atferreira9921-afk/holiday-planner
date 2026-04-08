@@ -71,15 +71,9 @@ export async function POST(
 
         // ── Preferences + bookings + free stays (all parallel) ──────────────
         send({ progress: 30, stage: "Fetching calendars and preferences…" });
-        const [membersWithPrefs, { data: allBookings }, { data: rawFreeStays }, { data: existingSuggestions }] =
+        const [{ data: allPrefs }, { data: allBookings }, { data: rawFreeStays }, { data: existingSuggestions }] =
           await Promise.all([
-            Promise.all(
-              members.map(async (m) => {
-                const { data: prefs } = await db
-                  .from("user_preferences").select("*").eq("user_id", m.user_id).single();
-                return { user_id: m.user_id, preferences: prefs };
-              })
-            ),
+            db.from("user_preferences").select("*").in("user_id", memberUserIds),
             db.from("booked_holidays")
               .select("owner_user_id, start_date, end_date")
               .in("owner_user_id", memberUserIds)
@@ -94,6 +88,10 @@ export async function POST(
               .select("destination_city, destination_country, rank")
               .eq("trip_id", tripId),
           ]);
+
+        // ── Map prefs by user_id for O(1) lookup ───────────────────────────
+        const prefsMap = new Map((allPrefs ?? []).map(p => [p.user_id, p]));
+        const membersWithPrefs = members.map(m => ({ user_id: m.user_id, preferences: prefsMap.get(m.user_id) ?? null }));
 
         // ── Fetch public holidays for all member countries ──────────────────
         const tripYear = new Date(trip.earliest_departure + "T00:00:00").getFullYear();
