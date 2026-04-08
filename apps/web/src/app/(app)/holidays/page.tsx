@@ -309,7 +309,7 @@ function CalendarGrid({
                       borderLeft: `3px solid ${bp.dot}`,
                       fontSize: 9, padding: "1px 4px", marginBottom: 2,
                       borderRadius: "0 3px 3px 0",
-                      background: isDark ? `${bp.dot}28` : bp.bg,
+                      backgroundColor: isDark ? `${bp.dot}28` : bp.bg,
                       color: isDark ? "#e2e8f0" : "#374151",
                       overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis",
                       fontWeight: 600,
