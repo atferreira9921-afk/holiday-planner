@@ -166,13 +166,25 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
     ? (suggestions ?? []).find(s => s.id === trip.selected_suggestion_id) ?? null
     : null;
 
+  const isDestinationFirst = trip.planning_mode === "destination_first" && !!trip.destination_city;
+
   const destinationCountry =
-    trip.planning_mode === "destination_first"
+    isDestinationFirst
       ? (trip.destination_country as string | null)
       : selectedSuggestionData?.destination_country ?? null;
 
   const departureDate =
     selectedSuggestionData?.suggested_departure ?? trip.earliest_departure;
+
+  // For destination-first trips compute a sensible search window:
+  // depart on earliest_departure, return after desired_duration_days
+  const destFirstReturn = (() => {
+    if (!isDestinationFirst) return trip.latest_return;
+    if (!trip.desired_duration_days) return trip.latest_return;
+    const d = new Date(trip.earliest_departure + "T00:00:00");
+    d.setDate(d.getDate() + trip.desired_duration_days);
+    return d.toISOString().slice(0, 10);
+  })();
 
   return (
     <div className="max-w-screen-xl mx-auto space-y-6">
@@ -248,8 +260,46 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
         </>
       )}
 
-      {/* Generate suggestions */}
-      {trip.status === "planning" && (
+      {/* Destination-first: show search panels directly — no AI suggestions needed */}
+      {isDestinationFirst && (
+        <div className="card p-6">
+          <div className="flex items-center gap-3 mb-5">
+            <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-xl flex-shrink-0">🔍</div>
+            <div>
+              <h2 className="font-bold text-slate-900">Find flights &amp; hotels</h2>
+              <p className="text-sm text-slate-500">Search options for {trip.destination_city}, {trip.destination_country}</p>
+            </div>
+          </div>
+          <FlightSearchPanel
+            fromIata={homeIata}
+            toIata={null}
+            toCity={trip.destination_city as string}
+            outbound={trip.earliest_departure}
+            ret={destFirstReturn}
+            fallbackUrl={buildFlightFallbackUrl(null, trip.destination_city as string, trip.earliest_departure, destFirstReturn)}
+          />
+          <HotelSearchPanel
+            city={trip.destination_city as string}
+            country={trip.destination_country as string}
+            checkin={trip.earliest_departure}
+            checkout={destFirstReturn}
+            fallbackUrl={buildHotelSearchUrl(trip.destination_city as string, trip.destination_country as string, trip.earliest_departure, destFirstReturn)}
+          />
+          {trip.vehicle_type === "car" && (
+            <CarRentalPanel
+              city={trip.destination_city as string}
+              country={trip.destination_country as string}
+              pickupDate={trip.earliest_departure}
+              dropoffDate={destFirstReturn}
+              reasoning={null}
+              estimatedPriceEur={null}
+            />
+          )}
+        </div>
+      )}
+
+      {/* Generate suggestions — only for AI-suggest mode */}
+      {trip.status === "planning" && !isDestinationFirst && (
         <div className="card p-6">
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 rounded-xl gradient-card flex items-center justify-center text-2xl flex-shrink-0">🤖</div>
@@ -264,8 +314,8 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
         </div>
       )}
 
-      {/* Suggestions */}
-      {suggestions && suggestions.length > 0 && (() => {
+      {/* Suggestions — only for AI-suggest mode */}
+      {!isDestinationFirst && suggestions && suggestions.length > 0 && (() => {
         const selectedSuggestion = trip.selected_suggestion_id
           ? suggestions.find(s => s.id === trip.selected_suggestion_id) ?? null
           : null;
@@ -451,7 +501,7 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
       })()}
 
       {/* Regenerate suggestions */}
-      {suggestions && suggestions.length > 0 && !trip.selected_suggestion_id && (
+      {!isDestinationFirst && suggestions && suggestions.length > 0 && !trip.selected_suggestion_id && (
         <div className="card p-5">
           <details className="group">
             <summary className="flex items-center gap-2 cursor-pointer list-none text-sm font-medium text-slate-500 hover:text-slate-700 transition">
@@ -465,8 +515,8 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
         </div>
       )}
 
-      {/* Voting — hidden once a destination is selected */}
-      {suggestions && suggestions.length > 0 && !trip.selected_suggestion_id && (
+      {/* Voting — hidden once a destination is selected or in destination-first mode */}
+      {!isDestinationFirst && suggestions && suggestions.length > 0 && !trip.selected_suggestion_id && (
         <VotingSection
           suggestions={suggestions.map(s => ({ id: s.id, rank: s.rank, destination_city: s.destination_city, destination_country: s.destination_country }))}
           members={members}
