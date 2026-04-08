@@ -833,6 +833,292 @@ export const AIRPORTS_BY_COUNTRY: Record<string, Airport[]> = {
   WS: [
     { iata: "APW", city: "Apia", name: "Faleolo International Airport" },
   ],
+
+  // ── Caribbean ─────────────────────────────────────────────────────────────
+  AG: [
+    { iata: "ANU", city: "Antigua", name: "V.C. Bird International Airport" },
+  ],
+  BB: [
+    { iata: "BGI", city: "Bridgetown", name: "Grantley Adams International Airport" },
+  ],
+  DM: [
+    { iata: "DCF", city: "Roseau", name: "Douglas-Charles Airport" },
+  ],
+  GD: [
+    { iata: "GND", city: "St. George's", name: "Maurice Bishop International Airport" },
+  ],
+  HT: [
+    { iata: "PAP", city: "Port-au-Prince", name: "Toussaint Louverture International Airport" },
+    { iata: "CAP", city: "Cap-Haïtien", name: "Hugo Chávez International Airport" },
+  ],
+  KN: [
+    { iata: "SKB", city: "Basseterre", name: "Robert L. Bradshaw International Airport" },
+  ],
+  LC: [
+    { iata: "UVF", city: "Vieux Fort", name: "Hewanorra International Airport" },
+    { iata: "SLU", city: "Castries", name: "George F.L. Charles Airport" },
+  ],
+  VC: [
+    { iata: "SVD", city: "Kingstown", name: "Argyle International Airport" },
+  ],
+  TT: [
+    { iata: "POS", city: "Port of Spain", name: "Piarco International Airport" },
+    { iata: "TAB", city: "Tobago", name: "ANR Robinson International Airport" },
+  ],
+
+  // ── Central America ───────────────────────────────────────────────────────
+  BZ: [
+    { iata: "BZE", city: "Belize City", name: "Philip S.W. Goldson International Airport" },
+  ],
+  SV: [
+    { iata: "SAL", city: "San Salvador", name: "Monseñor Óscar Arnulfo Romero International Airport" },
+  ],
+  HN: [
+    { iata: "TGU", city: "Tegucigalpa", name: "Toncontín International Airport" },
+    { iata: "SAP", city: "San Pedro Sula", name: "Ramón Villeda Morales International Airport" },
+  ],
+  NI: [
+    { iata: "MGA", city: "Managua", name: "Augusto C. Sandino International Airport" },
+  ],
+
+  // ── South America ─────────────────────────────────────────────────────────
+  BO: [
+    { iata: "VVI", city: "Santa Cruz", name: "Viru Viru International Airport" },
+    { iata: "LPB", city: "La Paz", name: "El Alto International Airport" },
+    { iata: "CBB", city: "Cochabamba", name: "Jorge Wilstermann International Airport" },
+  ],
+  EC: [
+    { iata: "UIO", city: "Quito", name: "Mariscal Sucre International Airport" },
+    { iata: "GYE", city: "Guayaquil", name: "José Joaquín de Olmedo International Airport" },
+    { iata: "GPS", city: "Galápagos", name: "Seymour Airport" },
+  ],
+  GY: [
+    { iata: "GEO", city: "Georgetown", name: "Cheddi Jagan International Airport" },
+  ],
+  PY: [
+    { iata: "ASU", city: "Asunción", name: "Silvio Pettirossi International Airport" },
+  ],
+  SR: [
+    { iata: "PBM", city: "Paramaribo", name: "Johan Adolf Pengel International Airport" },
+  ],
+  VE: [
+    { iata: "CCS", city: "Caracas", name: "Simón Bolívar International Airport" },
+    { iata: "MAR", city: "Maracaibo", name: "La Chinita International Airport" },
+    { iata: "VLN", city: "Valencia", name: "Arturo Michelena International Airport" },
+  ],
+  UY: [
+    { iata: "MVD", city: "Montevideo", name: "Carrasco International Airport" },
+  ],
+
+  // ── Middle East ───────────────────────────────────────────────────────────
+  IQ: [
+    { iata: "BGW", city: "Baghdad", name: "Baghdad International Airport" },
+    { iata: "BSR", city: "Basra", name: "Basra International Airport" },
+    { iata: "EBL", city: "Erbil", name: "Erbil International Airport" },
+    { iata: "ISU", city: "Sulaymaniyah", name: "Sulaymaniyah International Airport" },
+  ],
+  IR: [
+    { iata: "IKA", city: "Tehran", name: "Imam Khomeini International Airport" },
+    { iata: "THR", city: "Tehran", name: "Mehrabad International Airport" },
+    { iata: "MHD", city: "Mashhad", name: "Shahid Hasheminejad Airport" },
+    { iata: "IFN", city: "Isfahan", name: "Isfahan International Airport" },
+    { iata: "SYZ", city: "Shiraz", name: "Shahid Dastghaib International Airport" },
+    { iata: "TBZ", city: "Tabriz", name: "Tabriz International Airport" },
+  ],
+  SY: [
+    { iata: "DAM", city: "Damascus", name: "Damascus International Airport" },
+    { iata: "ALP", city: "Aleppo", name: "Aleppo International Airport" },
+  ],
+  YE: [
+    { iata: "SAH", city: "Sana'a", name: "Sana'a International Airport" },
+    { iata: "ADE", city: "Aden", name: "Aden International Airport" },
+  ],
+
+  // ── Central Asia ──────────────────────────────────────────────────────────
+  KG: [
+    { iata: "FRU", city: "Bishkek", name: "Manas International Airport" },
+    { iata: "OSS", city: "Osh", name: "Osh Airport" },
+  ],
+  TJ: [
+    { iata: "DYU", city: "Dushanbe", name: "Dushanbe International Airport" },
+  ],
+  TM: [
+    { iata: "ASB", city: "Ashgabat", name: "Ashgabat International Airport" },
+  ],
+  UZ: [
+    { iata: "TAS", city: "Tashkent", name: "Islam Karimov Tashkent International Airport" },
+    { iata: "SKD", city: "Samarkand", name: "Samarkand International Airport" },
+    { iata: "BHK", city: "Bukhara", name: "Bukhara International Airport" },
+  ],
+  AF: [
+    { iata: "KBL", city: "Kabul", name: "Hamid Karzai International Airport" },
+    { iata: "HEA", city: "Herat", name: "Herat International Airport" },
+  ],
+
+  // ── East & Southeast Asia ─────────────────────────────────────────────────
+  TW: [
+    { iata: "TPE", city: "Taipei", name: "Taiwan Taoyuan International Airport" },
+    { iata: "TSA", city: "Taipei", name: "Taipei Songshan Airport" },
+    { iata: "KHH", city: "Kaohsiung", name: "Kaohsiung International Airport" },
+    { iata: "RMQ", city: "Taichung", name: "Taichung Airport" },
+  ],
+  BN: [
+    { iata: "BWN", city: "Bandar Seri Begawan", name: "Brunei International Airport" },
+  ],
+  LA: [
+    { iata: "VTE", city: "Vientiane", name: "Wattay International Airport" },
+    { iata: "LPQ", city: "Luang Prabang", name: "Luang Prabang International Airport" },
+  ],
+  TL: [
+    { iata: "DIL", city: "Dili", name: "Presidente Nicolau Lobato International Airport" },
+  ],
+
+  // ── South Asia ────────────────────────────────────────────────────────────
+  BT: [
+    { iata: "PBH", city: "Paro", name: "Paro International Airport" },
+  ],
+
+  // ── North Africa ──────────────────────────────────────────────────────────
+  DZ: [
+    { iata: "ALG", city: "Algiers", name: "Houari Boumediene Airport" },
+    { iata: "ORN", city: "Oran", name: "Ahmed Ben Bella Airport" },
+    { iata: "CZL", city: "Constantine", name: "Mohamed Boudiaf International Airport" },
+    { iata: "AAE", city: "Annaba", name: "Rabah Bitat Airport" },
+  ],
+  LY: [
+    { iata: "TIP", city: "Tripoli", name: "Mitiga International Airport" },
+    { iata: "BEN", city: "Benghazi", name: "Benina International Airport" },
+  ],
+  SD: [
+    { iata: "KRT", city: "Khartoum", name: "Khartoum International Airport" },
+  ],
+  SS: [
+    { iata: "JUB", city: "Juba", name: "Juba International Airport" },
+  ],
+
+  // ── East Africa ───────────────────────────────────────────────────────────
+  DJ: [
+    { iata: "JIB", city: "Djibouti City", name: "Djibouti-Ambouli International Airport" },
+  ],
+  ER: [
+    { iata: "ASM", city: "Asmara", name: "Asmara International Airport" },
+  ],
+  SO: [
+    { iata: "MGQ", city: "Mogadishu", name: "Aden Adde International Airport" },
+    { iata: "HGA", city: "Hargeisa", name: "Egal International Airport" },
+  ],
+  BI: [
+    { iata: "BJM", city: "Bujumbura", name: "Melchior Ndadaye International Airport" },
+  ],
+  KM: [
+    { iata: "HAH", city: "Moroni", name: "Prince Said Ibrahim International Airport" },
+  ],
+  SZ: [
+    { iata: "SHO", city: "Manzini", name: "King Mswati III International Airport" },
+  ],
+  LS: [
+    { iata: "MSU", city: "Maseru", name: "Moshoeshoe I International Airport" },
+  ],
+  MW: [
+    { iata: "LLW", city: "Lilongwe", name: "Kamuzu International Airport" },
+    { iata: "BLZ", city: "Blantyre", name: "Chileka International Airport" },
+  ],
+
+  // ── West Africa ───────────────────────────────────────────────────────────
+  GA: [
+    { iata: "LBV", city: "Libreville", name: "Léon-Mba International Airport" },
+  ],
+  CG: [
+    { iata: "BZV", city: "Brazzaville", name: "Maya-Maya Airport" },
+    { iata: "PNR", city: "Pointe-Noire", name: "Pointe Noire Airport" },
+  ],
+  CD: [
+    { iata: "FIH", city: "Kinshasa", name: "N'djili Airport" },
+    { iata: "FBM", city: "Lubumbashi", name: "Lubumbashi International Airport" },
+    { iata: "GOM", city: "Goma", name: "Goma International Airport" },
+  ],
+  GQ: [
+    { iata: "SSG", city: "Malabo", name: "Santa Isabel Airport" },
+    { iata: "BSG", city: "Bata", name: "Bata Airport" },
+  ],
+  ST: [
+    { iata: "TMS", city: "São Tomé", name: "São Tomé International Airport" },
+  ],
+  CI: [
+    { iata: "ABJ", city: "Abidjan", name: "Félix-Houphouët-Boigny International Airport" },
+    { iata: "ASK", city: "Yamoussoukro", name: "Yamoussoukro Airport" },
+  ],
+  GM: [
+    { iata: "BJL", city: "Banjul", name: "Banjul International Airport" },
+  ],
+  GN: [
+    { iata: "CKY", city: "Conakry", name: "Conakry International Airport" },
+  ],
+  GW: [
+    { iata: "OXB", city: "Bissau", name: "Osvaldo Vieira International Airport" },
+  ],
+  ML: [
+    { iata: "BKO", city: "Bamako", name: "Modibo Keïta International Airport" },
+  ],
+  BF: [
+    { iata: "OUA", city: "Ouagadougou", name: "Ouagadougou Airport" },
+  ],
+  NE: [
+    { iata: "NIM", city: "Niamey", name: "Diori Hamani International Airport" },
+  ],
+  TD: [
+    { iata: "NDJ", city: "N'Djamena", name: "Hassan Djamous International Airport" },
+  ],
+  CF: [
+    { iata: "BGF", city: "Bangui", name: "Bangui M'Poko International Airport" },
+  ],
+  BJ: [
+    { iata: "COO", city: "Cotonou", name: "Cadjehoun Airport" },
+  ],
+  TG: [
+    { iata: "LFW", city: "Lomé", name: "Gnassingbé Eyadéma International Airport" },
+  ],
+  SL: [
+    { iata: "FNA", city: "Freetown", name: "Lungi International Airport" },
+  ],
+  LR: [
+    { iata: "ROB", city: "Monrovia", name: "Roberts International Airport" },
+  ],
+  MR: [
+    { iata: "NKC", city: "Nouakchott", name: "Nouakchott–Oumtounsy International Airport" },
+  ],
+
+  // ── Oceania ───────────────────────────────────────────────────────────────
+  PG: [
+    { iata: "POM", city: "Port Moresby", name: "Jacksons International Airport" },
+    { iata: "LAE", city: "Lae", name: "Lae Nadzab Airport" },
+    { iata: "RAB", city: "Rabaul", name: "Tokua Airport" },
+  ],
+  SB: [
+    { iata: "HIR", city: "Honiara", name: "Honiara International Airport" },
+  ],
+  VU: [
+    { iata: "VLI", city: "Port Vila", name: "Bauerfield International Airport" },
+  ],
+  PW: [
+    { iata: "ROR", city: "Koror", name: "Roman Tmetuchl International Airport" },
+  ],
+  FM: [
+    { iata: "TKK", city: "Chuuk", name: "Chuuk International Airport" },
+    { iata: "PNI", city: "Pohnpei", name: "Pohnpei International Airport" },
+  ],
+  MH: [
+    { iata: "MAJ", city: "Majuro", name: "Marshall Islands International Airport" },
+  ],
+  KI: [
+    { iata: "TRW", city: "Tarawa", name: "Bonriki International Airport" },
+  ],
+  TV: [
+    { iata: "FUN", city: "Funafuti", name: "Funafuti International Airport" },
+  ],
+  NR: [
+    { iata: "INU", city: "Yaren", name: "Nauru International Airport" },
+  ],
 };
 
 // Helper: get airports for a country, with fallback empty array
