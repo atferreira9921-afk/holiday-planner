@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { anthropic } from "@/lib/anthropic";
 
+export const maxDuration = 30;
+
 const ALLOWED_TRIP_TYPES = ["flight", "road_trip", "train", "cruise", "backpacking", "city_break", "beach", "ski", "camping"];
 
 export async function POST(
