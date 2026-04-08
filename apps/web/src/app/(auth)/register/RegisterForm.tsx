@@ -1,12 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
 export default function RegisterForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -26,8 +25,7 @@ export default function RegisterForm() {
     if (error) { setError(error.message); setLoading(false); return; }
     const redirectTo = searchParams.get("redirect");
     const destination = redirectTo?.startsWith("/") && !redirectTo.startsWith("//") ? redirectTo : "/dashboard";
-    router.push(destination);
-    router.refresh();
+    window.location.href = destination;
   }
 
   return (

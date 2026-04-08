@@ -1,12 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
 export default function LoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -30,8 +29,9 @@ export default function LoginForm() {
     if (error) { setError(error.message); setLoading(false); return; }
     const redirectTo = searchParams.get("redirect");
     const destination = redirectTo?.startsWith("/") && !redirectTo.startsWith("//") ? redirectTo : "/dashboard";
-    router.push(destination);
-    router.refresh();
+    // Hard redirect so the browser sends a fresh request with the auth cookie already set.
+    // Soft router.push + router.refresh() can race and render before the server sees the session.
+    window.location.href = destination;
   }
 
   return (
