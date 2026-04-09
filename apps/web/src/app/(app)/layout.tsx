@@ -119,7 +119,7 @@ export default async function AppLayout({
             </button>
           </form>
         </div>
-        <div className="flex-1 px-4 py-4 sm:px-6 sm:py-6 lg:px-10 xl:px-14 overflow-x-hidden min-w-0 pb-24 md:pb-6">
+        <div className="flex-1 px-4 py-4 sm:px-6 sm:py-6 lg:px-10 xl:px-14 overflow-x-clip min-w-0 pb-24 md:pb-6">
           {children}
         </div>
       </main>
