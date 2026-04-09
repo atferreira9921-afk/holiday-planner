@@ -86,10 +86,14 @@ export default async function AppLayout({
         </nav>
 
         {/* Bottom links */}
-        <div className="mt-4 pt-4 border-t border-white/10">
+        <div className="mt-4 pt-4 border-t border-white/10 space-y-1">
           <Link href="/about" className="sidebar-link opacity-70 hover:opacity-100">
             <span className="text-base">📖</span>
             <span>About / Features</span>
+          </Link>
+          <Link href="/bug-report" className="sidebar-link opacity-70 hover:opacity-100">
+            <span className="text-base">🐛</span>
+            <span>Report a bug</span>
           </Link>
         </div>
       </aside>
