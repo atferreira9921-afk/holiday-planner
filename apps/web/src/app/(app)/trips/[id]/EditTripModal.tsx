@@ -52,7 +52,17 @@ export default function EditTripModal({ trip }: Props) {
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const { name, value } = e.target;
-    setForm(prev => ({ ...prev, [name]: value }));
+    setForm(prev => {
+      const next = { ...prev, [name]: value };
+      if (name === "earliest_departure" || name === "latest_return") {
+        const dep = new Date(name === "earliest_departure" ? value : prev.earliest_departure);
+        const ret = new Date(name === "latest_return" ? value : prev.latest_return);
+        if (!isNaN(dep.getTime()) && !isNaN(ret.getTime()) && ret >= dep) {
+          next.desired_duration_days = Math.round((ret.getTime() - dep.getTime()) / 86400000) + 1;
+        }
+      }
+      return next;
+    });
   }
 
   async function handleSubmit(e: React.FormEvent) {

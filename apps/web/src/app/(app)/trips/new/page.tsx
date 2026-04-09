@@ -258,11 +258,31 @@ export default function NewTripPage() {
               <div className="grid grid-cols-2 gap-4">
                 <Field label="Earliest departure">
                   <input className="input" type="date" value={form.earliest_departure}
-                    onChange={e => set("earliest_departure", e.target.value)} required />
+                    onChange={e => {
+                      const dep = e.target.value;
+                      setForm(f => {
+                        const ret = new Date(f.latest_return);
+                        const d = new Date(dep);
+                        const days = (!isNaN(ret.getTime()) && !isNaN(d.getTime()) && ret >= d)
+                          ? Math.round((ret.getTime() - d.getTime()) / 86400000) + 1
+                          : f.desired_duration_days;
+                        return { ...f, earliest_departure: dep, desired_duration_days: days };
+                      });
+                    }} required />
                 </Field>
                 <Field label="Latest return">
                   <input className="input" type="date" value={form.latest_return}
-                    onChange={e => set("latest_return", e.target.value)} required />
+                    onChange={e => {
+                      const ret = e.target.value;
+                      setForm(f => {
+                        const dep = new Date(f.earliest_departure);
+                        const r = new Date(ret);
+                        const days = (!isNaN(dep.getTime()) && !isNaN(r.getTime()) && r >= dep)
+                          ? Math.round((r.getTime() - dep.getTime()) / 86400000) + 1
+                          : f.desired_duration_days;
+                        return { ...f, latest_return: ret, desired_duration_days: days };
+                      });
+                    }} required />
                 </Field>
               </div>
               <Field label="Trip duration" hint="How many days do you want to travel?">
