@@ -33,6 +33,10 @@ import DuplicateTripButton from "./DuplicateTripButton";
 import FlightSearchPanel from "./FlightSearchPanel";
 import HotelSearchPanel from "./HotelSearchPanel";
 import CarRentalPanel from "./CarRentalPanel";
+import TripChat from "./TripChat";
+import TripTasks from "./TripTasks";
+import PhrasebookCard from "./PhrasebookCard";
+import TripCostEstimator from "./TripCostEstimator";
 import { isAiEnabled } from "@/lib/config";
 
 export default async function TripDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -77,6 +81,9 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
     { data: pollVotes },
     { data: tripDocuments },
     { data: predepartureChecks },
+    { data: tripMessages },
+    { data: tripTasks },
+    { data: costEstimate },
   ] = await Promise.all([
     db.from("trip_suggestions").select("*").eq("trip_id", id).order("rank"),
     db.from("group_members").select("user_id, role").eq("group_id", trip.group_id),
@@ -87,7 +94,7 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
     db.from("trip_expenses").select("*").eq("trip_id", id).order("created_at"),
     db.from("trip_packing_items").select("*").eq("trip_id", id).order("created_at"),
     db.from("user_cars").select("*").eq("owner_user_id", user.id).order("created_at"),
-    db.from("user_preferences").select("home_country, home_city").eq("user_id", user.id).maybeSingle(),
+    db.from("user_preferences").select("home_country, home_city, passport_expiry").eq("user_id", user.id).maybeSingle(),
     db.from("family_members").select("id, display_name, color").eq("owner_user_id", user.id).order("created_at"),
     db.from("trip_family_members").select("family_member_id").eq("trip_id", id),
     db.from("trip_itinerary_items").select("*").eq("trip_id", id).order("day_number").order("sort_order"),
@@ -99,10 +106,30 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
     db.from("trip_poll_votes").select("*").in("poll_id", ["00000000-0000-0000-0000-000000000000"]),
     db.from("trip_documents").select("*").eq("trip_id", id).order("created_at"),
     db.from("trip_predeparture_checks").select("item_id, is_checked, is_shared, is_removed, label, user_id").eq("trip_id", id),
+    db.from("trip_messages").select("id, user_id, content, created_at").eq("trip_id", id).order("created_at").limit(100),
+    db.from("trip_tasks").select("*").eq("trip_id", id).order("created_at"),
+    db.from("trip_cost_estimates").select("*").eq("trip_id", id).maybeSingle(),
   ]);
 
-  const homeCountry = (userPrefs as { home_country?: string; home_city?: string } | null)?.home_country ?? "PT";
-  const homeIata    = (userPrefs as { home_country?: string; home_city?: string } | null)?.home_city ?? "LIS";
+  const homeCountry = (userPrefs as { home_country?: string; home_city?: string; passport_expiry?: string | null } | null)?.home_country ?? "PT";
+  const homeIata    = (userPrefs as { home_country?: string; home_city?: string; passport_expiry?: string | null } | null)?.home_city ?? "LIS";
+  const passportExpiry = (userPrefs as { passport_expiry?: string | null } | null)?.passport_expiry ?? null;
+
+  // Passport warning: expires within 6 months of return date
+  const returnDateForPassport = trip.latest_return;
+  const passportWarning = (() => {
+    if (!passportExpiry) return null;
+    const expiry = new Date(passportExpiry);
+    const ret = new Date(returnDateForPassport);
+    const sixMonthsAfterReturn = new Date(ret);
+    sixMonthsAfterReturn.setMonth(sixMonthsAfterReturn.getMonth() + 6);
+    if (expiry < sixMonthsAfterReturn) {
+      const daysUntilExpiry = Math.ceil((expiry.getTime() - Date.now()) / 86400000);
+      if (daysUntilExpiry <= 0) return "Your passport has already expired!";
+      return `Your passport expires on ${expiry.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })} — within 6 months of your return date. Many countries require 6+ months validity.`;
+    }
+    return null;
+  })();
 
   // Fetch poll options + votes with real poll IDs
   const pollIds = (tripPolls ?? []).map((p: { id: string }) => p.id);
@@ -204,6 +231,18 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
   return (
     <div className="max-w-screen-xl mx-auto space-y-6">
       <TripRealtimeUpdater tripId={id} groupId={trip.group_id} />
+
+      {/* Passport expiry warning */}
+      {passportWarning && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-start gap-3">
+          <span className="text-lg flex-shrink-0">⚠️</span>
+          <div>
+            <p className="text-sm font-semibold text-amber-800">Passport expiry warning</p>
+            <p className="text-xs text-amber-700 mt-0.5">{passportWarning}</p>
+            <a href="/preferences" className="text-xs text-amber-600 underline mt-1 inline-block">Update passport details →</a>
+          </div>
+        </div>
+      )}
 
       {/* Header */}
       <div>
@@ -666,6 +705,33 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
         currentUserId={user.id}
         members={members}
         initialChecks={(predepartureChecks ?? []) as Parameters<typeof PreDepartureChecklist>[0]["initialChecks"]}
+      />
+
+      {/* Trip to-dos */}
+      <TripTasks
+        tripId={trip.id}
+        currentUserId={user.id}
+        members={members}
+        initialTasks={(tripTasks ?? []) as Parameters<typeof TripTasks>[0]["initialTasks"]}
+      />
+
+      {/* Cost estimator */}
+      <TripCostEstimator
+        tripId={trip.id}
+        tripDays={trip.desired_duration_days}
+        memberCount={members.length}
+        initialEstimate={(costEstimate as Parameters<typeof TripCostEstimator>[0]["initialEstimate"]) ?? null}
+      />
+
+      {/* Phrasebook */}
+      {destinationCountry && <PhrasebookCard countryCode={destinationCountry} />}
+
+      {/* Group chat */}
+      <TripChat
+        tripId={trip.id}
+        currentUserId={user.id}
+        memberNames={memberNames}
+        initialMessages={(tripMessages ?? []) as Parameters<typeof TripChat>[0]["initialMessages"]}
       />
 
       {/* Invite */}

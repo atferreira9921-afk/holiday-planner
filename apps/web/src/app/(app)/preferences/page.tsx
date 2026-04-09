@@ -397,6 +397,14 @@ export default function PreferencesPage() {
                 onChange={e => setPrefs(p => ({ ...p, birthday: e.target.value || null }))} />
               <p className="text-xs text-slate-400 mt-1">Marked on your calendar.</p>
             </div>
+            <div className="col-span-2">
+              <label className="label">Passport expiry date</label>
+              <input className="input" type="date" value={(prefs as { passport_expiry?: string | null }).passport_expiry ?? ""}
+                onChange={e => setPrefs(p => ({ ...p, passport_expiry: e.target.value || null } as typeof p))} />
+              <p className="text-xs text-slate-400 mt-1">
+                You'll see a warning on trip pages if your passport expires within 6 months of your return date.
+              </p>
+            </div>
             <div className="flex items-start gap-3 pt-1">
               <input
                 id="birthday-vacation"
