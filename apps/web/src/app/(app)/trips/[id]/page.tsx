@@ -49,6 +49,7 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
 
   const t  = await getTranslations("tripHeader");
   const tc = await getTranslations("common");
+  const tf = await getTranslations("flights");
 
   const db = createServiceClient();
 
@@ -358,12 +359,12 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-xl flex-shrink-0">🔍</div>
                 <div>
-                  <h2 className="font-bold text-slate-900">Find flights, hotels &amp; car rentals</h2>
-                  <p className="text-sm text-slate-500">Search options for {trip.destination_city}, {trip.destination_country}</p>
+                  <h2 className="font-bold text-slate-900">{tf("title")}</h2>
+                  <p className="text-sm text-slate-500">{tf("subtitle", { city: trip.destination_city, country: trip.destination_country })}</p>
                 </div>
               </div>
-              <span className="text-xs text-slate-400 group-open:hidden flex-shrink-0">Show</span>
-              <span className="text-xs text-slate-400 hidden group-open:inline flex-shrink-0">Hide</span>
+              <span className="text-xs text-slate-400 group-open:hidden flex-shrink-0">{tf("show")}</span>
+              <span className="text-xs text-slate-400 hidden group-open:inline flex-shrink-0">{tf("hide")}</span>
             </summary>
             <div className="mt-5">
           <FlightSearchPanel

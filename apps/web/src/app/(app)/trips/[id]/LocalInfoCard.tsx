@@ -49,7 +49,7 @@ export default function LocalInfoCard({
   return (
     <div className="card p-6 space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="font-bold text-slate-900 text-lg">🌐 {t("title", { dest: destName })}</h2>
+        <h2 className="font-bold text-slate-900 text-lg">{t("title", { dest: destName })}</h2>
         <button onClick={() => setOpen(o => !o)} className="btn-ghost text-sm">{open ? tc("hide") : tc("show")}</button>
       </div>
 
@@ -100,12 +100,12 @@ export default function LocalInfoCard({
           <Row label="💰 Currency" value={`${info.currency} ${info.currencySymbol}`} />
           <Row label="🗣️ Language" value={info.language} />
           <Row label={`🚨 ${t("emergency")}`} value={info.emergencyNumber} />
-          <Row label={`👮 ${t("police")}`} value={info.policeNumber} />
-          <Row label={`🚑 ${t("ambulance")}`} value={info.ambulanceNumber} />
-          <Row label={`🔌 ${t("plug")}`} value={info.plugTypes.join(", ")} />
-          <Row label={`🚗 ${t("driving")}`} value={info.drivingSide === "left" ? t("left") : t("right")} />
-          <Row label={`📞 ${t("callingCode")}`} value={info.callingCode} />
-          <Row label={`💵 ${t("tipping")}`} value={info.tippingCulture} />
+          <Row label={t("police")} value={info.policeNumber} />
+          <Row label={t("ambulance")} value={info.ambulanceNumber} />
+          <Row label={t("plug")} value={info.plugTypes.join(", ")} />
+          <Row label={t("driving")} value={info.drivingSide === "left" ? t("left") : t("right")} />
+          <Row label={t("callingCode")} value={info.callingCode} />
+          <Row label={t("tipping")} value={info.tippingCulture} />
         </div>
       )}
       </>}

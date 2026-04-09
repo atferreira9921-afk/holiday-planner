@@ -78,21 +78,21 @@ export default function TripCostEstimator({ tripId, tripDays, memberCount, initi
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {flight > 0 && (
             <div className="bg-blue-50 rounded-xl p-3 text-center">
-              <p className="text-xs font-semibold text-blue-400 uppercase tracking-wide">✈️ {t("flights")}</p>
+              <p className="text-xs font-semibold text-blue-400 uppercase tracking-wide">{t("flights")}</p>
               <p className="text-lg font-bold text-blue-600">€{Math.round(flight)}</p>
               <p className="text-xs text-blue-400">{t("perPerson")}</p>
             </div>
           )}
           {hotel > 0 && (
             <div className="bg-purple-50 rounded-xl p-3 text-center">
-              <p className="text-xs font-semibold text-purple-400 uppercase tracking-wide">🏨 {t("hotel")}</p>
+              <p className="text-xs font-semibold text-purple-400 uppercase tracking-wide">{t("hotel")}</p>
               <p className="text-lg font-bold text-purple-600">€{Math.round(hotelPerPerson)}</p>
               <p className="text-xs text-purple-400">{t("hotelLine", { amount: Math.round(hotelPerPerson), nights })}</p>
             </div>
           )}
           {daily > 0 && (
             <div className="bg-green-50 rounded-xl p-3 text-center">
-              <p className="text-xs font-semibold text-green-400 uppercase tracking-wide">🍽️ {t("daily")}</p>
+              <p className="text-xs font-semibold text-green-400 uppercase tracking-wide">{t("daily")}</p>
               <p className="text-lg font-bold text-green-600">€{Math.round(daily * tripDays)}</p>
               <p className="text-xs text-green-400">{t("dailyLine", { amount: Math.round(daily * tripDays), days: tripDays })}</p>
             </div>
@@ -109,7 +109,7 @@ export default function TripCostEstimator({ tripId, tripDays, memberCount, initi
         <div className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">✈️ {t("flights")}</label>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">{t("flights")}</label>
               <input
                 className="input w-full"
                 type="number"
@@ -121,7 +121,7 @@ export default function TripCostEstimator({ tripId, tripDays, memberCount, initi
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">🏨 {t("hotel")}</label>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">{t("hotel")}</label>
               <input
                 className="input w-full"
                 type="number"
@@ -136,7 +136,7 @@ export default function TripCostEstimator({ tripId, tripDays, memberCount, initi
               )}
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">🍽️ {t("daily")}</label>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">{t("daily")}</label>
               <input
                 className="input w-full"
                 type="number"

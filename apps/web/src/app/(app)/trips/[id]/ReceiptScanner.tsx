@@ -95,7 +95,7 @@ export default function ReceiptScanner({
                 : "bg-slate-100 text-slate-600 hover:bg-slate-200"
             }`}
           >
-            {m === "text" ? `📝 ${t("pasteText")}` : `📷 ${t("uploadPhoto")}`}
+            {m === "text" ? t("pasteText") : t("uploadPhoto")}
           </button>
         ))}
       </div>
