@@ -78,7 +78,7 @@ export default function ReceiptScanner({
   return (
     <div className="card p-5 space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="font-bold text-slate-800">🧾 {t("title")}</h3>
+        <h3 className="font-bold text-slate-800">{t("title")}</h3>
         <button onClick={() => setOpen(o => !o)} className="btn-ghost text-sm">{open ? tc("hide") : tc("show")}</button>
       </div>
 

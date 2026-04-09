@@ -41,7 +41,7 @@ export default function TimeWidget({ destinationCountry }: { destinationCountry:
 
   useEffect(() => {
     setNow(new Date());
-    const id = setInterval(() => setNow(new Date()), 1000);
+    const id = setInterval(() => setNow(new Date()), 60000);
     return () => clearInterval(id);
   }, []);
 
@@ -49,7 +49,7 @@ export default function TimeWidget({ destinationCountry }: { destinationCountry:
 
   const destTime = new Intl.DateTimeFormat("en-GB", {
     timeZone: tz,
-    hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
+    hour: "2-digit", minute: "2-digit", hour12: false,
   }).format(now);
 
   const destDate = new Intl.DateTimeFormat("en-GB", {

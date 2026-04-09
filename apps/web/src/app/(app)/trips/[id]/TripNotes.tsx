@@ -64,7 +64,7 @@ export default function TripNotes({
   return (
     <div className="card p-6 space-y-3">
       <div className="flex items-center justify-between">
-        <h2 className="font-bold text-slate-900 text-lg">📝 {t("title")}</h2>
+        <h2 className="font-bold text-slate-900 text-lg">{t("title")}</h2>
         <div className="flex items-center gap-2">
           {open && saving && <span className="text-xs text-slate-400 animate-pulse">{tc("saving")}</span>}
           {open && !saving && saved && <span className="text-xs text-emerald-500 font-medium">✓ {tc("saved")}</span>}

@@ -94,7 +94,7 @@ export default function AvailabilityPoll({
     <div className="card p-6 space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="font-bold text-slate-900 text-lg">📅 {t("title")}</h2>
+          <h2 className="font-bold text-slate-900 text-lg">{t("title")}</h2>
           <p className="text-xs text-slate-400 mt-0.5">
             {members.length > 1
               ? t("membersInfo", { count: confirmedMembers.length })

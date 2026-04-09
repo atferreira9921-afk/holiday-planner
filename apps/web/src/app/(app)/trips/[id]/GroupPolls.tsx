@@ -169,7 +169,7 @@ export default function GroupPolls({
     <div className="card p-6 space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="font-bold text-slate-900 text-lg">🗳️ {t("title")}</h2>
+        <h2 className="font-bold text-slate-900 text-lg">{t("title")}</h2>
         <div className="flex items-center gap-2">
           <button onClick={() => setOpen(o => !o)} className="btn-ghost text-sm">{open ? tc("hide") : tc("show")}</button>
           {open && <button onClick={() => setShowCreateForm(f => !f)} className="btn-ghost text-sm">

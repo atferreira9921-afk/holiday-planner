@@ -57,7 +57,14 @@
       "Bash(grep -n \"EditTripModal\" apps/web/src/app/\\\\\\(app\\\\\\)/trips/[id]/page.tsx)",
       "Bash(wc:*)",
       "Bash(ls \"C:\\\\Users\\\\alexandferreira\\\\holiday-planner\\\\apps\\\\web\\\\src\\\\app\\\\\\(app\\)\\\\trips\\\\[id]\" \")",
-      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(list\\(d.get\\(''''dependencies'''',{}\\).keys\\(\\)\\)\\)\")"
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(list\\(d.get\\(''''dependencies'''',{}\\).keys\\(\\)\\)\\)\")",
+      "Bash(__NEW_LINE_bf4c494caa660f5b__ sed:*)",
+      "Bash(sed -i 's/💬 {t\\(\"\"title\"\"}\\)/{t\\(\"\"title\"\"\\)}/g' \"C:/Users/alexandferreira/holiday-planner/apps/web/src/app/\\(app\\)/trips/[id]/TripChat.tsx\")",
+      "Bash(sed -i 's/📝 {t\\(\"\"title\"\"}\\)/{t\\(\"\"title\"\"\\)}/g' \"C:/Users/alexandferreira/holiday-planner/apps/web/src/app/\\(app\\)/trips/[id]/TripNotes.tsx\")",
+      "Bash(sed -i 's/✅ {t\\(\"\"title\"\"}\\)/{t\\(\"\"title\"\"\\)}/g' \"C:/Users/alexandferreira/holiday-planner/apps/web/src/app/\\(app\\)/trips/[id]/TripTasks.tsx\")",
+      "Bash(sed -i 's/📁 {t\\(\"\"title\"\"}\\)/{t\\(\"\"title\"\"\\)}/g' \"C:/Users/alexandferreira/holiday-planner/apps/web/src/app/\\(app\\)/trips/[id]/DocumentVault.tsx\")",
+      "Bash(python3:*)",
+      "Bash(python:*)"
     ]
   }
 }

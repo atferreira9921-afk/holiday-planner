@@ -105,7 +105,7 @@ export default function TripChat({ tripId, currentUserId, memberNames, initialMe
     <div className="card p-6 space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <h2 className="font-bold text-slate-900 text-lg">💬 {t("title")}</h2>
+          <h2 className="font-bold text-slate-900 text-lg">{t("title")}</h2>
           {collapsed && messages.length > 0 && (
             <span className="text-xs bg-indigo-100 text-indigo-600 font-semibold px-2 py-0.5 rounded-full">
               {t("messages", { count: messages.length })}
