@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { isAiEnabled } from "@/lib/config";
 
 interface ItineraryItem {
   id: string;
@@ -25,6 +26,15 @@ const TIME_SLOTS = [
 
 function slotMeta(key: string) {
   return TIME_SLOTS.find(s => s.key === key) ?? TIME_SLOTS[0];
+}
+
+interface AiSuggestion {
+  day: number;
+  time_slot: string;
+  title: string;
+  description: string | null;
+  location: string | null;
+  cost_eur: number | null;
 }
 
 export default function ItinerarySection({
@@ -56,6 +66,13 @@ export default function ItinerarySection({
     title: "", description: "", location: "", cost_eur: "",
   });
 
+  // AI suggestions state
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError]     = useState<string | null>(null);
+  const [suggestions, setSuggestions] = useState<AiSuggestion[] | null>(null);
+  const [addedSet, setAddedSet]   = useState<Set<string>>(new Set());
+  const [addingAll, setAddingAll] = useState(false);
+
   const days = Array.from({ length: Math.max(tripDays, 1) }, (_, i) => i + 1);
 
   function dayLabel(n: number) {
@@ -73,6 +90,63 @@ export default function ItinerarySection({
         const diff = order.indexOf(a.time_slot) - order.indexOf(b.time_slot);
         return diff !== 0 ? diff : a.sort_order - b.sort_order;
       });
+  }
+
+  async function fetchAiSuggestions() {
+    setAiLoading(true);
+    setAiError(null);
+    setSuggestions(null);
+    setAddedSet(new Set());
+    try {
+      const res = await fetch(`/api/trips/${tripId}/itinerary-suggest`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      const data = await res.json();
+      if (!res.ok) { setAiError(data.error ?? "Failed to generate itinerary"); }
+      else { setSuggestions(data.items ?? []); }
+    } catch {
+      setAiError("Network error. Please try again.");
+    } finally {
+      setAiLoading(false);
+    }
+  }
+
+  function suggestionKey(s: AiSuggestion) {
+    return `${s.day}-${s.time_slot}-${s.title}`;
+  }
+
+  async function addSuggestion(s: AiSuggestion) {
+    const key = suggestionKey(s);
+    if (addedSet.has(key)) return;
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { data } = await supabase.from("trip_itinerary_items").insert({
+      trip_id: tripId,
+      day_number: s.day,
+      time_slot: s.time_slot,
+      title: s.title,
+      description: s.description,
+      location: s.location,
+      cost_eur: s.cost_eur,
+      sort_order: items.filter(i => i.day_number === s.day && i.time_slot === s.time_slot).length,
+      created_by: user.id,
+    }).select("*").single();
+    if (data) {
+      setItems(prev => [...prev, data as ItineraryItem]);
+      setAddedSet(prev => new Set([...prev, key]));
+    }
+  }
+
+  async function addAllSuggestions() {
+    if (!suggestions) return;
+    setAddingAll(true);
+    for (const s of suggestions) {
+      await addSuggestion(s);
+    }
+    setAddingAll(false);
   }
 
   async function addItem(e: React.FormEvent) {
@@ -120,7 +194,7 @@ export default function ItinerarySection({
             </p>
           )}
         </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
           {!isEmpty && (
             <div className="flex rounded-lg border border-slate-200 overflow-hidden text-xs">
               <button onClick={() => setView("list")}
@@ -132,6 +206,22 @@ export default function ItinerarySection({
                 Timeline
               </button>
             </div>
+          )}
+          {isAiEnabled && !suggestions && (
+            <button
+              onClick={fetchAiSuggestions}
+              disabled={aiLoading}
+              className="btn-ghost text-sm flex items-center gap-1.5"
+            >
+              {aiLoading
+                ? <><span className="animate-spin inline-block text-xs">⏳</span> Generating…</>
+                : <><span>🤖</span> AI suggest</>}
+            </button>
+          )}
+          {suggestions && (
+            <button onClick={() => { setSuggestions(null); setAddedSet(new Set()); }} className="btn-ghost text-sm text-slate-400">
+              Close AI
+            </button>
           )}
           <button onClick={() => setShowForm(f => !f)} className="btn-ghost text-sm">
             {showForm ? "Cancel" : "+ Add"}
@@ -197,8 +287,77 @@ export default function ItinerarySection({
         </form>
       )}
 
+      {/* AI error */}
+      {aiError && (
+        <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl px-4 py-3 flex items-center justify-between gap-2">
+          <span>{aiError}</span>
+          <button onClick={() => setAiError(null)} className="text-red-400 hover:text-red-600 text-xs">✕</button>
+        </div>
+      )}
+
+      {/* AI suggestions panel */}
+      {suggestions && suggestions.length > 0 && (
+        <div className="border border-indigo-200 rounded-xl overflow-hidden">
+          <div className="bg-indigo-50 px-4 py-3 flex items-center justify-between gap-2 flex-wrap">
+            <div>
+              <p className="text-sm font-semibold text-indigo-800">🤖 AI-suggested itinerary</p>
+              <p className="text-xs text-indigo-500 mt-0.5">
+                {suggestions.length} activities · {addedSet.size} added so far
+              </p>
+            </div>
+            <button
+              onClick={addAllSuggestions}
+              disabled={addingAll || addedSet.size === suggestions.length}
+              className="btn-primary text-xs px-3 py-1.5"
+            >
+              {addingAll ? "Adding…" : addedSet.size === suggestions.length ? "✓ All added" : "Add all"}
+            </button>
+          </div>
+          <div className="divide-y divide-slate-100 max-h-[520px] overflow-y-auto">
+            {Array.from({ length: tripDays }, (_, i) => i + 1).map(day => {
+              const dayItems = suggestions.filter(s => s.day === day);
+              if (dayItems.length === 0) return null;
+              return (
+                <div key={day} className="px-4 py-3 space-y-2">
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">{dayLabel(day)}</p>
+                  {dayItems.map(s => {
+                    const key = suggestionKey(s);
+                    const added = addedSet.has(key);
+                    const slot = slotMeta(s.time_slot);
+                    return (
+                      <div key={key} className={`flex items-start gap-3 p-2.5 rounded-xl transition ${added ? "opacity-50 bg-emerald-50" : "bg-white border border-slate-100 hover:border-indigo-200"}`}>
+                        <div className="w-7 h-7 rounded-lg flex items-center justify-center text-sm flex-shrink-0 mt-0.5"
+                          style={{ background: isDark ? `${slot.color}26` : slot.bg, color: slot.color }}>
+                          {slot.emoji}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-slate-800">{s.title}</p>
+                          {s.location && <p className="text-xs text-slate-400">📍 {s.location}</p>}
+                          {s.description && <p className="text-xs text-slate-500 mt-0.5">{s.description}</p>}
+                          {s.cost_eur != null && s.cost_eur > 0 && (
+                            <p className="text-xs text-indigo-500 mt-0.5 font-semibold">~€{s.cost_eur}</p>
+                          )}
+                          {s.cost_eur === 0 && <p className="text-xs text-emerald-500 mt-0.5">Free</p>}
+                        </div>
+                        <button
+                          onClick={() => addSuggestion(s)}
+                          disabled={added}
+                          className={`flex-shrink-0 text-xs font-semibold px-2.5 py-1 rounded-lg transition ${added ? "text-emerald-600 bg-emerald-100" : "text-indigo-600 bg-indigo-50 hover:bg-indigo-100"}`}
+                        >
+                          {added ? "✓" : "+ Add"}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Empty state */}
-      {isEmpty && !showForm && (
+      {isEmpty && !showForm && !suggestions && (
         <div className="py-6 text-center">
           <p className="text-slate-400 text-sm">No activities planned yet.</p>
           <p className="text-xs text-slate-400 mt-1">Add restaurants, sights, tours, and activities day by day.</p>
