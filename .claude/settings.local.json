@@ -44,7 +44,20 @@
       "Bash(pnpm:*)",
       "Bash(grep -n \"suggestion\\\\|Suggestion\" /c/Users/alexandferreira/holiday-planner/apps/web/src/app/\\\\\\(app\\\\\\)/trips/[id]/page.tsx)",
       "Bash(head:*)",
-      "Bash(grep -n \"group_invites\\\\|pending\\\\|invite\" /c/Users/alexandferreira/holiday-planner/apps/web/src/app/\\\\\\(app\\\\\\)/trips/[id]/page.tsx)"
+      "Bash(grep -n \"group_invites\\\\|pending\\\\|invite\" /c/Users/alexandferreira/holiday-planner/apps/web/src/app/\\\\\\(app\\\\\\)/trips/[id]/page.tsx)",
+      "Bash(find \"C:/Users/alexandferreira/holiday-planner/apps/web/src/app/\\(app\\)/preferences\" -name \"*.tsx\")",
+      "Bash(find \"C:/Users/alexandferreira/holiday-planner/apps/web/src/app/\\(app\\)/family\" -name \"*.tsx\")",
+      "Bash(git log:*)",
+      "Bash(npx tsc:*)",
+      "Bash(grep -n \"CountryInfo\\\\|currencyCode\\\\|simOptions\\\\|currency\" C:/Users/alexandferreira/holiday-planner/apps/web/src/app/\\\\\\(app\\\\\\)/trips/[id]/LocalInfoCard.tsx)",
+      "Bash(grep -n \"const suggestions\\\\|let suggestions\\\\| suggestions \" C:/Users/alexandferreira/holiday-planner/apps/web/src/app/\\\\\\(app\\\\\\)/trips/[id]/page.tsx)",
+      "Bash(git reset:*)",
+      "Bash(ls /c/Users/alexandferreira/holiday-planner/apps/web/src/app/\\\\\\(app\\\\\\)/)",
+      "Bash(grep -rn \"return_origin\\\\|return_iata\\\\|return_city\\\\|open.jaw\\\\|fromIata\\\\|toIata\\\\|homeIata\\\\|buildFlight\" apps/web/src/app/\\\\\\(app\\\\\\)/trips/[id]/FlightSearchPanel.tsx apps/web/src/app/\\\\\\(app\\\\\\)/trips/[id]/page.tsx)",
+      "Bash(grep -n \"EditTripModal\" apps/web/src/app/\\\\\\(app\\\\\\)/trips/[id]/page.tsx)",
+      "Bash(wc:*)",
+      "Bash(ls \"C:\\\\Users\\\\alexandferreira\\\\holiday-planner\\\\apps\\\\web\\\\src\\\\app\\\\\\(app\\)\\\\trips\\\\[id]\" \")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(list\\(d.get\\(''''dependencies'''',{}\\).keys\\(\\)\\)\\)\")"
     ]
   }
 }

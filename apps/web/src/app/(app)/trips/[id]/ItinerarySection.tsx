@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { isAiEnabled } from "@/lib/config";
+import { useTranslations } from "next-intl";
 
 interface ItineraryItem {
   id: string;
@@ -17,15 +18,15 @@ interface ItineraryItem {
   created_at: string;
 }
 
-const TIME_SLOTS = [
-  { key: "morning",   label: "Morning",   emoji: "🌅", color: "#f59e0b", bg: "#fffbeb" },
-  { key: "afternoon", label: "Afternoon", emoji: "☀️", color: "#f97316", bg: "#fff7ed" },
-  { key: "evening",   label: "Evening",   emoji: "🌆", color: "#8b5cf6", bg: "#f5f3ff" },
-  { key: "night",     label: "Night",     emoji: "🌙", color: "#1e40af", bg: "#eff6ff" },
+const TIME_SLOT_DEFS = [
+  { key: "morning",   emoji: "🌅", color: "#f59e0b", bg: "#fffbeb" },
+  { key: "afternoon", emoji: "☀️", color: "#f97316", bg: "#fff7ed" },
+  { key: "evening",   emoji: "🌆", color: "#8b5cf6", bg: "#f5f3ff" },
+  { key: "night",     emoji: "🌙", color: "#1e40af", bg: "#eff6ff" },
 ];
 
 function slotMeta(key: string) {
-  return TIME_SLOTS.find(s => s.key === key) ?? TIME_SLOTS[0];
+  return TIME_SLOT_DEFS.find(s => s.key === key) ?? TIME_SLOT_DEFS[0];
 }
 
 interface AiSuggestion {
@@ -48,6 +49,10 @@ export default function ItinerarySection({
   tripDays: number;
   departureDate: string;
 }) {
+  const t  = useTranslations("itinerary");
+  const tc = useTranslations("common");
+  const TIME_SLOTS = TIME_SLOT_DEFS.map(s => ({ ...s, label: t(s.key) }));
+
   const [open, setOpen]     = useState(true);
   const [isDark, setIsDark] = useState(false);
   useEffect(() => {
@@ -188,10 +193,10 @@ export default function ItinerarySection({
       {/* Header */}
       <div className="flex items-center justify-between gap-2">
         <div className="min-w-0">
-          <h2 className="font-bold text-slate-900 text-lg">🗓️ Itinerary</h2>
+          <h2 className="font-bold text-slate-900 text-lg">{t("title")}</h2>
           {!isEmpty && (
             <p className="text-xs text-slate-400 mt-0.5">
-              {items.length} activities · {totalCost > 0 ? `€${totalCost.toFixed(0)} planned` : "no costs added"}
+              {t("activities", { count: items.length })} · {totalCost > 0 ? t("costPlanned", { cost: totalCost.toFixed(0) }) : t("noCosts")}
             </p>
           )}
         </div>
@@ -200,11 +205,11 @@ export default function ItinerarySection({
             <div className="flex rounded-lg border border-slate-200 overflow-hidden text-xs">
               <button onClick={() => setView("list")}
                 className={`px-2.5 py-1.5 transition ${view === "list" ? "bg-indigo-50 text-indigo-700 font-semibold" : "text-slate-500 hover:bg-slate-50"}`}>
-                List
+                {t("listView")}
               </button>
               <button onClick={() => setView("timeline")}
                 className={`px-2.5 py-1.5 border-l border-slate-200 transition ${view === "timeline" ? "bg-indigo-50 text-indigo-700 font-semibold" : "text-slate-500 hover:bg-slate-50"}`}>
-                Timeline
+                {t("timelineView")}
               </button>
             </div>
           )}
@@ -215,19 +220,19 @@ export default function ItinerarySection({
               className="btn-ghost text-sm flex items-center gap-1.5"
             >
               {aiLoading
-                ? <><span className="animate-spin inline-block text-xs">⏳</span> Generating…</>
-                : <><span>🤖</span> AI suggest</>}
+                ? <><span className="animate-spin inline-block text-xs">⏳</span> {t("generating")}</>
+                : <><span>🤖</span> {t("aiSuggest")}</>}
             </button>
           )}
           {suggestions && (
             <button onClick={() => { setSuggestions(null); setAddedSet(new Set()); }} className="btn-ghost text-sm text-slate-400">
-              Close AI
+              {t("closeAi")}
             </button>
           )}
           {open && <button onClick={() => setShowForm(f => !f)} className="btn-ghost text-sm">
-            {showForm ? "Cancel" : "+ Add"}
+            {showForm ? tc("cancel") : t("addButton")}
           </button>}
-          <button onClick={() => setOpen(o => !o)} className="btn-ghost text-sm">{open ? "Hide" : "Show"}</button>
+          <button onClick={() => setOpen(o => !o)} className="btn-ghost text-sm">{open ? tc("hide") : tc("show")}</button>
         </div>
       </div>
 
@@ -237,14 +242,14 @@ export default function ItinerarySection({
         <form onSubmit={addItem} className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="label">Day</label>
+              <label className="label">{t("day")}</label>
               <select className="input text-sm" value={form.day_number}
                 onChange={e => setForm(f => ({ ...f, day_number: parseInt(e.target.value) }))}>
                 {days.map(d => <option key={d} value={d}>{dayLabel(d)}</option>)}
               </select>
             </div>
             <div>
-              <label className="label">Time</label>
+              <label className="label">{t("time")}</label>
               <div className="flex gap-1.5 flex-wrap">
                 {TIME_SLOTS.map(s => (
                   <button key={s.key} type="button"
@@ -260,32 +265,32 @@ export default function ItinerarySection({
             </div>
           </div>
           <div>
-            <label className="label">Activity / title <span className="text-red-400">*</span></label>
+            <label className="label">{t("activityLabel")} <span className="text-red-400">*</span></label>
             <input className="input" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
-              placeholder="e.g. Visit Sagrada Família" required autoFocus />
+              placeholder={t("titlePlaceholder")} required autoFocus />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="label">Location (optional)</label>
+              <label className="label">{t("location")}</label>
               <input className="input text-sm" value={form.location}
                 onChange={e => setForm(f => ({ ...f, location: e.target.value }))}
-                placeholder="e.g. Eixample, Barcelona" />
+                placeholder={t("locationPlaceholder")} />
             </div>
             <div>
-              <label className="label">Cost (€, optional)</label>
+              <label className="label">{t("cost")}</label>
               <input className="input text-sm" type="number" step="0.01" min="0" value={form.cost_eur}
                 onChange={e => setForm(f => ({ ...f, cost_eur: e.target.value }))}
-                placeholder="e.g. 26" />
+                placeholder={t("costPlaceholder")} />
             </div>
           </div>
           <div>
-            <label className="label">Notes (optional)</label>
+            <label className="label">{t("notesLabel")}</label>
             <input className="input text-sm" value={form.description}
               onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-              placeholder="Book in advance, wear comfortable shoes…" />
+              placeholder={t("notesPlaceholder")} />
           </div>
           <button type="submit" disabled={saving} className="btn-primary text-sm">
-            {saving ? "Adding…" : "Add to itinerary"}
+            {saving ? t("adding") : t("addTitle")}
           </button>
         </form>
       )}
@@ -303,9 +308,9 @@ export default function ItinerarySection({
         <div className="border border-indigo-200 rounded-xl overflow-hidden">
           <div className="bg-indigo-50 px-4 py-3 flex items-center justify-between gap-2 flex-wrap">
             <div>
-              <p className="text-sm font-semibold text-indigo-800">🤖 AI-suggested itinerary</p>
+              <p className="text-sm font-semibold text-indigo-800">{t("aiPanelTitle")}</p>
               <p className="text-xs text-indigo-500 mt-0.5">
-                {suggestions.length} activities · {addedSet.size} added so far
+                {t("activities", { count: suggestions.length })} · {t("aiPanelAdded", { added: addedSet.size })}
               </p>
             </div>
             <button
@@ -313,7 +318,7 @@ export default function ItinerarySection({
               disabled={addingAll || addedSet.size === suggestions.length}
               className="btn-primary text-xs px-3 py-1.5"
             >
-              {addingAll ? "Adding…" : addedSet.size === suggestions.length ? "✓ All added" : "Add all"}
+              {addingAll ? t("adding") : addedSet.size === suggestions.length ? t("allAdded") : t("addAll")}
             </button>
           </div>
           <div className="divide-y divide-slate-100 max-h-[520px] overflow-y-auto">
@@ -347,7 +352,7 @@ export default function ItinerarySection({
                           disabled={added}
                           className={`flex-shrink-0 text-xs font-semibold px-2.5 py-1 rounded-lg transition ${added ? "text-emerald-600 bg-emerald-100" : "text-indigo-600 bg-indigo-50 hover:bg-indigo-100"}`}
                         >
-                          {added ? "✓" : "+ Add"}
+                          {added ? "✓" : t("addButton")}
                         </button>
                       </div>
                     );
@@ -362,8 +367,8 @@ export default function ItinerarySection({
       {/* Empty state */}
       {isEmpty && !showForm && !suggestions && (
         <div className="py-6 text-center">
-          <p className="text-slate-400 text-sm">No activities planned yet.</p>
-          <p className="text-xs text-slate-400 mt-1">Add restaurants, sights, tours, and activities day by day.</p>
+          <p className="text-slate-400 text-sm">{t("noActivities")}</p>
+          <p className="text-xs text-slate-400 mt-1">{t("noActivitiesHint")}</p>
         </div>
       )}
 

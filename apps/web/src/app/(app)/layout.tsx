@@ -1,20 +1,25 @@
 import { redirect } from "next/navigation";
-import { headers } from "next/headers";
+import { headers, cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import DarkModeToggle from "./DarkModeToggle";
 import MobileMenuButton from "./MobileMenuButton";
 import NotificationBell from "./NotificationBell";
 import BottomNav from "./BottomNav";
+import LanguageSwitcher from "./LanguageSwitcher";
+import { NextIntlClientProvider } from "next-intl";
+import { getMessages, getLocale } from "next-intl/server";
 
-const navItems = [
-  { href: "/dashboard", icon: "🏠", label: "Dashboard" },
-  { href: "/trips", icon: "✈️", label: "My Trips" },
-  { href: "/holidays", icon: "🗓️", label: "Holiday Calendar" },
-  { href: "/wishlist", icon: "🌍", label: "Wishlist" },
-  { href: "/family", icon: "👨‍👩‍👧", label: "Family & Friends" },
-  { href: "/preferences", icon: "⚙️", label: "User Config" },
-];
+function getNavItems(t: (k: string) => string) {
+  return [
+    { href: "/dashboard", icon: "🏠", label: t("nav.dashboard") },
+    { href: "/trips",     icon: "✈️", label: t("nav.trips") },
+    { href: "/holidays",  icon: "🗓️", label: t("nav.calendar") },
+    { href: "/wishlist",  icon: "🌍", label: t("nav.wishlist") },
+    { href: "/family",    icon: "👨‍👩‍👧", label: t("nav.family") },
+    { href: "/preferences", icon: "⚙️", label: t("nav.preferences") },
+  ];
+}
 
 export default async function AppLayout({
   children,
@@ -24,6 +29,16 @@ export default async function AppLayout({
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
+
+  const locale = await getLocale();
+  const messages = await getMessages();
+  const t = (key: string) => {
+    const parts = key.split(".");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let obj: any = messages;
+    for (const p of parts) obj = obj?.[p];
+    return typeof obj === "string" ? obj : key;
+  };
 
   // Redirect first-time users to onboarding (skip if already on that page)
   // We check by seeing if user_preferences row exists
@@ -41,9 +56,11 @@ export default async function AppLayout({
     redirect("/onboarding");
   }
 
+  const navItems = getNavItems(t);
   const initials = user.email?.slice(0, 2).toUpperCase() ?? "HP";
 
   return (
+    <NextIntlClientProvider locale={locale} messages={messages}>
     <div className="min-h-screen flex flex-col md:flex-row" style={{ background: "var(--bg)" }}>
 
       {/* Mobile top bar */}
@@ -89,7 +106,7 @@ export default async function AppLayout({
         <div className="mt-4 pt-4 border-t border-white/10 space-y-1">
           <Link href="/about" className="sidebar-link opacity-70 hover:opacity-100">
             <span className="text-base">📖</span>
-            <span>About / Features</span>
+            <span>{t("nav.about")}</span>
           </Link>
           {/* Bug report — hidden until email is configured
           <Link href="/bug-report" className="sidebar-link opacity-70 hover:opacity-100">
@@ -104,6 +121,7 @@ export default async function AppLayout({
       <main className="flex-1 ml-0 md:ml-60 min-h-screen flex flex-col">
         {/* Top bar — desktop only */}
         <div className="hidden md:flex sticky top-0 z-30 items-center justify-end gap-2 px-8 py-3 border-b border-slate-100" style={{ background: "var(--surface)" }}>
+          <LanguageSwitcher currentLocale={locale} />
           <DarkModeToggle compact />
           <NotificationBell userId={user.id} />
           <div className="w-px h-5 bg-slate-200 mx-1" />
@@ -126,5 +144,6 @@ export default async function AppLayout({
 
       <BottomNav />
     </div>
+    </NextIntlClientProvider>
   );
 }

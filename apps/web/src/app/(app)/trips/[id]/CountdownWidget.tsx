@@ -1,3 +1,7 @@
+"use client";
+
+import { useTranslations } from "next-intl";
+
 interface Props {
   departureDate: string;
   returnDate: string;
@@ -5,6 +9,7 @@ interface Props {
 }
 
 export default function CountdownWidget({ departureDate, returnDate, tripTitle }: Props) {
+  const t = useTranslations("countdown");
   const today      = new Date(); today.setHours(0, 0, 0, 0);
   const departure  = new Date(departureDate); departure.setHours(0, 0, 0, 0);
   const returnD    = new Date(returnDate); returnD.setHours(0, 0, 0, 0);
@@ -26,13 +31,13 @@ export default function CountdownWidget({ departureDate, returnDate, tripTitle }
     bg = "from-emerald-500 to-teal-600";
     emoji = "🌍";
     numberStr = `Day ${dayOfTrip}`;
-    label = `of ${totalDays}`;
+    label = t("onTrip");
     sub = `Enjoy ${tripTitle}!`;
   } else if (daysToGo === 0) {
     bg = "from-emerald-500 to-teal-600";
     emoji = "🛫";
     numberStr = "Today!";
-    label = "Departure day";
+    label = t("departureToday");
     sub = "Have an amazing trip!";
   } else if (daysToGo === 1) {
     bg = "from-amber-500 to-orange-600";
@@ -44,19 +49,19 @@ export default function CountdownWidget({ departureDate, returnDate, tripTitle }
     bg = "from-amber-500 to-orange-500";
     emoji = "🎒";
     numberStr = String(daysToGo);
-    label = "days to go";
+    label = t("daysToGo");
     sub = "Almost there!";
   } else if (daysToGo <= 30) {
     bg = "from-indigo-500 to-violet-600";
     emoji = "✈️";
     numberStr = String(daysToGo);
-    label = "days to go";
+    label = t("daysToGo");
     sub = new Date(departureDate).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
   } else {
     bg = "from-slate-500 to-slate-600";
     emoji = "📅";
     numberStr = String(daysToGo);
-    label = "days to go";
+    label = t("daysToGo");
     sub = new Date(departureDate).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
   }
 

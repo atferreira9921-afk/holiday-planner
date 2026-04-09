@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 
 interface Task {
@@ -34,6 +35,8 @@ function isOverdue(due: string | null, done: boolean) {
 }
 
 export default function TripTasks({ tripId, currentUserId, members, initialTasks }: Props) {
+  const t = useTranslations("tasks");
+  const tc = useTranslations("common");
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [open, setOpen]             = useState(true);
   const [addingTask, setAddingTask] = useState(false);
@@ -112,7 +115,7 @@ export default function TripTasks({ tripId, currentUserId, members, initialTasks
             )}
             {task.due_date && (
               <span className={`text-xs font-semibold ${overdue ? "text-red-500" : "text-slate-400"}`}>
-                {overdue ? "⚠️ " : "📅 "}{fmtDate(task.due_date)}
+                {overdue ? `⚠️ ${t("overdue")} ` : "📅 "}{fmtDate(task.due_date)}
               </span>
             )}
             {task.is_done && task.done_at && (
@@ -139,15 +142,15 @@ export default function TripTasks({ tripId, currentUserId, members, initialTasks
     <div className="card p-6 space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="font-bold text-slate-900 text-lg">✅ Trip to-dos</h2>
+          <h2 className="font-bold text-slate-900 text-lg">✅ {t("title")}</h2>
           <p className="text-xs text-slate-400 mt-0.5">
-            {pending.length === 0 ? "All done!" : `${pending.length} task${pending.length !== 1 ? "s" : ""} remaining`}
+            {pending.length === 0 ? t("allDone") : t("remaining", { count: pending.length })}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => setOpen(o => !o)} className="btn-ghost text-sm flex-shrink-0">{open ? "Hide" : "Show"}</button>
+          <button onClick={() => setOpen(o => !o)} className="btn-ghost text-sm flex-shrink-0">{open ? tc("hide") : tc("show")}</button>
           {open && <button onClick={() => setAddingTask(a => !a)} className="btn-ghost text-sm flex-shrink-0">
-            {addingTask ? "Cancel" : "+ Add task"}
+            {addingTask ? tc("cancel") : t("addTask")}
           </button>}
         </div>
       </div>
@@ -158,7 +161,7 @@ export default function TripTasks({ tripId, currentUserId, members, initialTasks
         <form onSubmit={addTask} className="bg-slate-50 rounded-xl p-4 space-y-3 border border-slate-200">
           <input
             className="input w-full text-sm"
-            placeholder="What needs to be done? e.g. Book airport parking"
+            placeholder={t("taskPlaceholder")}
             value={form.title}
             onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
             required
@@ -167,7 +170,7 @@ export default function TripTasks({ tripId, currentUserId, members, initialTasks
           />
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">Assign to</label>
+              <label className="block text-xs font-medium text-slate-600 mb-1">{t("assignTo")}</label>
               <select
                 className="input text-sm w-full"
                 value={form.assigned_to}
@@ -182,7 +185,7 @@ export default function TripTasks({ tripId, currentUserId, members, initialTasks
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">Due date (optional)</label>
+              <label className="block text-xs font-medium text-slate-600 mb-1">{t("dueDate")}</label>
               <input
                 className="input text-sm w-full"
                 type="date"
@@ -192,7 +195,7 @@ export default function TripTasks({ tripId, currentUserId, members, initialTasks
             </div>
           </div>
           <button type="submit" disabled={saving || !form.title.trim()} className="btn-primary text-sm">
-            {saving ? "Adding…" : "Add task"}
+            {saving ? tc("saving") : t("addAction")}
           </button>
         </form>
       )}
@@ -200,7 +203,7 @@ export default function TripTasks({ tripId, currentUserId, members, initialTasks
       {/* Pending tasks */}
       {pending.length === 0 && !addingTask && (
         <p className="text-sm text-slate-400 text-center py-3">
-          No tasks yet. Add things to organise — book hotel, sort insurance, etc.
+          {t("noTasks")}
         </p>
       )}
       {pending.length > 0 && (
@@ -214,7 +217,7 @@ export default function TripTasks({ tripId, currentUserId, members, initialTasks
             onClick={() => setShowDone(s => !s)}
             className="text-xs text-slate-400 hover:text-slate-600 transition"
           >
-            {showDone ? "Hide" : `Show ${done.length} completed task${done.length !== 1 ? "s" : ""}`}
+            {showDone ? t("hideCompleted") : t("showCompleted", { count: done.length })}
           </button>
           {showDone && (
             <div className="mt-2 space-y-0.5 opacity-60">{done.map(renderTask)}</div>

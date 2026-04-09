@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import GenerateSuggestionsButton from "./GenerateSuggestionsButton";
 import VotingSection from "./VotingSection";
@@ -45,6 +46,9 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) notFound();
+
+  const t  = await getTranslations("tripHeader");
+  const tc = await getTranslations("common");
 
   const db = createServiceClient();
 
@@ -126,8 +130,8 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
     sixMonthsAfterReturn.setMonth(sixMonthsAfterReturn.getMonth() + 6);
     if (expiry < sixMonthsAfterReturn) {
       const daysUntilExpiry = Math.ceil((expiry.getTime() - Date.now()) / 86400000);
-      if (daysUntilExpiry <= 0) return "Your passport has already expired!";
-      return `Your passport expires on ${expiry.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })} — within 6 months of your return date. Many countries require 6+ months validity.`;
+      if (daysUntilExpiry <= 0) return t("passportExpired");
+      return t("passportWarning", { date: expiry.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) });
     }
     return null;
   })();
@@ -240,9 +244,9 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
         <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-start gap-3">
           <span className="text-lg flex-shrink-0">⚠️</span>
           <div>
-            <p className="text-sm font-semibold text-amber-800">Passport expiry warning</p>
+            <p className="text-sm font-semibold text-amber-800">{t("passportWarning")}</p>
             <p className="text-xs text-amber-700 mt-0.5">{passportWarning}</p>
-            <a href="/preferences" className="text-xs text-amber-600 underline mt-1 inline-block">Update passport details →</a>
+            <a href="/preferences" className="text-xs text-amber-600 underline mt-1 inline-block">{t("updatePassport")} →</a>
           </div>
         </div>
       )}
@@ -250,7 +254,7 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
       {/* Header */}
       <div>
         <Link href="/trips" className="text-slate-400 text-sm hover:text-slate-600 transition flex items-center gap-1 mb-4">
-          ← Back to trips
+          {t("back")}
         </Link>
         <div className="flex items-start justify-between flex-wrap gap-3">
           <div>
@@ -260,7 +264,7 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
             </p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-            <StatusBadge status={trip.status} />
+            <StatusBadge status={trip.status} label={t(trip.status as "planning" | "booked" | "suggested" | "completed" | "cancelled")} />
             <EditTripModal trip={{ id: trip.id, title: trip.title, earliest_departure: trip.earliest_departure, latest_return: trip.latest_return, desired_duration_days: trip.desired_duration_days, budget_per_person_eur: trip.budget_per_person_eur ?? null, destination_hint: trip.destination_hint ?? null, destination_city: (trip.destination_city as string | null) ?? null, destination_country: (trip.destination_country as string | null) ?? null, return_origin_city: (trip.return_origin_city as string | null) ?? null, return_origin_country: (trip.return_origin_country as string | null) ?? null, vehicle_type: trip.vehicle_type as string | null, planning_mode: trip.planning_mode as string | null }} />
             <DuplicateTripButton tripId={trip.id} />
             <DeleteTripButton tripId={trip.id} />
@@ -299,12 +303,12 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
       {/* Trip details card */}
       <div id="trip-details" className="card p-6">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Stat icon="🌙" label="Duration" value={`${trip.desired_duration_days} days`} />
-          <Stat icon="📅" label="Window" value={`${trip.earliest_departure}`} sub={`→ ${trip.latest_return}`} />
-          {trip.budget_per_person_eur && <Stat icon="💶" label="Budget" value={`€${trip.budget_per_person_eur}`} sub="per person" />}
-          {trip.destination_hint && <Stat icon="💡" label="Hint" value={trip.destination_hint} />}
+          <Stat icon="🌙" label="Duration" value={t("duration", { days: trip.desired_duration_days })} />
+          <Stat icon="📅" label={t("window")} value={`${trip.earliest_departure}`} sub={`→ ${trip.latest_return}`} />
+          {trip.budget_per_person_eur && <Stat icon="💶" label={t("budget")} value={`€${trip.budget_per_person_eur}`} sub="per person" />}
+          {trip.destination_hint && <Stat icon="💡" label={t("hint")} value={trip.destination_hint} />}
           {trip.planning_mode === "destination_first" && trip.destination_city && (
-            <Stat icon="📍" label="Destination" value={`${trip.destination_city}, ${trip.destination_country}`} />
+            <Stat icon="📍" label={t("destination")} value={`${trip.destination_city}, ${trip.destination_country}`} />
           )}
         </div>
       </div>
@@ -788,7 +792,7 @@ function Stat({ icon, label, value, sub }: { icon: string; label: string; value:
   );
 }
 
-function StatusBadge({ status }: { status: string }) {
+function StatusBadge({ status, label }: { status: string; label?: string }) {
   const map: Record<string, string> = {
     planning:  "bg-yellow-100 text-yellow-800",
     suggested: "bg-violet-100 text-violet-700",
@@ -796,5 +800,5 @@ function StatusBadge({ status }: { status: string }) {
     completed: "bg-slate-100 text-slate-600",
     cancelled: "bg-red-100 text-red-700",
   };
-  return <span className={`badge ${map[status] ?? map.planning}`}>{status}</span>;
+  return <span className={`badge ${map[status] ?? map.planning}`}>{label ?? status}</span>;
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 
 export default function TripNotes({
@@ -18,6 +19,8 @@ export default function TripNotes({
   updatedAt: string | null;
   memberNames: Record<string, string>;
 }) {
+  const t = useTranslations("notes");
+  const tc = useTranslations("common");
   const [open, setOpen]       = useState(true);
   const [content, setContent] = useState(initialContent);
   const [saving, setSaving] = useState(false);
@@ -61,11 +64,11 @@ export default function TripNotes({
   return (
     <div className="card p-6 space-y-3">
       <div className="flex items-center justify-between">
-        <h2 className="font-bold text-slate-900 text-lg">📝 Trip notes</h2>
+        <h2 className="font-bold text-slate-900 text-lg">📝 {t("title")}</h2>
         <div className="flex items-center gap-2">
-          {open && saving && <span className="text-xs text-slate-400 animate-pulse">Saving…</span>}
-          {open && !saving && saved && <span className="text-xs text-emerald-500 font-medium">✓ Saved</span>}
-          <button onClick={() => setOpen(o => !o)} className="btn-ghost text-sm">{open ? "Hide" : "Show"}</button>
+          {open && saving && <span className="text-xs text-slate-400 animate-pulse">{tc("saving")}</span>}
+          {open && !saving && saved && <span className="text-xs text-emerald-500 font-medium">✓ {tc("saved")}</span>}
+          <button onClick={() => setOpen(o => !o)} className="btn-ghost text-sm">{open ? tc("hide") : tc("show")}</button>
         </div>
       </div>
 
@@ -75,14 +78,12 @@ export default function TripNotes({
         value={content}
         onChange={e => setContent(e.target.value)}
         onBlur={handleBlur}
-        placeholder="Shared notes for the group — restaurants to try, tips, reminders…"
+        placeholder={t("placeholder")}
       />}
 
       {open && editorName && lastUpdatedAt && (
         <p className="text-xs text-slate-400">
-          Last edited by{" "}
-          <span className="font-medium text-slate-500">{editorName}</span>
-          {" "}on {formatDate(lastUpdatedAt)}
+          {t("lastEdited", { name: editorName, date: formatDate(lastUpdatedAt) })}
         </p>
       )}
     </div>

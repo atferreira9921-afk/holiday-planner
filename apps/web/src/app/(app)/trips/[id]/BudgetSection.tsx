@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 
 interface Expense {
   amount_eur: number;
@@ -27,9 +28,11 @@ export default function BudgetSection({
   expenses: Expense[];
   itineraryItems: ItineraryItem[];
 }) {
-  if (!budgetPerPerson && expenses.length === 0 && itineraryItems.length === 0) return null;
-
+  const t  = useTranslations("budget");
+  const tc = useTranslations("common");
   const [open, setOpen] = useState(true);
+
+  if (!budgetPerPerson && expenses.length === 0 && itineraryItems.length === 0) return null;
   const totalActual    = expenses.reduce((s, e) => s + e.amount_eur, 0);
   const totalPlanned   = itineraryItems.reduce((s, i) => s + (i.cost_eur ?? 0), 0);
   const totalBudget    = (budgetPerPerson ?? 0) * Math.max(members.length, 1);
@@ -46,21 +49,21 @@ export default function BudgetSection({
   return (
     <div className="card p-6 space-y-5">
       <div className="flex items-center justify-between">
-        <h2 className="font-bold text-slate-900 text-lg">📊 Budget tracker</h2>
-        <button onClick={() => setOpen(o => !o)} className="btn-ghost text-sm flex-shrink-0">{open ? "Hide" : "Show"}</button>
+        <h2 className="font-bold text-slate-900 text-lg">{t("title")}</h2>
+        <button onClick={() => setOpen(o => !o)} className="btn-ghost text-sm flex-shrink-0">{open ? tc("hide") : tc("show")}</button>
       </div>
 
       {open && <>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {budgetPerPerson && (
             <div className="bg-indigo-50 rounded-xl p-3 text-center">
-              <p className="text-xs text-indigo-500 font-semibold uppercase tracking-wide mb-1">Budget</p>
+              <p className="text-xs text-indigo-500 font-semibold uppercase tracking-wide mb-1">{t("budget")}</p>
               <p className="text-xl font-bold text-indigo-700">€{totalBudget.toFixed(0)}</p>
               <p className="text-xs text-indigo-400">€{budgetPerPerson}/person</p>
             </div>
           )}
           <div className="bg-slate-50 rounded-xl p-3 text-center">
-            <p className="text-xs text-slate-500 font-semibold uppercase tracking-wide mb-1">Spent</p>
+            <p className="text-xs text-slate-500 font-semibold uppercase tracking-wide mb-1">{t("spent")}</p>
             <p className={`text-xl font-bold ${overBudget ? "text-red-600" : "text-slate-800"}`}>
               €{totalActual.toFixed(0)}
             </p>
@@ -68,15 +71,15 @@ export default function BudgetSection({
           </div>
           {totalPlanned > 0 && (
             <div className="bg-amber-50 rounded-xl p-3 text-center">
-              <p className="text-xs text-amber-600 font-semibold uppercase tracking-wide mb-1">Planned</p>
+              <p className="text-xs text-amber-600 font-semibold uppercase tracking-wide mb-1">{t("planned")}</p>
               <p className="text-xl font-bold text-amber-700">€{totalPlanned.toFixed(0)}</p>
-              <p className="text-xs text-amber-400">from itinerary</p>
+              <p className="text-xs text-amber-400">{t("fromItinerary")}</p>
             </div>
           )}
           {budgetPerPerson && (
             <div className={`rounded-xl p-3 text-center ${overBudget ? "bg-red-50" : "bg-emerald-50"}`}>
               <p className={`text-xs font-semibold uppercase tracking-wide mb-1 ${overBudget ? "text-red-500" : "text-emerald-600"}`}>
-                {overBudget ? "Over budget" : "Remaining"}
+                {overBudget ? t("overBudget") : t("remaining")}
               </p>
               <p className={`text-xl font-bold ${overBudget ? "text-red-700" : "text-emerald-700"}`}>
                 €{Math.abs(totalBudget - totalActual).toFixed(0)}
@@ -96,8 +99,8 @@ export default function BudgetSection({
                 }} />
             </div>
             <div className="flex justify-between text-xs text-slate-400 mt-1">
-              <span>{pct.toFixed(0)}% of budget used</span>
-              {overBudget && <span className="text-red-500 font-semibold">⚠️ Over budget by €{(totalActual - totalBudget).toFixed(0)}</span>}
+              <span>{t("pctUsed", { pct: pct.toFixed(0) })}</span>
+              {overBudget && <span className="text-red-500 font-semibold">{t("overBy", { amount: (totalActual - totalBudget).toFixed(0) })}</span>}
             </div>
           </div>
         )}
@@ -105,7 +108,7 @@ export default function BudgetSection({
         {/* By category breakdown */}
         {byCategory.length > 0 && (
           <div>
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Breakdown</p>
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">{t("breakdown")}</p>
             <div className="space-y-1.5">
               {byCategory.map(([cat, amount]) => {
                 const catPct = totalActual > 0 ? (amount / totalActual) * 100 : 0;

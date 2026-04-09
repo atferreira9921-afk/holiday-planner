@@ -1,0 +1,185 @@
+================================================================================
+  HOLIDAY PLANNER — PITCH & DEMO SCRIPT
+================================================================================
+
+--------------------------------------------------------------------------------
+  THE HOOK (30 seconds)
+--------------------------------------------------------------------------------
+
+Planning a group holiday is chaos.
+
+You're in 4 different WhatsApp threads trying to find a week when everyone is
+free. Someone forgets they have a conference. Someone else used up their vacation
+days. You spend more time coordinating than actually planning.
+
+Then once you finally pick dates, you still have to figure out where to go,
+find flights, compare hotels, split costs, make packing lists, and share all the
+documents — across 6 different apps.
+
+Holiday Planner fixes all of that. One app. Everyone in sync. AI doing the
+heavy lifting.
+
+--------------------------------------------------------------------------------
+  THE PROBLEM (1 minute)
+--------------------------------------------------------------------------------
+
+Group travel has three stages of pain:
+
+1. FINDING THE WINDOW
+   Everyone has different calendars, vacation day budgets, public holidays,
+   and family commitments. Finding even a 5-day overlap where everyone can go
+   is a spreadsheet nightmare.
+
+2. DECIDING WHERE TO GO
+   Once you have dates, someone has to research destinations that fit everyone's
+   budget, interests, and travel style — including who's flying from where.
+
+3. MANAGING THE TRIP
+   After the decision: flights, hotels, expenses, packing, documents, itineraries,
+   polls, notes — scattered across Google Docs, Splitwise, WhatsApp, and email.
+
+--------------------------------------------------------------------------------
+  THE SOLUTION (1 minute)
+--------------------------------------------------------------------------------
+
+Holiday Planner is an AI-powered multi-user travel coordination platform.
+
+It connects everyone's calendars, automatically surfaces windows when the whole
+group is free, then uses Claude (Anthropic's AI) to generate ranked destination
+suggestions — with real flight prices, hotel estimates, car rental guidance, and
+a full reasoning explaining why each destination fits this specific group.
+
+Once you pick a destination, the app becomes your shared trip workspace:
+expenses, packing, itinerary, documents, polls, notes — all in one place,
+live-synced for every member.
+
+--------------------------------------------------------------------------------
+  KEY DIFFERENTIATORS
+--------------------------------------------------------------------------------
+
+  * GROUP-FIRST, not solo-first. Calendars, preferences, and budgets for
+    every member are considered together. The AI knows Alice has 8 vacation
+    days left, Bob is flying from London, and Clara has a public holiday on
+    the 15th.
+
+  * AI THAT KNOWS YOUR CONSTRAINTS. Not just "suggest a destination" —
+    the AI receives everyone's blocked dates, interests, budget ranges,
+    travel styles, public holidays, and even free stays (friends/family with
+    spare rooms), then returns 3 ranked options with trade-off analysis.
+
+  * BRIDGE-DAY INTELLIGENCE. The app finds "bridge days" — where booking
+    just 1-2 extra vacation days creates a 9-10 day run. Most people leave
+    these on the table. Holiday Planner surfaces them automatically.
+
+  * EVERYTHING IN ONE PLACE. From "when can we go?" to shared expense
+    splitting and a printable trip summary — one app, not six.
+
+--------------------------------------------------------------------------------
+  DEMO FLOW
+--------------------------------------------------------------------------------
+
+Suggested order for a live demo (approx 10-15 minutes):
+
+--- STEP 1: Dashboard (1 min) ---
+  - Show the vacation day counter (days used / remaining)
+  - Point out the bridge-day cards — "3 days booked = 9 days off"
+  - Show the 3D globe with wishlist pins
+  - Mention: "This is everyone's state at a glance"
+
+--- STEP 2: Holiday Calendar (2 min) ---
+  - Show a multi-month calendar with colour-coded members
+  - Book a holiday period for one member — watch the calendar update live
+  - Show public holidays auto-populated for Portugal, UK, etc.
+  - Highlight the Bridge-Day Optimizer panel on the right
+
+--- STEP 3: Create a Trip (1 min) ---
+  - Click "New Trip" → choose AI-suggest mode
+  - Set a date window (e.g. July 15 – August 10), 7 days, €800/person budget
+  - Add a custom prompt: "We want beaches, somewhere we haven't been before"
+
+--- STEP 4: AI Suggestion Generation (3 min) ---
+  - Click "Generate Suggestions" — watch the progress bar stream live
+  - Show the 3 suggestions arrive: destination, dates, costs, reasoning,
+    highlights, trade-offs
+  - Point out: "It factored in both members' calendars and public holidays"
+  - Show the car rental panel for a destination that needs one
+    ("Rural Alentejo — public transport is limited, car recommended, ~€180")
+  - Show the Hotel Search panel — live Google Hotels results
+  - Show the Flight Search panel — live Google Flights results
+  - Group members vote up/down on suggestions
+
+--- STEP 5: Wishlist & Free Stays (1 min) ---
+  - Show a wishlist destination on the 3D globe
+  - Show a Free Stay entry: "Friend's apartment in Barcelona"
+  - Toggle it active/inactive — explain: "Inactive ones are excluded from AI"
+
+--- STEP 6: Trip Detail — Shared Workspace (2 min) ---
+  - Scroll through the trip detail tabs: Expenses, Packing, Itinerary,
+    Documents, Photos, Notes, Polls
+  - Add an expense: "Flights — €320" — split equally
+  - Check off a packing item
+  - Show the Local Info card (visa, currency, timezone, language, safety)
+  - Show the Currency widget (live exchange rate)
+
+--- STEP 7: Notifications (30 sec) ---
+  - Show the notification bell — "Suggestions ready for Summer Trip 2025"
+  - Mention: "Every group member gets notified — no one misses an update"
+
+--- STEP 8: Profile & Preferences (1 min) ---
+  - Show travel preferences: travel style, budget, interests, avoided countries
+  - Show parental leave toggle (blocks calendar days automatically)
+  - Show My Cars with AI fuel consumption estimator
+  - Mention Facebook login as an option
+
+--------------------------------------------------------------------------------
+  NUMBERS & SCOPE
+--------------------------------------------------------------------------------
+
+  10 major feature areas
+  100+ countries with live public holiday data
+  Powered by Claude (Anthropic Sonnet 4.6)
+  Live flight & hotel prices via SerpApi
+  Real-time sync via Supabase Realtime
+  Built with: Next.js 16 · TypeScript · Supabase · Tailwind CSS · Three.js
+
+--------------------------------------------------------------------------------
+  CLOSING LINE
+--------------------------------------------------------------------------------
+
+"Holiday Planner doesn't just help you plan a trip.
+ It helps a group of people — with different calendars, different budgets,
+ and different ideas of fun — actually agree on one.
+
+ That's the hard part. And the AI handles it."
+
+--------------------------------------------------------------------------------
+  Q&A PREP — LIKELY QUESTIONS
+--------------------------------------------------------------------------------
+
+Q: How does the AI know about flight prices?
+A: Real-time search via SerpApi (Google Flights / Google Hotels), called
+   live when you open the suggestion panel.
+
+Q: What if two people are in different countries?
+A: Each member has their own home country, airport, and public holiday
+   calendar. The AI gets everyone's data and suggests departure dates that
+   work for all of them.
+
+Q: Can you use it solo?
+A: Yes — create a group with just yourself. It still tracks your calendar,
+   vacation days, and generates personal suggestions.
+
+Q: Is the data private?
+A: All data is stored in Supabase with row-level security. You only see your
+   own data and trips you've been invited to.
+
+Q: Can you add family members who don't have an account?
+A: Yes — add them as profiles (child, partner, etc.) and link them to an
+   app account later if they join.
+
+Q: Why not just use Google Trips / TripIt?
+A: Those are for managing trips you've already booked. Holiday Planner is
+   for the coordination phase before booking — finding the window, picking
+   the destination, building group consensus.
+
+================================================================================

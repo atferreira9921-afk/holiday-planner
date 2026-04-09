@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { isAiEnabled } from "@/lib/config";
 
 interface ParsedReceipt {
@@ -18,6 +19,8 @@ export default function ReceiptScanner({
   tripId: string;
   onResult?: (receipt: ParsedReceipt) => void;
 }) {
+  const t  = useTranslations("receipt");
+  const tc = useTranslations("common");
   const [open, setOpen]         = useState(true);
   const [mode, setMode]         = useState<"text" | "image">("text");
   const [text, setText]         = useState("");
@@ -75,8 +78,8 @@ export default function ReceiptScanner({
   return (
     <div className="card p-5 space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="font-bold text-slate-800">🧾 Receipt scanner</h3>
-        <button onClick={() => setOpen(o => !o)} className="btn-ghost text-sm">{open ? "Hide" : "Show"}</button>
+        <h3 className="font-bold text-slate-800">🧾 {t("title")}</h3>
+        <button onClick={() => setOpen(o => !o)} className="btn-ghost text-sm">{open ? tc("hide") : tc("show")}</button>
       </div>
 
       {open && <>
@@ -92,7 +95,7 @@ export default function ReceiptScanner({
                 : "bg-slate-100 text-slate-600 hover:bg-slate-200"
             }`}
           >
-            {m === "text" ? "📝 Paste text" : "📷 Upload photo"}
+            {m === "text" ? `📝 ${t("pasteText")}` : `📷 ${t("uploadPhoto")}`}
           </button>
         ))}
       </div>
@@ -102,7 +105,7 @@ export default function ReceiptScanner({
           <textarea
             value={text}
             onChange={e => setText(e.target.value)}
-            placeholder="Paste receipt text here..."
+            placeholder={t("pasteHere")}
             rows={5}
             className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-mono resize-none focus:outline-none focus:ring-2 focus:ring-indigo-400"
           />
@@ -111,7 +114,7 @@ export default function ReceiptScanner({
             disabled={scanning || !text.trim()}
             className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
           >
-            {scanning ? "Scanning…" : "Scan receipt"}
+            {scanning ? t("scanning") : t("scan")}
           </button>
         </div>
       ) : (
@@ -128,7 +131,7 @@ export default function ReceiptScanner({
             disabled={scanning}
             className="w-full border-2 border-dashed border-slate-200 rounded-xl py-8 text-slate-400 hover:border-indigo-300 hover:text-indigo-500 transition disabled:opacity-50"
           >
-            {scanning ? "Scanning…" : "Click to upload receipt photo"}
+            {scanning ? t("scanning") : t("uploadPhoto")}
           </button>
         </div>
       )}
@@ -139,24 +142,29 @@ export default function ReceiptScanner({
 
       {result && (
         <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2">
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{t("result")}</p>
           <div className="flex items-center justify-between">
             <p className="font-semibold text-slate-800">{result.description}</p>
             <p className="font-bold text-indigo-700 text-lg">
+              <span className="text-xs text-slate-400 font-normal mr-1">{t("total")}</span>
               {result.currency !== "EUR" ? `${result.currency} ` : "€"}{result.total_eur.toFixed(2)}
             </p>
           </div>
           <span className="inline-block text-[11px] px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 font-medium capitalize">
-            {result.category}
+            {t("category")}: {result.category}
           </span>
           {result.items && result.items.length > 0 && (
-            <ul className="mt-2 space-y-1 text-sm text-slate-600">
-              {result.items.map((item, i) => (
-                <li key={i} className="flex justify-between">
-                  <span>{item.name}</span>
-                  <span className="font-medium">{item.price.toFixed(2)}</span>
-                </li>
-              ))}
-            </ul>
+            <div>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">{t("items")}</p>
+              <ul className="space-y-1 text-sm text-slate-600">
+                {result.items.map((item, i) => (
+                  <li key={i} className="flex justify-between">
+                    <span>{item.name}</span>
+                    <span className="font-medium">{item.price.toFixed(2)}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
         </div>
       )}

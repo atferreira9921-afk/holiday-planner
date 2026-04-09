@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 
 interface Member { user_id: string; name: string; pending?: boolean; familyMember?: boolean; }
@@ -42,6 +43,8 @@ export default function AvailabilityPoll({
   earliestDeparture: string;
   latestReturn: string;
 }) {
+  const t = useTranslations("availability");
+  const tc = useTranslations("common");
   const [entries, setEntries]   = useState<AvailabilityEntry[]>(initialEntries);
   const [saving, setSaving]     = useState<string | null>(null);
   const [collapsed, setCollapsed] = useState(false);
@@ -91,21 +94,21 @@ export default function AvailabilityPoll({
     <div className="card p-6 space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="font-bold text-slate-900 text-lg">📅 Availability poll</h2>
+          <h2 className="font-bold text-slate-900 text-lg">📅 {t("title")}</h2>
           <p className="text-xs text-slate-400 mt-0.5">
             {members.length > 1
-              ? `${confirmedMembers.length} member${confirmedMembers.length !== 1 ? "s" : ""} · green = everyone free`
-              : "Just you so far — invite others to compare availability"}
+              ? t("membersInfo", { count: confirmedMembers.length })
+              : t("justYou")}
           </p>
         </div>
         <div className="flex items-center gap-2">
           {allAvailableDates.length > 0 && (
             <span className="text-xs font-semibold px-2 py-1 rounded-full bg-emerald-100 text-emerald-700">
-              {allAvailableDates.length} shared day{allAvailableDates.length !== 1 ? "s" : ""}
+              {t("sharedDays", { count: allAvailableDates.length })}
             </span>
           )}
           <button onClick={() => setCollapsed(c => !c)} className="btn-ghost text-sm">
-            {collapsed ? "Show" : "Hide"}
+            {collapsed ? tc("show") : tc("hide")}
           </button>
         </div>
       </div>

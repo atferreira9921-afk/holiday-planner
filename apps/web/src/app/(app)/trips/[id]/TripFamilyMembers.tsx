@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 
 interface FamilyMember {
@@ -23,6 +24,7 @@ export default function TripFamilyMembers({
   allFamilyMembers: FamilyMember[];
   initialTaggedIds: string[];
 }) {
+  const t = useTranslations("familyMembers");
   const [taggedIds, setTaggedIds] = useState<Set<string>>(new Set(initialTaggedIds));
   const [saving, setSaving] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -58,8 +60,8 @@ export default function TripFamilyMembers({
   return (
     <div className="card p-5 space-y-3">
       <div>
-        <h2 className="font-bold text-slate-900">👨‍👩‍👧 Travellers</h2>
-        <p className="text-xs text-slate-400 mt-0.5">Select who is coming on this trip</p>
+        <h2 className="font-bold text-slate-900">{t("title")}</h2>
+        <p className="text-xs text-slate-400 mt-0.5">{t("addMember")}</p>
       </div>
       <div className="flex flex-wrap gap-2">
         {allFamilyMembers.map(fm => {

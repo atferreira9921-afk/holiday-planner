@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 
 interface CheckRow {
@@ -88,6 +89,8 @@ function generateId() {
 }
 
 export default function PreDepartureChecklist({ tripId, currentUserId, members, initialChecks }: Props) {
+  const t = useTranslations("checklist");
+  const tc = useTranslations("common");
   const [checks, setChecks] = useState<CheckRow[]>(initialChecks);
   const [collapsed, setCollapsed] = useState(true);
   const [showHidden, setShowHidden] = useState(false);
@@ -219,13 +222,13 @@ export default function PreDepartureChecklist({ tripId, currentUserId, members, 
     <div className="card p-6 space-y-4">
       <div className="flex items-center justify-between gap-2">
         <div className="min-w-0">
-          <h2 className="font-bold text-slate-900 text-lg">✅ Pre-departure checklist</h2>
+          <h2 className="font-bold text-slate-900 text-lg">{t("title")}</h2>
           <p className="text-xs text-slate-400 mt-0.5">
             {allDone && total > 0 ? "All done — have a great trip!" : `${myCheckedCount} of ${total} checked`}
           </p>
         </div>
         <button onClick={() => setCollapsed(c => !c)} className="btn-ghost text-sm flex-shrink-0">
-          {collapsed ? "Show" : "Hide"}
+          {collapsed ? tc("show") : tc("hide")}
         </button>
       </div>
 
@@ -304,7 +307,7 @@ export default function PreDepartureChecklist({ tripId, currentUserId, members, 
                 onClick={() => setShowHidden(s => !s)}
                 className="text-xs text-slate-400 hover:text-slate-600 transition"
               >
-                {showHidden ? "Hide" : `Show ${hiddenCount} removed item${hiddenCount !== 1 ? "s" : ""}`}
+                {showHidden ? tc("hide") : `Show ${hiddenCount} removed item${hiddenCount !== 1 ? "s" : ""}`}
               </button>
               {showHidden && (
                 <div className="mt-2 space-y-0.5">

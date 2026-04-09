@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 
 interface Photo {
@@ -24,6 +25,9 @@ export default function PhotoSection({
   memberNames: Record<string, string>;
   currentUserId: string;
 }) {
+  const t = useTranslations("photos");
+  const tc = useTranslations("common");
+
   const [open, setOpen]       = useState(true);
   const [photos, setPhotos]   = useState<Photo[]>(initialPhotos);
   const [uploading, setUploading] = useState(false);
@@ -81,15 +85,15 @@ export default function PhotoSection({
     <div className="card p-6 space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="font-bold text-slate-900 text-lg">📸 Trip photos</h2>
+          <h2 className="font-bold text-slate-900 text-lg">📸 {t("title")}</h2>
           {photos.length > 0 && (
-            <p className="text-xs text-slate-400 mt-0.5">{photos.length} photo{photos.length !== 1 ? "s" : ""}</p>
+            <p className="text-xs text-slate-400 mt-0.5">{t("count", { count: photos.length })}</p>
           )}
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => setOpen(o => !o)} className="btn-ghost text-sm">{open ? "Hide" : "Show"}</button>
+          <button onClick={() => setOpen(o => !o)} className="btn-ghost text-sm">{open ? tc("hide") : tc("show")}</button>
           {open && <button onClick={() => fileRef.current?.click()} disabled={uploading} className="btn-ghost text-sm">
-            {uploading ? "Uploading…" : "+ Upload photo"}
+            {uploading ? tc("uploading") : `+ ${t("upload")}`}
           </button>}
         </div>
       </div>
@@ -102,7 +106,7 @@ export default function PhotoSection({
       <div className="flex gap-2">
         <input className="input text-sm flex-1" value={caption}
           onChange={e => setCaption(e.target.value)}
-          placeholder="Caption for next photo (optional)…" />
+          placeholder={t("captionPlaceholder")} />
       </div>
 
       {error && <p className="text-sm text-red-500">⚠️ {error}</p>}
@@ -110,8 +114,8 @@ export default function PhotoSection({
       {photos.length === 0 ? (
         <div className="py-8 text-center border-2 border-dashed border-slate-200 rounded-xl">
           <p className="text-3xl mb-2">📷</p>
-          <p className="text-slate-400 text-sm">No photos yet.</p>
-          <p className="text-xs text-slate-400 mt-1">Upload memories from your trip.</p>
+          <p className="text-slate-400 text-sm">{t("noPhotos")}</p>
+          <p className="text-xs text-slate-400 mt-1">{t("noPhotosHint")}</p>
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">

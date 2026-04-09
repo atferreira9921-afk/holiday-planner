@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { getFuelPrice } from "@/lib/data/fuel-prices";
 import { COUNTRIES } from "@/lib/data/geo";
+import { useTranslations } from "next-intl";
 
 interface Member { user_id: string; name: string; }
 
@@ -82,6 +83,8 @@ export default function ExpensesSection({
   currentUserId: string;
   homeCountry?: string;
 }) {
+  const t  = useTranslations("expenses");
+  const tc = useTranslations("common");
   const [isDark, setIsDark] = useState(false);
   useEffect(() => {
     const check = () => setIsDark(document.documentElement.getAttribute("data-theme") === "dark");
@@ -229,17 +232,17 @@ export default function ExpensesSection({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="font-bold text-slate-900 text-lg">💸 Trip costs</h2>
+          <h2 className="font-bold text-slate-900 text-lg">{t("title")}</h2>
           {expenses.length > 0 && (
             <p className="text-xs text-slate-400 mt-0.5">
-              Total: <strong>€{total.toFixed(2)}</strong> · {expenses.length} expense{expenses.length !== 1 ? "s" : ""}
+              {t("total")}: <strong>€{total.toFixed(2)}</strong>
             </p>
           )}
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => setOpen(o => !o)} className="btn-ghost text-sm">{open ? "Hide" : "Show"}</button>
+          <button onClick={() => setOpen(o => !o)} className="btn-ghost text-sm">{open ? tc("hide") : tc("show")}</button>
           {open && <button onClick={() => setShowForm(f => !f)} className="btn-ghost text-sm">
-            {showForm ? "Cancel" : "+ Add expense"}
+            {showForm ? tc("cancel") : t("addExpense")}
           </button>}
         </div>
       </div>
@@ -262,17 +265,17 @@ export default function ExpensesSection({
           {/* Per person */}
           {members.length > 1 && (
             <div className="space-y-2">
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Per person breakdown</p>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">{t("perPerson")}</p>
               <div className={`grid gap-2 grid-cols-2 sm:grid-cols-${Math.min(members.length, 3)}`}>
                 {perPerson.map(m => (
                   <div key={m.user_id} className="bg-slate-50 rounded-xl p-3">
                     <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 truncate">{m.name}</p>
                     <p className="text-lg font-bold text-slate-800">€{m.owes.toFixed(0)}</p>
-                    <p className="text-xs text-slate-400">their share</p>
-                    {m.paid > 0 && <p className="text-xs text-emerald-600 mt-1 font-semibold">paid €{m.paid.toFixed(0)}</p>}
+                    <p className="text-xs text-slate-400">{t("theirShare")}</p>
+                    {m.paid > 0 && <p className="text-xs text-emerald-600 mt-1 font-semibold">{t("paid", { amount: m.paid.toFixed(0) })}</p>}
                     {m.net !== 0 && (
                       <p className={`text-xs mt-0.5 font-semibold ${m.net > 0 ? "text-green-600" : "text-red-500"}`}>
-                        {m.net > 0 ? `+€${m.net.toFixed(0)} owed back` : `-€${Math.abs(m.net).toFixed(0)} to pay`}
+                        {m.net > 0 ? t("owedBack", { amount: m.net.toFixed(0) }) : t("toPay", { amount: Math.abs(m.net).toFixed(0) })}
                       </p>
                     )}
                   </div>
@@ -284,7 +287,7 @@ export default function ExpensesSection({
           {/* Settle up */}
           {settlements.length > 0 && (
             <div className="space-y-2">
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">🤝 Settle up</p>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">{t("settleUp")}</p>
               <div className="space-y-2">
                 {settlements.map((s, i) => (
                   <div key={i} className="flex items-center gap-3 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3">
@@ -295,11 +298,11 @@ export default function ExpensesSection({
                   </div>
                 ))}
               </div>
-              <p className="text-xs text-slate-400">{settlements.length} transfer{settlements.length !== 1 ? "s" : ""} to settle all debts</p>
+              <p className="text-xs text-slate-400">{t("transfers", { count: settlements.length })}</p>
             </div>
           )}
           {members.length > 1 && expenses.length > 0 && settlements.length === 0 && (
-            <p className="text-xs text-emerald-600 font-semibold">✓ All settled — no transfers needed</p>
+            <p className="text-xs text-emerald-600 font-semibold">{t("allSettled")}</p>
           )}
         </>
       )}
@@ -309,7 +312,7 @@ export default function ExpensesSection({
         <form onSubmit={handleAdd} className="bg-slate-50 rounded-xl p-5 space-y-4 border border-slate-200">
           {/* Category picker */}
           <div>
-            <label className="label">Type</label>
+            <label className="label">{t("type")}</label>
             <div className="flex flex-wrap gap-2">
               {CATEGORIES.map(c => (
                 <button key={c.value} type="button" onClick={() => handleCategoryChange(c.value)}
@@ -329,10 +332,10 @@ export default function ExpensesSection({
           {/* Car trip fields */}
           {form.category === "car-trip" && (
             <div className="space-y-3 p-4 bg-amber-50 rounded-xl border border-amber-100">
-              <p className="text-xs font-semibold text-amber-700 uppercase tracking-wide">Road trip details</p>
+              <p className="text-xs font-semibold text-amber-700 uppercase tracking-wide">{t("roadTrip")}</p>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="label">Car</label>
+                  <label className="label">{t("car")}</label>
                   <select className="input text-sm" value={form.car_id} onChange={e => setForm(f => ({ ...f, car_id: e.target.value }))}>
                     <option value="">Select a car…</option>
                     {cars.map(c => (
@@ -347,7 +350,7 @@ export default function ExpensesSection({
                   </button>
                 </div>
                 <div>
-                  <label className="label">Distance (km)</label>
+                  <label className="label">{t("distance")}</label>
                   <input className="input text-sm" type="number" min="0" value={form.distance_km}
                     onChange={e => setForm(f => ({ ...f, distance_km: e.target.value }))}
                     placeholder="e.g. 850" />
@@ -357,7 +360,7 @@ export default function ExpensesSection({
               {/* Inline add car form */}
               {showCarForm && (
                 <form onSubmit={handleAddCar} className="bg-white rounded-xl p-3 space-y-3 border border-amber-200">
-                  <p className="text-xs font-semibold text-slate-600">Add a car</p>
+                  <p className="text-xs font-semibold text-slate-600">{t("addCar")}</p>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                     <div>
                       <label className="label text-xs">Name</label>
@@ -404,7 +407,7 @@ export default function ExpensesSection({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="label">Description</label>
+              <label className="label">{t("description")}</label>
               <input className="input" value={form.description}
                 onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
                 placeholder={form.category === "car-trip" ? "e.g. Fuel Lisbon–Madrid" : "e.g. Hotel deposit"}
@@ -412,7 +415,7 @@ export default function ExpensesSection({
             </div>
             <div>
               <label className="label">
-                Amount (€)
+                {t("amount")}
                 {form.category === "car-trip" && autoCarCost && (
                   <span className="text-xs text-slate-400 ml-1">or use calculated above</span>
                 )}
@@ -427,14 +430,14 @@ export default function ExpensesSection({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="label">Paid by</label>
+              <label className="label">{t("paidBy")}</label>
               <select className="input" value={form.paid_by}
                 onChange={e => setForm(f => ({ ...f, paid_by: e.target.value }))}>
                 {members.map(m => <option key={m.user_id} value={m.user_id}>{m.name}</option>)}
               </select>
             </div>
             <div>
-              <label className="label">Split with</label>
+              <label className="label">{t("splitWith")}</label>
               <div className="flex flex-wrap gap-1.5">
                 {members.map(m => (
                   <button key={m.user_id} type="button" onClick={() => toggleSplit(m.user_id)}
@@ -452,7 +455,7 @@ export default function ExpensesSection({
           </div>
 
           <button type="submit" className="btn-primary text-sm" disabled={saving}>
-            {saving ? "Saving…" : "Add expense"}
+            {saving ? tc("saving") : t("addAction")}
           </button>
         </form>
       )}
@@ -489,7 +492,7 @@ export default function ExpensesSection({
           })}
         </div>
       ) : (
-        <p className="text-sm text-slate-400 text-center py-4">No expenses yet. Add flights, hotel, fuel and more above.</p>
+        <p className="text-sm text-slate-400 text-center py-4">{t("noExpenses")}</p>
       )}
 
       {/* Settlement */}
@@ -526,7 +529,7 @@ export default function ExpensesSection({
       {/* Cars list (shown if any cars added) */}
       {cars.length > 0 && (
         <div className="border-t border-slate-100 pt-4">
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Your cars</p>
+          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">{t("yourCars")}</p>
           <div className="flex flex-wrap gap-2">
             {cars.map(c => (
               <div key={c.id} className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs"

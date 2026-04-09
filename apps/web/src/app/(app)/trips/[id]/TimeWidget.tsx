@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 
 const COUNTRY_TZ: Record<string, string> = {
   PT: "Europe/Lisbon",   ES: "Europe/Madrid",    FR: "Europe/Paris",
@@ -33,6 +34,8 @@ const COUNTRY_TZ: Record<string, string> = {
 };
 
 export default function TimeWidget({ destinationCountry }: { destinationCountry: string }) {
+  const t = useTranslations("timeWidget");
+  const tc = useTranslations("common");
   const tz = COUNTRY_TZ[destinationCountry];
   const [now, setNow] = useState<Date | null>(null);
 
@@ -70,15 +73,15 @@ export default function TimeWidget({ destinationCountry }: { destinationCountry:
   })();
   const diffMin = destOffset - localOffset;
   const diffH   = diffMin / 60;
-  const diffStr = diffH === 0 ? "same time as you"
-    : diffH > 0 ? `+${diffH}h ahead of you`
-    : `${diffH}h behind you`;
+  const diffStr = diffH === 0 ? t("same")
+    : diffH > 0 ? t("ahead", { h: diffH })
+    : t("behind", { h: Math.abs(diffH) });
 
   return (
     <div className="flex items-center gap-4 bg-indigo-50 rounded-xl px-4 py-3">
       <span className="text-2xl">🕐</span>
       <div className="min-w-0">
-        <p className="text-xs text-indigo-500 font-semibold uppercase tracking-wide">Local time at destination</p>
+        <p className="text-xs text-indigo-500 font-semibold uppercase tracking-wide">{t("title")}</p>
         <p className="text-2xl font-bold text-indigo-700 tabular-nums leading-tight">{destTime}</p>
         <p className="text-xs text-indigo-400">{destDate} · {tzName} · {diffStr}</p>
       </div>

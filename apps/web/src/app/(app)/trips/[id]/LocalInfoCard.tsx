@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { getCountryInfo } from "@/lib/data/country-info";
 import { getWarning, WARNING_COLORS, WARNING_LABELS } from "@/lib/data/travel-warnings";
 import { getVisaRequirement, VISA_LABELS } from "@/lib/data/visa-requirements";
@@ -22,6 +23,8 @@ export default function LocalInfoCard({
   destinationCountry: string;
   homeCountry: string;
 }) {
+  const t  = useTranslations("localInfo");
+  const tc = useTranslations("common");
   const info    = getCountryInfo(destinationCountry);
   const warning = getWarning(destinationCountry);
   const visa    = getVisaRequirement(homeCountry, destinationCountry);
@@ -46,8 +49,8 @@ export default function LocalInfoCard({
   return (
     <div className="card p-6 space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="font-bold text-slate-900 text-lg">🌐 {destName} — local info</h2>
-        <button onClick={() => setOpen(o => !o)} className="btn-ghost text-sm">{open ? "Hide" : "Show"}</button>
+        <h2 className="font-bold text-slate-900 text-lg">🌐 {t("title", { dest: destName })}</h2>
+        <button onClick={() => setOpen(o => !o)} className="btn-ghost text-sm">{open ? tc("hide") : tc("show")}</button>
       </div>
 
       {open && <>
@@ -60,7 +63,7 @@ export default function LocalInfoCard({
           </span>
           <div>
             <p className="text-sm font-bold" style={{ color: wColors.text }}>
-              {WARNING_LABELS[warning.level]}
+              {t("warning")} — {WARNING_LABELS[warning.level]}
             </p>
             <p className="text-xs mt-0.5" style={{ color: wColors.text }}>{warning.summary}</p>
             <p className="text-xs opacity-60 mt-0.5">Source: {warning.source}</p>
@@ -75,7 +78,7 @@ export default function LocalInfoCard({
             <span>🛂</span>
             <div>
               <p className="text-sm font-bold" style={{ color: vMeta.color }}>
-                {vMeta.label} — for {homeName} passport holders
+                {t("visa")} — {vMeta.label} — for {homeName} passport holders
               </p>
               {visa === "evisa" && (
                 <p className="text-xs text-slate-500 mt-0.5">Apply online before travelling — usually takes 24–72 hours.</p>
@@ -96,13 +99,13 @@ export default function LocalInfoCard({
         <div className="space-y-0">
           <Row label="💰 Currency" value={`${info.currency} ${info.currencySymbol}`} />
           <Row label="🗣️ Language" value={info.language} />
-          <Row label="🚨 Emergency" value={info.emergencyNumber} />
-          <Row label="👮 Police" value={info.policeNumber} />
-          <Row label="🚑 Ambulance" value={info.ambulanceNumber} />
-          <Row label="🔌 Plug type" value={info.plugTypes.join(", ")} />
-          <Row label="🚗 Drives on" value={info.drivingSide === "left" ? "Left side" : "Right side"} />
-          <Row label="📞 Calling code" value={info.callingCode} />
-          <Row label="💵 Tipping" value={info.tippingCulture} />
+          <Row label={`🚨 ${t("emergency")}`} value={info.emergencyNumber} />
+          <Row label={`👮 ${t("police")}`} value={info.policeNumber} />
+          <Row label={`🚑 ${t("ambulance")}`} value={info.ambulanceNumber} />
+          <Row label={`🔌 ${t("plug")}`} value={info.plugTypes.join(", ")} />
+          <Row label={`🚗 ${t("driving")}`} value={info.drivingSide === "left" ? t("left") : t("right")} />
+          <Row label={`📞 ${t("callingCode")}`} value={info.callingCode} />
+          <Row label={`💵 ${t("tipping")}`} value={info.tippingCulture} />
         </div>
       )}
       </>}

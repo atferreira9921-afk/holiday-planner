@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 
 interface Member { user_id: string; name: string; }
 
@@ -11,6 +12,8 @@ export default function InviteSection({
   tripId: string;
   members: Member[];
 }) {
+  const t = useTranslations("invite");
+  const tc = useTranslations("common");
   const [inviteUrl, setInviteUrl]   = useState<string | null>(null);
   const [loading, setLoading]       = useState(false);
   const [copied, setCopied]         = useState(false);
@@ -62,7 +65,7 @@ export default function InviteSection({
   return (
     <div className="card p-6 space-y-4">
       <div>
-        <h2 className="font-bold text-slate-900 text-lg">👥 Invite people</h2>
+        <h2 className="font-bold text-slate-900 text-lg">{t("title")}</h2>
         <p className="text-xs text-slate-400 mt-1">
           Share a link or send an email so friends can join this group and be included in planning.
         </p>
@@ -71,7 +74,7 @@ export default function InviteSection({
       {/* Current members */}
       <div>
         <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">
-          Current members ({members.length})
+          {t("members", { count: members.length })}
         </p>
         <div className="flex flex-wrap gap-2">
           {members.map(m => (
@@ -106,13 +109,13 @@ export default function InviteSection({
         <div className="space-y-3">
           <div className="flex gap-2 flex-wrap">
             <button onClick={() => generateInvite()} disabled={loading} className="btn-ghost text-sm">
-              {loading ? "Generating…" : "🔗 Generate invite link"}
+              {loading ? t("pending") : "🔗 " + t("sendInvite")}
             </button>
             <button
               onClick={() => setShowEmailForm(f => !f)}
               className="btn-ghost text-sm"
             >
-              {showEmailForm ? "Cancel" : "📧 Invite by email"}
+              {showEmailForm ? tc("cancel") : "📧 " + t("sendInvite")}
             </button>
           </div>
 
@@ -121,13 +124,13 @@ export default function InviteSection({
               <input
                 className="input text-sm flex-1"
                 type="email"
-                placeholder="friend@example.com"
+                placeholder={t("emailPlaceholder")}
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 required
               />
               <button type="submit" disabled={loading || !email.trim()} className="btn-primary text-sm flex-shrink-0">
-                {loading ? "…" : "Send"}
+                {loading ? t("sending") : t("sendInvite")}
               </button>
             </form>
           )}
@@ -142,7 +145,7 @@ export default function InviteSection({
               onFocus={e => e.target.select()}
             />
             <button onClick={copyLink} className="btn-primary text-sm px-4 flex-shrink-0">
-              {copied ? "✓ Copied!" : "Copy"}
+              {copied ? t("copied") : t("copyLink")}
             </button>
           </div>
 
@@ -159,16 +162,16 @@ export default function InviteSection({
               <input
                 className="input text-sm flex-1"
                 type="email"
-                placeholder="friend@example.com"
+                placeholder={t("emailPlaceholder")}
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 required
               />
               <button type="submit" disabled={loading || !email.trim()} className="btn-primary text-sm flex-shrink-0">
-                {loading ? "…" : "Send"}
+                {loading ? t("sending") : t("sendInvite")}
               </button>
               <button type="button" onClick={() => setShowEmailForm(false)} className="btn-ghost text-sm">
-                Cancel
+                {tc("cancel")}
               </button>
             </form>
           )}

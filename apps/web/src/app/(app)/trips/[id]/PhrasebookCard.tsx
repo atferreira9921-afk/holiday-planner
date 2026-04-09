@@ -1,11 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { getPhrasebook } from "@/lib/data/phrases";
 
 interface Props { countryCode: string }
 
 export default function PhrasebookCard({ countryCode }: Props) {
+  const t = useTranslations("phrasebook");
+  const tc = useTranslations("common");
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
 
@@ -25,12 +28,12 @@ export default function PhrasebookCard({ countryCode }: Props) {
         <div className="flex items-center gap-2">
           <span className="text-xl">{book.flag}</span>
           <div>
-            <h2 className="font-bold text-slate-900 text-lg">Phrasebook</h2>
-            <p className="text-xs text-slate-400">{book.language} — tap a phrase to copy</p>
+            <h2 className="font-bold text-slate-900 text-lg">{t("title")}</h2>
+            <p className="text-xs text-slate-400">{book.language} — {t("tapToCopy")}</p>
           </div>
         </div>
         <button onClick={() => setOpen(o => !o)} className="btn-ghost text-sm flex-shrink-0">
-          {open ? "Hide" : "Show"}
+          {open ? tc("hide") : tc("show")}
         </button>
       </div>
 
@@ -51,7 +54,7 @@ export default function PhrasebookCard({ countryCode }: Props) {
                   )}
                 </div>
                 <span className={`text-xs flex-shrink-0 mt-0.5 transition ${copied === phrase.native ? "text-emerald-500" : "text-slate-300 group-hover:text-indigo-400"}`}>
-                  {copied === phrase.native ? "✓" : "⎘"}
+                  {copied === phrase.native ? t("copied") : "⎘"}
                 </span>
               </div>
             </button>

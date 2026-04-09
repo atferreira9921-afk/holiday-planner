@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { isAiEnabled } from "@/lib/config";
+import { useTranslations } from "next-intl";
 
 interface PackingItem {
   id: string;
@@ -191,6 +192,8 @@ const TEMPLATES: Record<string, { item: string; category: string }[]> = {
 };
 
 export default function PackingSection({ tripId, currentUserId, members, initialItems, destinationCountry, tripType }: Props) {
+  const t  = useTranslations("packing");
+  const tc = useTranslations("common");
   const [open, setOpen]               = useState(true);
   const [items, setItems]             = useState<PackingItem[]>(initialItems);
 
@@ -350,10 +353,10 @@ export default function PackingSection({ tripId, currentUserId, members, initial
       {/* Header */}
       <div className="flex items-center justify-between gap-2">
         <div className="min-w-0">
-          <h2 className="font-bold text-slate-900 text-lg">🎒 My packing list</h2>
+          <h2 className="font-bold text-slate-900 text-lg">{t("title")}</h2>
           {myTotal > 0 && (
             <p className="text-xs text-slate-400 mt-0.5">
-              {myAllDone ? "✓ All packed!" : `${myPacked} of ${myTotal} packed`}
+              {myAllDone ? t("allPacked") : t("packedOf", { packed: myPacked, total: myTotal })}
             </p>
           )}
         </div>
@@ -361,18 +364,18 @@ export default function PackingSection({ tripId, currentUserId, members, initial
           {isAiEnabled && open && !aiSuggestions && (
             <button onClick={fetchAiSuggestions} disabled={aiLoading} className="btn-ghost text-sm flex items-center gap-1.5">
               {aiLoading
-                ? <><span className="animate-spin inline-block text-xs">⏳</span> Generating…</>
-                : <><span>🤖</span> AI suggest</>}
+                ? <><span className="animate-spin inline-block text-xs">⏳</span> {t("generating")}</>
+                : <span>{t("aiSuggest")}</span>}
             </button>
           )}
           {aiSuggestions && (
             <button onClick={() => { setAiSuggestions(null); setAiAddedSet(new Set()); }} className="btn-ghost text-sm text-slate-400">
-              Close AI
+              {t("closeAi")}
             </button>
           )}
-          <button onClick={() => setOpen(o => !o)} className="btn-ghost text-sm flex-shrink-0">{open ? "Hide" : "Show"}</button>
+          <button onClick={() => setOpen(o => !o)} className="btn-ghost text-sm flex-shrink-0">{open ? tc("hide") : tc("show")}</button>
           {open && <button onClick={() => setShowForm(f => !f)} className="btn-ghost text-sm flex-shrink-0">
-            {showForm ? "Cancel" : "+ Add item"}
+            {showForm ? tc("cancel") : t("addItem")}
           </button>}
         </div>
       </div>
@@ -390,8 +393,8 @@ export default function PackingSection({ tripId, currentUserId, members, initial
       {aiSuggestions && aiSuggestions.length > 0 && (
         <div className="border border-indigo-200 rounded-xl overflow-hidden">
           <div className="bg-indigo-50 px-4 py-3">
-            <p className="text-sm font-semibold text-indigo-800">🤖 AI-suggested items</p>
-            <p className="text-xs text-indigo-500 mt-0.5">{aiSuggestions.length} items · {aiAddedSet.size} added so far</p>
+            <p className="text-sm font-semibold text-indigo-800">{t("aiPanelTitle")}</p>
+            <p className="text-xs text-indigo-500 mt-0.5">{aiSuggestions.length} · {t("aiPanelAdded", { added: aiAddedSet.size })}</p>
           </div>
           <div className="divide-y divide-slate-100 max-h-[400px] overflow-y-auto">
             {aiSuggestions.map((s, i) => (
@@ -406,7 +409,7 @@ export default function PackingSection({ tripId, currentUserId, members, initial
                   disabled={aiAddedSet.has(i)}
                   className={`flex-shrink-0 text-xs font-semibold px-2.5 py-1 rounded-lg transition ${aiAddedSet.has(i) ? "text-emerald-600 bg-emerald-100" : "text-indigo-600 bg-indigo-50 hover:bg-indigo-100"}`}
                 >
-                  {aiAddedSet.has(i) ? "✓" : "+ Add"}
+                  {aiAddedSet.has(i) ? t("added") : t("addSuggestion")}
                 </button>
               </div>
             ))}
@@ -416,7 +419,7 @@ export default function PackingSection({ tripId, currentUserId, members, initial
 
       {/* Templates */}
       <div className="flex flex-wrap gap-2 items-center">
-        <span className="text-xs text-slate-400 flex-shrink-0">Load template:</span>
+        <span className="text-xs text-slate-400 flex-shrink-0">{t("loadTemplate")}</span>
         {Object.keys(TEMPLATES).map(t => (
           <button key={t} onClick={() => applyTemplate(t)} disabled={loadingTemplate || clearing}
             className="text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:border-indigo-300 hover:text-indigo-600 hover:bg-indigo-50 transition whitespace-nowrap disabled:opacity-50">
@@ -472,8 +475,8 @@ export default function PackingSection({ tripId, currentUserId, members, initial
       {/* My items by category */}
       {myTotal === 0 ? (
         <div className="py-4 text-center">
-          <p className="text-slate-400 text-sm">No items yet.</p>
-          <p className="text-xs text-slate-400 mt-1">Load a template above or add items manually.</p>
+          <p className="text-slate-400 text-sm">{t("noItems")}</p>
+          <p className="text-xs text-slate-400 mt-1">{t("loadTemplate")} …</p>
         </div>
       ) : (
         <div className="space-y-4">

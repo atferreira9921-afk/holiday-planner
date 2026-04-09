@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 
 interface Poll {
@@ -39,6 +40,9 @@ export default function GroupPolls({
   initialVotes: PollVote[];
   memberNames: Record<string, string>;
 }) {
+  const t = useTranslations("polls");
+  const tc = useTranslations("common");
+
   const [polls, setPolls] = useState<Poll[]>(initialPolls);
   const [options, setOptions] = useState<PollOption[]>(initialOptions);
   const [votes, setVotes] = useState<PollVote[]>(initialVotes);
@@ -165,11 +169,11 @@ export default function GroupPolls({
     <div className="card p-6 space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="font-bold text-slate-900 text-lg">🗳️ Group polls</h2>
+        <h2 className="font-bold text-slate-900 text-lg">🗳️ {t("title")}</h2>
         <div className="flex items-center gap-2">
-          <button onClick={() => setOpen(o => !o)} className="btn-ghost text-sm">{open ? "Hide" : "Show"}</button>
+          <button onClick={() => setOpen(o => !o)} className="btn-ghost text-sm">{open ? tc("hide") : tc("show")}</button>
           {open && <button onClick={() => setShowCreateForm(f => !f)} className="btn-ghost text-sm">
-            {showCreateForm ? "Cancel" : "+ Create poll"}
+            {showCreateForm ? tc("cancel") : `+ ${t("createPoll")}`}
           </button>}
         </div>
       </div>
@@ -182,25 +186,25 @@ export default function GroupPolls({
           className="bg-slate-50 rounded-xl p-5 space-y-4 border border-slate-200"
         >
           <div>
-            <label className="label">Question</label>
+            <label className="label">{t("question")}</label>
             <input
               className="input"
               value={newQuestion}
               onChange={e => setNewQuestion(e.target.value)}
-              placeholder="e.g. Where should we stay?"
+              placeholder={t("questionPlaceholder")}
               required
             />
           </div>
 
           <div className="space-y-2">
-            <label className="label">Options</label>
+            <label className="label">{t("options")}</label>
             {newOptionLabels.map((label, i) => (
               <div key={i} className="flex gap-2 items-center">
                 <input
                   className="input flex-1 text-sm"
                   value={label}
                   onChange={e => updateOptionLabel(i, e.target.value)}
-                  placeholder={`Option ${i + 1}`}
+                  placeholder={t("optionPlaceholder", { n: i + 1 })}
                   required={i < 2}
                 />
                 {newOptionLabels.length > 2 && (
@@ -221,13 +225,13 @@ export default function GroupPolls({
                 onClick={addOptionInput}
                 className="text-xs text-indigo-500 hover:underline mt-1"
               >
-                + Add option
+                + {t("addOption")}
               </button>
             )}
           </div>
 
           <button type="submit" className="btn-primary text-sm" disabled={creating}>
-            {creating ? "Creating…" : "Create poll"}
+            {creating ? tc("saving") : t("createAction")}
           </button>
         </form>
       )}
@@ -235,7 +239,7 @@ export default function GroupPolls({
       {/* Polls list */}
       {polls.length === 0 && !showCreateForm && (
         <p className="text-sm text-slate-400 text-center py-4">
-          No polls yet. Create one to let everyone vote.
+          {t("noPolls")}
         </p>
       )}
 
@@ -264,7 +268,7 @@ export default function GroupPolls({
                     by {creatorName}
                     {isClosed && (
                       <span className="ml-2 px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500 font-medium">
-                        Closed
+                        {t("closed")}
                       </span>
                     )}
                   </p>
@@ -275,7 +279,7 @@ export default function GroupPolls({
                       onClick={() => handleClosePoll(poll.id)}
                       className="text-xs text-slate-400 hover:text-slate-600 transition"
                     >
-                      Close
+                      {t("closePoll")}
                     </button>
                   )}
                   {canDelete && (
@@ -317,7 +321,7 @@ export default function GroupPolls({
                         <div className="flex items-center justify-between">
                           <span>{opt.label}</span>
                           <span className="text-xs font-semibold ml-2 flex-shrink-0">
-                            {count} {count === 1 ? "vote" : "votes"}
+                            {t("votes", { count })}
                             {totalVotes > 0 && ` · ${pct}%`}
                             {isUserChoice && " · Your pick"}
                             {isWinner && " · Winner"}
@@ -343,7 +347,7 @@ export default function GroupPolls({
 
               {totalVotes > 0 && (
                 <p className="text-xs text-slate-400">
-                  {totalVotes} {totalVotes === 1 ? "vote" : "votes"} total
+                  {t("votes", { count: totalVotes })} total
                 </p>
               )}
             </div>

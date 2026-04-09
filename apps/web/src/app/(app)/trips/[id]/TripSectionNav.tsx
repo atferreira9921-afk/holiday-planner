@@ -1,26 +1,30 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 
-const SECTIONS = [
-  { id: "trip-details",  label: "Details" },
-  { id: "availability",  label: "Availability" },
-  { id: "expenses",      label: "Expenses" },
-  { id: "budget",        label: "Budget" },
-  { id: "itinerary",     label: "Itinerary" },
-  { id: "packing",       label: "Packing" },
-  { id: "notes",         label: "Notes" },
-  { id: "polls",         label: "Polls" },
-  { id: "documents",     label: "Documents" },
-  { id: "photos",        label: "Photos" },
-  { id: "checklist",     label: "Checklist" },
-  { id: "tasks",         label: "To-dos" },
-  { id: "costs",         label: "Cost est." },
-  { id: "phrasebook",    label: "Phrasebook" },
-  { id: "chat",          label: "Chat" },
+const SECTION_IDS = [
+  { id: "trip-details",  key: "details" },
+  { id: "availability",  key: "availability" },
+  { id: "expenses",      key: "expenses" },
+  { id: "budget",        key: "budget" },
+  { id: "itinerary",     key: "itinerary" },
+  { id: "packing",       key: "packing" },
+  { id: "notes",         key: "notes" },
+  { id: "polls",         key: "polls" },
+  { id: "documents",     key: "documents" },
+  { id: "photos",        key: "photos" },
+  { id: "checklist",     key: "checklist" },
+  { id: "tasks",         key: "tasks" },
+  { id: "costs",         key: "costs" },
+  { id: "phrasebook",    key: "phrasebook" },
+  { id: "chat",          key: "chat" },
 ];
 
 export default function TripSectionNav() {
+  const t = useTranslations("sectionNav");
+  const SECTIONS = SECTION_IDS.map(s => ({ ...s, label: t(s.key) }));
+
   const [active, setActive] = useState<string>("");
   const [visible, setVisible] = useState<Set<string>>(new Set());
 
@@ -65,7 +69,7 @@ export default function TripSectionNav() {
 
   return (
     <nav className="hidden xl:block sticky top-24 self-start w-40 flex-shrink-0">
-      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3 px-2">On this page</p>
+      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3 px-2">{t("onThisPage")}</p>
       <ul className="space-y-0.5">
         {SECTIONS.map(({ id, label }) => {
           const isActive = active === id;

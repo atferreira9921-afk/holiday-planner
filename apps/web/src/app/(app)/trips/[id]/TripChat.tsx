@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 
 interface Message {
@@ -42,6 +43,8 @@ function avatarColor(uid: string) {
 }
 
 export default function TripChat({ tripId, currentUserId, memberNames, initialMessages }: Props) {
+  const t = useTranslations("chat");
+  const tc = useTranslations("common");
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
@@ -102,15 +105,15 @@ export default function TripChat({ tripId, currentUserId, memberNames, initialMe
     <div className="card p-6 space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <h2 className="font-bold text-slate-900 text-lg">💬 Group chat</h2>
+          <h2 className="font-bold text-slate-900 text-lg">💬 {t("title")}</h2>
           {collapsed && messages.length > 0 && (
             <span className="text-xs bg-indigo-100 text-indigo-600 font-semibold px-2 py-0.5 rounded-full">
-              {messages.length} message{messages.length !== 1 ? "s" : ""}
+              {t("messages", { count: messages.length })}
             </span>
           )}
         </div>
         <button onClick={() => setCollapsed(c => !c)} className="btn-ghost text-sm flex-shrink-0">
-          {collapsed ? "Open" : "Close"}
+          {collapsed ? tc("show") : tc("hide")}
         </button>
       </div>
 
@@ -120,7 +123,7 @@ export default function TripChat({ tripId, currentUserId, memberNames, initialMe
           <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
             {messages.length === 0 && (
               <p className="text-sm text-slate-400 text-center py-6">
-                No messages yet. Say hello to your group!
+                {t("noMessages")}
               </p>
             )}
             {messages.map(m => {
@@ -150,7 +153,7 @@ export default function TripChat({ tripId, currentUserId, memberNames, initialMe
                         <button
                           onClick={() => deleteMsg(m.id)}
                           className="absolute -top-1.5 -right-1.5 opacity-0 group-hover:opacity-100 transition w-4 h-4 bg-red-500 text-white rounded-full text-xs flex items-center justify-center"
-                          title="Delete"
+                          title={t("deleteMessage")}
                         >
                           ×
                         </button>
@@ -167,7 +170,7 @@ export default function TripChat({ tripId, currentUserId, memberNames, initialMe
           <form onSubmit={send} className="flex gap-2">
             <input
               className="input flex-1 text-sm"
-              placeholder="Type a message…"
+              placeholder={t("placeholder")}
               value={text}
               onChange={e => setText(e.target.value)}
               maxLength={2000}
@@ -178,7 +181,7 @@ export default function TripChat({ tripId, currentUserId, memberNames, initialMe
               disabled={sending || !text.trim()}
               className="btn-primary text-sm flex-shrink-0 px-4"
             >
-              {sending ? "…" : "Send"}
+              {sending ? t("sending") : t("send")}
             </button>
           </form>
         </>

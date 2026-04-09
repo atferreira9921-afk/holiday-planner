@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 
 interface TripDocument {
@@ -38,6 +39,9 @@ export default function DocumentVault({
   initialDocs: TripDocument[];
   memberNames: Record<string, string>;
 }) {
+  const t = useTranslations("documents");
+  const tc = useTranslations("common");
+
   const [open, setOpen]           = useState(true);
   const [docs, setDocs] = useState<TripDocument[]>(initialDocs);
   const [uploading, setUploading] = useState(false);
@@ -106,11 +110,11 @@ export default function DocumentVault({
   return (
     <div className="card p-6 space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="font-bold text-slate-900 text-lg">📁 Documents &amp; vouchers</h2>
+        <h2 className="font-bold text-slate-900 text-lg">📁 {t("title")}</h2>
         <div className="flex items-center gap-2">
-          <button onClick={() => setOpen(o => !o)} className="btn-ghost text-sm">{open ? "Hide" : "Show"}</button>
+          <button onClick={() => setOpen(o => !o)} className="btn-ghost text-sm">{open ? tc("hide") : tc("show")}</button>
           {open && <button onClick={() => fileRef.current?.click()} disabled={uploading} className="btn-ghost text-sm">
-            {uploading ? "Uploading…" : "+ Upload"}
+            {uploading ? tc("uploading") : `+ ${t("upload")}`}
           </button>}
         </div>
       </div>
@@ -149,7 +153,7 @@ export default function DocumentVault({
       {docs.length === 0 ? (
         <div className="py-8 text-center border-2 border-dashed border-slate-200 rounded-xl">
           <p className="text-3xl mb-2">📁</p>
-          <p className="text-slate-400 text-sm">No documents yet.</p>
+          <p className="text-slate-400 text-sm">{t("noDocuments")}</p>
           <p className="text-xs text-slate-400 mt-1">
             Upload boarding passes, hotel vouchers, insurance docs…
           </p>
@@ -189,7 +193,7 @@ export default function DocumentVault({
                             onClick={() => deleteDoc(doc)}
                             className="text-xs text-red-400 hover:text-red-600 transition"
                           >
-                            Delete
+                            {t("delete")}
                           </button>
                         )}
                       </div>
