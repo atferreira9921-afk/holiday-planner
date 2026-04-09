@@ -205,6 +205,25 @@ export default function ExpensesSection({
     return { ...m, paid, owes, net: paid - owes };
   });
 
+  // Simplified debt settlement (greedy algorithm minimising transactions)
+  interface Settlement { from: string; to: string; amount: number }
+  const settlements: Settlement[] = (() => {
+    if (members.length < 2 || expenses.length === 0) return [];
+    const creditors = perPerson.filter(m => m.net >  0.005).map(m => ({ id: m.user_id, name: m.name, amount: m.net }));
+    const debtors   = perPerson.filter(m => m.net < -0.005).map(m => ({ id: m.user_id, name: m.name, amount: -m.net }));
+    const txns: Settlement[] = [];
+    let i = 0, j = 0;
+    while (i < debtors.length && j < creditors.length) {
+      const amt = Math.min(debtors[i].amount, creditors[j].amount);
+      if (amt > 0.005) txns.push({ from: debtors[i].name, to: creditors[j].name, amount: amt });
+      debtors[i].amount   -= amt;
+      creditors[j].amount -= amt;
+      if (debtors[i].amount   < 0.005) i++;
+      if (creditors[j].amount < 0.005) j++;
+    }
+    return txns;
+  })();
+
   return (
     <div className="card p-6 space-y-6">
       {/* Header */}
@@ -260,6 +279,27 @@ export default function ExpensesSection({
                 ))}
               </div>
             </div>
+          )}
+
+          {/* Settle up */}
+          {settlements.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">🤝 Settle up</p>
+              <div className="space-y-2">
+                {settlements.map((s, i) => (
+                  <div key={i} className="flex items-center gap-3 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3">
+                    <span className="text-sm font-semibold text-slate-700 flex-shrink-0">{s.from}</span>
+                    <span className="text-slate-400 text-xs">→</span>
+                    <span className="text-sm font-semibold text-slate-700 flex-shrink-0">{s.to}</span>
+                    <span className="ml-auto text-sm font-bold text-amber-700">€{s.amount.toFixed(2)}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-slate-400">{settlements.length} transfer{settlements.length !== 1 ? "s" : ""} to settle all debts</p>
+            </div>
+          )}
+          {members.length > 1 && expenses.length > 0 && settlements.length === 0 && (
+            <p className="text-xs text-emerald-600 font-semibold">✓ All settled — no transfers needed</p>
           )}
         </>
       )}

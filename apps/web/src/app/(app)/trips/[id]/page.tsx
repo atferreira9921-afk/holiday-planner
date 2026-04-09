@@ -37,6 +37,7 @@ import TripTasks from "./TripTasks";
 import PhrasebookCard from "./PhrasebookCard";
 import TripCostEstimator from "./TripCostEstimator";
 import TripSectionNav from "./TripSectionNav";
+import TimeWidget from "./TimeWidget";
 import { isAiEnabled } from "@/lib/config";
 
 export default async function TripDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -339,6 +340,7 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
       {/* Local info + currency (shown when destination is known) */}
       {destinationCountry && (
         <>
+          <TimeWidget destinationCountry={destinationCountry} />
           <LocalInfoCard destinationCountry={destinationCountry} homeCountry={homeCountry} />
           <CurrencyWidget destinationCountry={destinationCountry} />
         </>
