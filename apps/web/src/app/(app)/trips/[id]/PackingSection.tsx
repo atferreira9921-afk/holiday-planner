@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { isAiEnabled } from "@/lib/config";
 
 interface PackingItem {
   id: string;
@@ -14,11 +15,19 @@ interface PackingItem {
   is_shared: boolean;
 }
 
+interface AiPackingSuggestion {
+  item: string;
+  category: string;
+  reason: string;
+}
+
 interface Props {
   tripId: string;
   currentUserId: string;
   members: { user_id: string; name: string }[];
   initialItems: PackingItem[];
+  destinationCountry: string | null;
+  tripType: string;
 }
 
 // Parse "T-shirts (×5)" → { base: "T-shirts", qty: 5 }
@@ -181,9 +190,15 @@ const TEMPLATES: Record<string, { item: string; category: string }[]> = {
   ],
 };
 
-export default function PackingSection({ tripId, currentUserId, members, initialItems }: Props) {
+export default function PackingSection({ tripId, currentUserId, members, initialItems, destinationCountry, tripType }: Props) {
   const [open, setOpen]               = useState(true);
   const [items, setItems]             = useState<PackingItem[]>(initialItems);
+
+  // AI suggestions state
+  const [aiLoading, setAiLoading]         = useState(false);
+  const [aiSuggestions, setAiSuggestions] = useState<AiPackingSuggestion[] | null>(null);
+  const [aiAddedSet, setAiAddedSet]       = useState<Set<number>>(new Set());
+  const [aiError, setAiError]             = useState<string | null>(null);
   const [showForm, setShowForm]       = useState(false);
   const [newItem, setNewItem]         = useState("");
   const [newQty, setNewQty]           = useState<number | "">("");
@@ -275,6 +290,46 @@ export default function PackingSection({ tripId, currentUserId, members, initial
     setClearing(false);
   }
 
+  async function fetchAiSuggestions() {
+    setAiLoading(true);
+    setAiError(null);
+    setAiSuggestions(null);
+    setAiAddedSet(new Set());
+    try {
+      const res = await fetch(`/api/trips/${tripId}/smart-packing`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ destinationCountry, tripType }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setAiError(data.error ?? "Failed to generate suggestions"); }
+      else { setAiSuggestions(data.suggestions ?? []); }
+    } catch {
+      setAiError("Network error. Please try again.");
+    } finally {
+      setAiLoading(false);
+    }
+  }
+
+  async function addAiSuggestion(s: AiPackingSuggestion, index: number) {
+    if (aiAddedSet.has(index)) return;
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { data } = await supabase.from("trip_packing_items").insert({
+      trip_id: tripId,
+      item: s.item,
+      category: s.category,
+      packed: false,
+      owner_user_id: currentUserId,
+      is_shared: false,
+    }).select("*").single();
+    if (data) {
+      setItems(prev => [...prev, data as PackingItem]);
+      setAiAddedSet(prev => new Set([...prev, index]));
+    }
+  }
+
   async function applyTemplate(templateName: string) {
     const template = TEMPLATES[templateName];
     if (!template) return;
@@ -302,7 +357,19 @@ export default function PackingSection({ tripId, currentUserId, members, initial
             </p>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
+          {isAiEnabled && open && !aiSuggestions && (
+            <button onClick={fetchAiSuggestions} disabled={aiLoading} className="btn-ghost text-sm flex items-center gap-1.5">
+              {aiLoading
+                ? <><span className="animate-spin inline-block text-xs">⏳</span> Generating…</>
+                : <><span>🤖</span> AI suggest</>}
+            </button>
+          )}
+          {aiSuggestions && (
+            <button onClick={() => { setAiSuggestions(null); setAiAddedSet(new Set()); }} className="btn-ghost text-sm text-slate-400">
+              Close AI
+            </button>
+          )}
           <button onClick={() => setOpen(o => !o)} className="btn-ghost text-sm flex-shrink-0">{open ? "Hide" : "Show"}</button>
           {open && <button onClick={() => setShowForm(f => !f)} className="btn-ghost text-sm flex-shrink-0">
             {showForm ? "Cancel" : "+ Add item"}
@@ -311,6 +378,42 @@ export default function PackingSection({ tripId, currentUserId, members, initial
       </div>
 
       {open && <>
+      {/* AI error */}
+      {aiError && (
+        <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl px-4 py-3 flex items-center justify-between gap-2">
+          <span>{aiError}</span>
+          <button onClick={() => setAiError(null)} className="text-red-400 hover:text-red-600 text-xs">✕</button>
+        </div>
+      )}
+
+      {/* AI suggestions panel */}
+      {aiSuggestions && aiSuggestions.length > 0 && (
+        <div className="border border-indigo-200 rounded-xl overflow-hidden">
+          <div className="bg-indigo-50 px-4 py-3">
+            <p className="text-sm font-semibold text-indigo-800">🤖 AI-suggested items</p>
+            <p className="text-xs text-indigo-500 mt-0.5">{aiSuggestions.length} items · {aiAddedSet.size} added so far</p>
+          </div>
+          <div className="divide-y divide-slate-100 max-h-[400px] overflow-y-auto">
+            {aiSuggestions.map((s, i) => (
+              <div key={i} className={`flex items-start gap-3 px-4 py-3 transition ${aiAddedSet.has(i) ? "opacity-50 bg-emerald-50" : "bg-white hover:bg-slate-50"}`}>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-slate-800">{s.item}</p>
+                  <p className="text-xs text-slate-500 mt-0.5">{s.reason}</p>
+                  <span className="inline-block mt-1 text-[10px] px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 font-medium">{s.category}</span>
+                </div>
+                <button
+                  onClick={() => addAiSuggestion(s, i)}
+                  disabled={aiAddedSet.has(i)}
+                  className={`flex-shrink-0 text-xs font-semibold px-2.5 py-1 rounded-lg transition ${aiAddedSet.has(i) ? "text-emerald-600 bg-emerald-100" : "text-indigo-600 bg-indigo-50 hover:bg-indigo-100"}`}
+                >
+                  {aiAddedSet.has(i) ? "✓" : "+ Add"}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Templates */}
       <div className="flex flex-wrap gap-2 items-center">
         <span className="text-xs text-slate-400 flex-shrink-0">Load template:</span>

@@ -21,7 +21,6 @@ import TripReportExport from "./TripReportExport";
 import TripNotes from "./TripNotes";
 import GroupPolls from "./GroupPolls";
 import DocumentVault from "./DocumentVault";
-import SmartPackingButton from "./SmartPackingButton";
 import SuggestionWeather from "./SuggestionWeather";
 import CityDescription from "./CityDescription";
 import TripStatusControl from "./TripStatusControl";
@@ -37,6 +36,7 @@ import TripChat from "./TripChat";
 import TripTasks from "./TripTasks";
 import PhrasebookCard from "./PhrasebookCard";
 import TripCostEstimator from "./TripCostEstimator";
+import TripSectionNav from "./TripSectionNav";
 import { isAiEnabled } from "@/lib/config";
 
 export default async function TripDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -229,8 +229,10 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
   })();
 
   return (
-    <div className="max-w-screen-xl mx-auto space-y-6">
+    <div className="max-w-screen-xl mx-auto">
       <TripRealtimeUpdater tripId={id} groupId={trip.group_id} />
+      <div className="flex gap-8 items-start">
+      <div className="flex-1 min-w-0 space-y-6">
 
       {/* Passport expiry warning */}
       {passportWarning && (
@@ -294,7 +296,7 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
       )}
 
       {/* Trip details card */}
-      <div className="card p-6">
+      <div id="trip-details" className="card p-6">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Stat icon="🌙" label="Duration" value={`${trip.desired_duration_days} days`} />
           <Stat icon="📅" label="Window" value={`${trip.earliest_departure}`} sub={`→ ${trip.latest_return}`} />
@@ -345,13 +347,19 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
       {/* Destination-first: show search panels directly — no AI suggestions needed */}
       {isDestinationFirst && (
         <div className="card p-6">
-          <div className="flex items-center gap-3 mb-5">
-            <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-xl flex-shrink-0">🔍</div>
-            <div>
-              <h2 className="font-bold text-slate-900">Find flights, hotels &amp; car rentals</h2>
-              <p className="text-sm text-slate-500">Search options for {trip.destination_city}, {trip.destination_country}</p>
-            </div>
-          </div>
+          <details open className="group">
+            <summary className="list-none cursor-pointer flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-xl flex-shrink-0">🔍</div>
+                <div>
+                  <h2 className="font-bold text-slate-900">Find flights, hotels &amp; car rentals</h2>
+                  <p className="text-sm text-slate-500">Search options for {trip.destination_city}, {trip.destination_country}</p>
+                </div>
+              </div>
+              <span className="text-xs text-slate-400 group-open:hidden flex-shrink-0">Show</span>
+              <span className="text-xs text-slate-400 hidden group-open:inline flex-shrink-0">Hide</span>
+            </summary>
+            <div className="mt-5">
           <FlightSearchPanel
             fromIata={homeIata}
             toIata={null}
@@ -377,6 +385,8 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
             reasoning={null}
             estimatedPriceEur={null}
           />
+            </div>
+          </details>
         </div>
       )}
 
@@ -609,6 +619,7 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
       )}
 
       {/* Availability poll */}
+      <div id="availability">
       <AvailabilityPoll
         tripId={trip.id}
         members={availabilityMembers}
@@ -617,8 +628,10 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
         earliestDeparture={trip.earliest_departure}
         latestReturn={trip.latest_return}
       />
+      </div>
 
       {/* Cost split */}
+      <div id="expenses">
       <ExpensesSection
         tripId={trip.id}
         members={members}
@@ -627,43 +640,46 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
         currentUserId={user.id}
         homeCountry={homeCountry}
       />
+      </div>
 
       {/* Receipt scanner */}
       <ReceiptScanner tripId={trip.id} />
 
 
       {/* Budget vs actual */}
+      <div id="budget">
       <BudgetSection
         budgetPerPerson={trip.budget_per_person_eur ?? null}
         members={members}
         expenses={(expenses ?? []) as Parameters<typeof BudgetSection>[0]["expenses"]}
         itineraryItems={(itineraryItems ?? []) as Parameters<typeof BudgetSection>[0]["itineraryItems"]}
       />
+      </div>
 
       {/* Itinerary */}
+      <div id="itinerary">
       <ItinerarySection
         tripId={trip.id}
         initialItems={(itineraryItems ?? []) as Parameters<typeof ItinerarySection>[0]["initialItems"]}
         tripDays={trip.desired_duration_days}
         departureDate={departureDate}
       />
-
-      {/* Smart packing suggestions */}
-      <SmartPackingButton
-        tripId={trip.id}
-        destinationCountry={destinationCountry}
-        tripType={trip.vehicle_type ?? "flight"}
-      />
+      </div>
 
       {/* Packing list */}
+      <div id="packing">
       <PackingSection
         tripId={trip.id}
         currentUserId={user.id}
         members={members}
         initialItems={(packingItems ?? []) as Parameters<typeof PackingSection>[0]["initialItems"]}
+        destinationCountry={destinationCountry}
+        tripType={trip.vehicle_type ?? "flight"}
       />
+      </div>
 
       {/* Shared notes */}
+      <div id="notes">
       <TripNotes
         tripId={trip.id}
         currentUserId={user.id}
@@ -672,8 +688,10 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
         updatedAt={(tripNotesRow as { updated_at?: string } | null)?.updated_at ?? null}
         memberNames={memberNames}
       />
+      </div>
 
       {/* Group polls */}
+      <div id="polls">
       <GroupPolls
         tripId={trip.id}
         currentUserId={user.id}
@@ -682,60 +700,78 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
         initialVotes={(pollVotesReal ?? []) as Parameters<typeof GroupPolls>[0]["initialVotes"]}
         memberNames={memberNames}
       />
+      </div>
 
       {/* Documents vault */}
+      <div id="documents">
       <DocumentVault
         tripId={trip.id}
         currentUserId={user.id}
         initialDocs={(tripDocuments ?? []) as Parameters<typeof DocumentVault>[0]["initialDocs"]}
         memberNames={memberNames}
       />
+      </div>
 
       {/* Trip photos */}
+      <div id="photos">
       <PhotoSection
         tripId={trip.id}
         initialPhotos={(tripPhotos ?? []) as Parameters<typeof PhotoSection>[0]["initialPhotos"]}
         memberNames={memberNames}
         currentUserId={user.id}
       />
+      </div>
 
       {/* Pre-departure checklist */}
+      <div id="checklist">
       <PreDepartureChecklist
         tripId={trip.id}
         currentUserId={user.id}
         members={members}
         initialChecks={(predepartureChecks ?? []) as Parameters<typeof PreDepartureChecklist>[0]["initialChecks"]}
       />
+      </div>
 
       {/* Trip to-dos */}
+      <div id="tasks">
       <TripTasks
         tripId={trip.id}
         currentUserId={user.id}
         members={members}
         initialTasks={(tripTasks ?? []) as Parameters<typeof TripTasks>[0]["initialTasks"]}
       />
+      </div>
 
       {/* Cost estimator */}
+      <div id="costs">
       <TripCostEstimator
         tripId={trip.id}
         tripDays={trip.desired_duration_days}
         memberCount={members.length}
         initialEstimate={(costEstimate as Parameters<typeof TripCostEstimator>[0]["initialEstimate"]) ?? null}
       />
+      </div>
 
       {/* Phrasebook */}
+      <div id="phrasebook">
       {destinationCountry && <PhrasebookCard countryCode={destinationCountry} />}
+      </div>
 
       {/* Group chat */}
+      <div id="chat">
       <TripChat
         tripId={trip.id}
         currentUserId={user.id}
         memberNames={memberNames}
         initialMessages={(tripMessages ?? []) as Parameters<typeof TripChat>[0]["initialMessages"]}
       />
+      </div>
 
       {/* Invite */}
       <InviteSection tripId={trip.id} members={members} />
+      </div>
+      <TripSectionNav />
+      </div>
     </div>
   );
 }
