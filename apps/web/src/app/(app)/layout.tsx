@@ -91,10 +91,12 @@ export default async function AppLayout({
             <span className="text-base">📖</span>
             <span>About / Features</span>
           </Link>
+          {/* Bug report — hidden until email is configured
           <Link href="/bug-report" className="sidebar-link opacity-70 hover:opacity-100">
             <span className="text-base">🐛</span>
             <span>Report a bug</span>
           </Link>
+          */}
         </div>
       </aside>
 
