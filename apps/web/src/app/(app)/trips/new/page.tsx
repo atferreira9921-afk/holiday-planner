@@ -6,6 +6,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { COUNTRIES } from "@/lib/data/geo";
 import ReturnOriginPicker from "../ReturnOriginPicker";
+import { useTranslations } from "next-intl";
 
 type PlanningMode = "days_first" | "destination_first";
 type VehicleType = "flight" | "car" | "bus";
@@ -35,6 +36,7 @@ function fmt(d: string) {
 }
 
 export default function NewTripPage() {
+  const t = useTranslations("newTrip");
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
@@ -181,9 +183,9 @@ export default function NewTripPage() {
     <div>
       <div className="mb-8">
         <Link href="/trips" className="text-slate-400 text-sm hover:text-slate-600 transition flex items-center gap-1 mb-4">
-          ← Back to trips
+          {t("back")}
         </Link>
-        <h1 className="text-2xl font-bold text-slate-900">Plan a new trip</h1>
+        <h1 className="text-2xl font-bold text-slate-900">{t("title")}</h1>
         <p className="text-slate-500 text-sm mt-1">Fill in the details and we'll help you find the perfect trip.</p>
       </div>
 
@@ -191,7 +193,7 @@ export default function NewTripPage() {
 
         {/* Trip name */}
         <div className="card p-6">
-          <Field label="Trip name" hint="Give it a fun name">
+          <Field label={t("tripName")} hint="Give it a fun name">
             <input className="input" type="text" value={form.title}
               onChange={e => set("title", e.target.value)}
               placeholder="e.g. Summer beach escape" required />
@@ -201,7 +203,7 @@ export default function NewTripPage() {
         {/* Based on booked vacation days? */}
         <div className="card p-6 space-y-4">
           <div>
-            <h2 className="font-bold text-slate-900">📅 Dates</h2>
+            <h2 className="font-bold text-slate-900">📅 {t("dates")}</h2>
             <p className="text-xs text-slate-400 mt-0.5">Is this trip based on pre-booked vacation days?</p>
           </div>
 
@@ -209,13 +211,13 @@ export default function NewTripPage() {
             <button type="button" onClick={() => setUseBookedDays(true)}
               className={`p-4 rounded-xl border-2 text-left transition ${useBookedDays === true ? "border-indigo-500 bg-indigo-50" : "border-slate-200 hover:border-slate-300"}`}>
               <div className="text-2xl mb-1">📋</div>
-              <div className="text-sm font-bold text-slate-800">Yes — use my booked days</div>
+              <div className="text-sm font-bold text-slate-800">{t("useBookedDays")}</div>
               <div className="text-xs text-slate-500 mt-0.5">Choose from your planned vacations</div>
             </button>
             <button type="button" onClick={() => { setUseBookedDays(false); setSelectedHolidayId(""); }}
               className={`p-4 rounded-xl border-2 text-left transition ${useBookedDays === false ? "border-indigo-500 bg-indigo-50" : "border-slate-200 hover:border-slate-300"}`}>
               <div className="text-2xl mb-1">✏️</div>
-              <div className="text-sm font-bold text-slate-800">No — set dates manually</div>
+              <div className="text-sm font-bold text-slate-800">{t("setManually")}</div>
               <div className="text-xs text-slate-500 mt-0.5">Pick any date range</div>
             </button>
           </div>
@@ -290,15 +292,15 @@ export default function NewTripPage() {
         {/* Vehicle */}
         <div className="card p-6 space-y-4">
           <div>
-            <h2 className="font-bold text-slate-900">🚗 How will you travel?</h2>
+            <h2 className="font-bold text-slate-900">🚗 {t("howTravel")}</h2>
             <p className="text-xs text-slate-400 mt-0.5">Choose your main mode of transport to the destination.</p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {([
-              { type: "flight" as VehicleType, icon: "✈️", label: "Flight" },
-              { type: "car"    as VehicleType, icon: "🚗", label: "Road trip" },
-              { type: "bus"    as VehicleType, icon: "🚌", label: "Bus / Train" },
+              { type: "flight" as VehicleType, icon: "✈️", label: t("flight") },
+              { type: "car"    as VehicleType, icon: "🚗", label: t("roadTrip") },
+              { type: "bus"    as VehicleType, icon: "🚌", label: t("busTrain") },
             ]).map(v => (
               <button key={v.type} type="button" onClick={() => setVehicleType(v.type)}
                 className={`p-4 rounded-xl border-2 text-center transition ${vehicleType === v.type ? "border-indigo-500 bg-indigo-50" : "border-slate-200 hover:border-slate-300"}`}>
@@ -346,7 +348,7 @@ export default function NewTripPage() {
         {/* Destination / planning mode */}
         <div className="card p-6 space-y-4">
           <div>
-            <h2 className="font-bold text-slate-900">🌍 Destination</h2>
+            <h2 className="font-bold text-slate-900">🌍 {t("destination")}</h2>
             <p className="text-xs text-slate-400 mt-0.5">Do you already know where you want to go?</p>
           </div>
 
@@ -354,13 +356,13 @@ export default function NewTripPage() {
             <button type="button" onClick={() => setMode("days_first")}
               className={`p-4 rounded-xl border-2 text-left transition ${mode === "days_first" ? "border-indigo-500 bg-indigo-50" : "border-slate-200 hover:border-slate-300"}`}>
               <div className="text-2xl mb-1">🤖</div>
-              <div className="text-sm font-bold text-slate-800">Suggest for me</div>
+              <div className="text-sm font-bold text-slate-800">{t("suggestMe")}</div>
               <div className="text-xs text-slate-500 mt-0.5">AI picks the best destinations for your dates</div>
             </button>
             <button type="button" onClick={() => setMode("destination_first")}
               className={`p-4 rounded-xl border-2 text-left transition ${mode === "destination_first" ? "border-indigo-500 bg-indigo-50" : "border-slate-200 hover:border-slate-300"}`}>
               <div className="text-2xl mb-1">📍</div>
-              <div className="text-sm font-bold text-slate-800">I know where I'm going</div>
+              <div className="text-sm font-bold text-slate-800">{t("iKnowWhere")}</div>
               <div className="text-xs text-slate-500 mt-0.5">Enter city and country manually</div>
             </button>
           </div>
@@ -410,7 +412,7 @@ export default function NewTripPage() {
 
         {/* Budget */}
         <div className="card p-6">
-          <Field label="Budget per person (€)" hint="Optional — helps filter results">
+          <Field label={t("budget")} hint="Optional — helps filter results">
             <input className="input" type="number" value={form.budget_per_person_eur}
               onChange={e => set("budget_per_person_eur", e.target.value)}
               placeholder="e.g. 1200" style={{ maxWidth: 160 }} />
@@ -425,7 +427,7 @@ export default function NewTripPage() {
           (useBookedDays === null) ||
           (useBookedDays === true && !selectedHolidayId && bookedHolidays.length > 0)
         }>
-          {loading ? "Creating trip…" : mode === "days_first" ? "Create trip → Get AI suggestions" : "Create trip →"}
+          {loading ? t("creating") : mode === "days_first" ? t("submit") : t("submitDirect")}
         </button>
 
         {useBookedDays === null && (

@@ -303,9 +303,9 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
       {/* Trip details card */}
       <div id="trip-details" className="card p-6">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Stat icon="🌙" label="Duration" value={t("duration", { days: trip.desired_duration_days })} />
+          <Stat icon="🌙" label={t("durationLabel")} value={t("duration", { days: trip.desired_duration_days })} />
           <Stat icon="📅" label={t("window")} value={`${trip.earliest_departure}`} sub={`→ ${trip.latest_return}`} />
-          {trip.budget_per_person_eur && <Stat icon="💶" label={t("budget")} value={`€${trip.budget_per_person_eur}`} sub="per person" />}
+          {trip.budget_per_person_eur && <Stat icon="💶" label={t("budget")} value={`€${trip.budget_per_person_eur}`} sub={t("perPerson")} />}
           {trip.destination_hint && <Stat icon="💡" label={t("hint")} value={trip.destination_hint} />}
           {trip.planning_mode === "destination_first" && trip.destination_city && (
             <Stat icon="📍" label={t("destination")} value={`${trip.destination_city}, ${trip.destination_country}`} />
@@ -321,7 +321,7 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="text-lg font-bold text-slate-900">{trip.destination_city}, {trip.destination_country}</h3>
-                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">✅ Destination set</span>
+                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">{t("destinationSet")}</span>
               </div>
               <p className="text-sm text-slate-500">
                 {trip.earliest_departure} → {destFirstReturn} · {trip.desired_duration_days} days
@@ -402,7 +402,7 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 rounded-xl gradient-card flex items-center justify-center text-2xl flex-shrink-0">🤖</div>
             <div className="flex-1">
-              <h2 className="font-bold text-slate-900">Get AI suggestions</h2>
+              <h2 className="font-bold text-slate-900">{t("getAiSuggestions")}</h2>
               <p className="text-sm text-slate-500 mt-1 mb-4">
                 The AI will analyse public holidays, find optimal date windows, and suggest your top trips.
               </p>
@@ -434,7 +434,7 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
                       {s.destination_iata && <span className="text-slate-400 font-normal text-sm ml-1">({s.destination_iata})</span>}
                     </h3>
                     {isSelected && (
-                      <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">✅ Selected</span>
+                      <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">{t("selected")}</span>
                     )}
                   </div>
                   <p className="text-sm text-slate-500">
@@ -452,7 +452,7 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
                 {s.estimated_total_price_eur && (
                   <div className="text-right flex-shrink-0">
                     <p className={`font-bold text-indigo-600 ${dimmed ? "text-lg" : "text-2xl"}`}>€{Math.round(s.estimated_total_price_eur)}</p>
-                    <p className="text-xs text-slate-400">per person est.</p>
+                    <p className="text-xs text-slate-400">{t("perPersonEst")}</p>
                   </div>
                 )}
               </div>
@@ -483,7 +483,7 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
                     {s.highlights?.length > 0 && (
                       <div className="bg-green-50 rounded-xl p-3">
-                        <p className="text-xs font-semibold text-green-700 mb-2 uppercase tracking-wide">Highlights</p>
+                        <p className="text-xs font-semibold text-green-700 mb-2 uppercase tracking-wide">{t("highlights")}</p>
                         <ul className="space-y-1">
                           {s.highlights.map((h: string, j: number) => (
                             <li key={j} className="text-sm text-green-700 flex items-start gap-1.5"><span className="mt-0.5">✓</span>{h}</li>
@@ -493,10 +493,10 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
                     )}
                     {s.trade_offs?.length > 0 && (
                       <div className="bg-slate-50 rounded-xl p-3">
-                        <p className="text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wide">Trade-offs</p>
+                        <p className="text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wide">{t("tradeoffs")}</p>
                         <ul className="space-y-1">
-                          {s.trade_offs.map((t: string, j: number) => (
-                            <li key={j} className="text-sm text-slate-600 flex items-start gap-1.5"><span className="mt-0.5">·</span>{t}</li>
+                          {s.trade_offs.map((tradeOff: string, j: number) => (
+                            <li key={j} className="text-sm text-slate-600 flex items-start gap-1.5"><span className="mt-0.5">·</span>{tradeOff}</li>
                           ))}
                         </ul>
                       </div>
@@ -556,9 +556,9 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
         return (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="font-bold text-slate-900 text-lg">✨ Suggestions</h2>
+              <h2 className="font-bold text-slate-900 text-lg">{t("suggestions")}</h2>
               {!trip.selected_suggestion_id && (
-                <p className="text-xs text-slate-400">Select a destination to confirm your trip</p>
+                <p className="text-xs text-slate-400">{t("selectDestination")}</p>
               )}
             </div>
 

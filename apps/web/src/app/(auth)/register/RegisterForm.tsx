@@ -3,9 +3,11 @@
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 
 export default function RegisterForm() {
+  const t = useTranslations("auth");
   const searchParams = useSearchParams();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -31,22 +33,22 @@ export default function RegisterForm() {
   return (
     <div className="w-full max-w-sm">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-900">Create your account</h1>
-        <p className="text-slate-500 text-sm mt-1">Start planning smarter holidays</p>
+        <h1 className="text-2xl font-bold text-slate-900">{t("registerTitle")}</h1>
+        <p className="text-slate-500 text-sm mt-1">{t("registerSubtitle")}</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="label">Full name</label>
+          <label className="label">{t("fullName")}</label>
           <input className="input" type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Alex Ferreira" required />
         </div>
         <div>
-          <label className="label">Email</label>
+          <label className="label">{t("email")}</label>
           <input className="input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" required />
         </div>
         <div>
-          <label className="label">Password</label>
-          <input className="input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Min. 6 characters" required minLength={6} />
+          <label className="label">{t("password")}</label>
+          <input className="input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t("minPassword")} required minLength={6} />
         </div>
 
         {error && (
@@ -56,14 +58,14 @@ export default function RegisterForm() {
         )}
 
         <button type="submit" className="btn-primary w-full justify-center py-3" disabled={loading}>
-          {loading ? "Creating account..." : "Create account →"}
+          {loading ? t("registering") : t("registerSubmit")}
         </button>
       </form>
 
       <p className="text-center text-sm text-slate-500 mt-6">
-        Already have an account?{" "}
+        {t("alreadyAccount")}{" "}
         <Link href="/login" className="text-indigo-600 font-semibold hover:underline">
-          Sign in
+          {t("signIn")}
         </Link>
       </p>
     </div>

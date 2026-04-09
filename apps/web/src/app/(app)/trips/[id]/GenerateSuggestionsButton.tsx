@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 export default function GenerateSuggestionsButton({
   tripId,
@@ -11,6 +12,7 @@ export default function GenerateSuggestionsButton({
   hasSuggestions?: boolean;
 }) {
   const router = useRouter();
+  const t = useTranslations("tripActions");
   const [loading, setLoading]     = useState(false);
   const [progress, setProgress]   = useState(0);
   const [stage, setStage]         = useState("");
@@ -22,7 +24,7 @@ export default function GenerateSuggestionsButton({
     setLoading(true);
     setError(null);
     setProgress(0);
-    setStage("Starting…");
+    setStage(t("starting"));
 
     try {
       const res = await fetch(`/api/trips/${tripId}/suggestions`, {
@@ -85,7 +87,7 @@ export default function GenerateSuggestionsButton({
           className="text-xs text-indigo-500 hover:text-indigo-700 transition flex items-center gap-1"
         >
           <span>{showPrompt ? "▾" : "▸"}</span>
-          {showPrompt ? "Hide extra instructions" : "Add extra instructions (optional)"}
+          {showPrompt ? t("hideInstructions") : t("addInstructions")}
         </button>
 
         {showPrompt && (
@@ -112,10 +114,10 @@ export default function GenerateSuggestionsButton({
         }`}
       >
         {loading
-          ? "🤖 Generating…"
+          ? t("generating")
           : hasSuggestions
-            ? "🔄 Generate new suggestions"
-            : "🤖 Generate AI suggestions"}
+            ? t("regenerate")
+            : t("generate")}
       </button>
 
       {loading && (

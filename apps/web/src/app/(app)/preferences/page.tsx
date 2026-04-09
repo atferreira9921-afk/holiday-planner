@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 import type { UserPreferences } from "@holiday-planner/shared-types";
 import { COUNTRIES, getAirports, getRegions } from "@/lib/data/geo";
@@ -34,6 +35,7 @@ interface Car {
 }
 
 export default function PreferencesPage() {
+  const t = useTranslations("preferences");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -164,8 +166,8 @@ export default function PreferencesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">User Config</h1>
-        <p className="text-slate-500 text-sm mt-1">These help the AI personalise suggestions just for you.</p>
+        <h1 className="text-2xl font-bold text-slate-900">{t("title")}</h1>
+        <p className="text-slate-500 text-sm mt-1">{t("subtitle")}</p>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6 items-start">
@@ -191,7 +193,7 @@ export default function PreferencesPage() {
 
         {/* Home base */}
         <div className="card p-6 space-y-4">
-          <h2 className="font-bold text-slate-900 flex items-center gap-2">🏠 Home base</h2>
+          <h2 className="font-bold text-slate-900 flex items-center gap-2">{t("homeBase")}</h2>
 
           <div>
             <label className="label">Country</label>
@@ -282,7 +284,7 @@ export default function PreferencesPage() {
 
         {/* Travel style */}
         <div className="card p-6 space-y-4">
-          <h2 className="font-bold text-slate-900 flex items-center gap-2">🎯 Travel style</h2>
+          <h2 className="font-bold text-slate-900 flex items-center gap-2">{t("travelStyle")}</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {STYLES.map(s => (
               <button key={s.value} type="button" onClick={() => setPrefs(p => ({ ...p, travel_style: s.value as UserPreferences["travel_style"] }))}
@@ -309,7 +311,7 @@ export default function PreferencesPage() {
 
         {/* Interests */}
         <div className="card p-6 space-y-4">
-          <h2 className="font-bold text-slate-900 flex items-center gap-2">❤️ Interests</h2>
+          <h2 className="font-bold text-slate-900 flex items-center gap-2">{t("interests")}</h2>
           <p className="text-xs text-slate-400">Select everything that excites you about travel.</p>
           <div className="flex flex-wrap gap-2">
             {INTERESTS.map(interest => {
@@ -326,7 +328,7 @@ export default function PreferencesPage() {
 
         {/* Public holiday countries */}
         <div className="card p-6 space-y-4">
-          <h2 className="font-bold text-slate-900 flex items-center gap-2">🌍 Holiday countries</h2>
+          <h2 className="font-bold text-slate-900 flex items-center gap-2">{t("holidayCountries")}</h2>
           <p className="text-xs text-slate-400">Add countries whose public holidays you want to track in your calendar.</p>
           <div className="flex flex-wrap gap-2">
             <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-100 text-indigo-700 text-sm font-semibold border border-indigo-200">
@@ -364,7 +366,7 @@ export default function PreferencesPage() {
 
         {/* Personal details */}
         <div className="card p-6 space-y-4">
-          <h2 className="font-bold text-slate-900 flex items-center gap-2">👤 Personal details</h2>
+          <h2 className="font-bold text-slate-900 flex items-center gap-2">{t("personal")}</h2>
           <p className="text-xs text-slate-400">Used to calculate parental leave entitlements and personalise suggestions.</p>
 
           <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100">
@@ -398,7 +400,7 @@ export default function PreferencesPage() {
               <p className="text-xs text-slate-400 mt-1">Marked on your calendar.</p>
             </div>
             <div className="col-span-2">
-              <label className="label">Passport expiry date</label>
+              <label className="label">{t("passportExpiry")}</label>
               <input className="input" type="date" value={(prefs as { passport_expiry?: string | null }).passport_expiry ?? ""}
                 onChange={e => setPrefs(p => ({ ...p, passport_expiry: e.target.value || null } as typeof p))} />
               <p className="text-xs text-slate-400 mt-1">
@@ -414,7 +416,7 @@ export default function PreferencesPage() {
                 onChange={e => setPrefs(p => ({ ...p, birthday_is_vacation_day: e.target.checked }))}
               />
               <label htmlFor="birthday-vacation" className="cursor-pointer">
-                <span className="text-sm font-medium text-slate-700">🎂 Birthday is a vacation day</span>
+                <span className="text-sm font-medium text-slate-700">{t("birthdayVacationDay")}</span>
                 <p className="text-xs text-slate-400 mt-0.5">Adds +1 to your total vacation days per year.</p>
               </label>
             </div>
@@ -423,7 +425,7 @@ export default function PreferencesPage() {
           <div className="pt-2 border-t border-slate-100">
             <div className="flex items-center justify-between">
               <div>
-                <label className="label mb-0">Currently on parental leave</label>
+                <label className="label mb-0">{t("parentalLeave")}</label>
                 <p className="text-xs text-slate-400 mt-0.5">
                   {prefs.gender === "female" ? "Maternity leave" : prefs.gender === "male" ? "Paternity leave" : "Parental leave"} — blocked dates will be excluded from trip planning.
                 </p>
@@ -453,7 +455,7 @@ export default function PreferencesPage() {
       <div className="card p-6 space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="font-bold text-slate-900 flex items-center gap-2">🚗 My Cars</h2>
+            <h2 className="font-bold text-slate-900 flex items-center gap-2">{t("myCars")}</h2>
             <p className="text-xs text-slate-400 mt-0.5">Used to auto-calculate fuel costs on road trips.</p>
           </div>
           <button type="button" onClick={() => {
@@ -473,7 +475,7 @@ export default function PreferencesPage() {
 
         {/* Cars list */}
         {cars.length === 0 && !showCarForm && (
-          <p className="text-sm text-slate-400 text-center py-3">No cars added yet.</p>
+          <p className="text-sm text-slate-400 text-center py-3">{t("noCars")}</p>
         )}
         <div className="space-y-2">
           {cars.map(car => {
@@ -617,7 +619,7 @@ export default function PreferencesPage() {
         className="btn-primary w-full justify-center py-3"
         disabled={saving}
       >
-        {saving ? "Saving..." : saved ? "✓ Saved!" : "Save preferences"}
+        {saving ? t("saving") : saved ? t("saved") : t("savePreferences")}
       </button>
       </div> {/* end flex-1 */}
       </div> {/* end two-column */}

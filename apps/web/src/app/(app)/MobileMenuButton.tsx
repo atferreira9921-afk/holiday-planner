@@ -1,20 +1,25 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-
-const navItems = [
-  { href: "/dashboard", icon: "🏠", label: "Dashboard" },
-  { href: "/trips", icon: "✈️", label: "My Trips" },
-  { href: "/holidays", icon: "🗓️", label: "Holiday Calendar" },
-  { href: "/wishlist", icon: "🌍", label: "Wishlist" },
-  { href: "/family", icon: "👨‍👩‍👧", label: "Family & Friends" },
-  { href: "/preferences", icon: "⚙️", label: "User Config" },
-  { href: "/about", icon: "📖", label: "About / Features" },
-  { href: "/account", icon: "👤", label: "Account" },
-];
+import { useTranslations } from "next-intl";
 
 export default function MobileMenuButton() {
   const [open, setOpen] = useState(false);
+  const t = useTranslations("nav");
+  const tc = useTranslations("common");
+  const tm = useTranslations("mobileMenu");
+
+  const navItems = [
+    { href: "/dashboard",   icon: "🏠",       label: t("dashboard")   },
+    { href: "/trips",       icon: "✈️",       label: t("trips")       },
+    { href: "/holidays",    icon: "🗓️",       label: t("calendar")    },
+    { href: "/wishlist",    icon: "🌍",        label: t("wishlist")    },
+    { href: "/family",      icon: "👨‍👩‍👧", label: t("family")      },
+    { href: "/preferences", icon: "⚙️",       label: t("preferences") },
+    { href: "/about",       icon: "📖",        label: t("about")       },
+    { href: "/account",     icon: "👤",        label: tm("account")    },
+  ];
+
   return (
     <div className="relative">
       <button onClick={() => setOpen(o => !o)} className="text-white p-2 rounded-lg" style={{ background: "rgba(255,255,255,0.1)" }}>
@@ -36,7 +41,7 @@ export default function MobileMenuButton() {
               <form action="/api/auth/signout" method="POST">
                 <button className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-300 hover:bg-white/10 hover:text-white transition">
                   <span>🚪</span>
-                  <span>Sign out</span>
+                  <span>{tc("signOut")}</span>
                 </button>
               </form>
             </div>

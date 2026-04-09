@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import DashboardGlobe from "./DashboardGlobe";
+import { useTranslations } from "next-intl";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -118,12 +119,12 @@ const BOOKING_GROUPS = [
   },
 ];
 
-const STATUS_STYLE: Record<string, { bg: string; color: string; label: string; emoji: string }> = {
-  planning:  { bg: "#fef9c3", color: "#854d0e", label: "Planning",  emoji: "🗓️" },
-  suggested: { bg: "#ede9fe", color: "#5b21b6", label: "Suggested", emoji: "✨" },
-  booked:    { bg: "#dcfce7", color: "#166534", label: "Booked",    emoji: "✅" },
-  completed: { bg: "#f1f5f9", color: "#475569", label: "Done",      emoji: "🏁" },
-  cancelled: { bg: "#fee2e2", color: "#991b1b", label: "Cancelled", emoji: "✕"  },
+const STATUS_STYLE: Record<string, { bg: string; color: string; labelKey: string; emoji: string }> = {
+  planning:  { bg: "#fef9c3", color: "#854d0e", labelKey: "planning",  emoji: "🗓️" },
+  suggested: { bg: "#ede9fe", color: "#5b21b6", labelKey: "suggested", emoji: "✨" },
+  booked:    { bg: "#dcfce7", color: "#166534", labelKey: "booked",    emoji: "✅" },
+  completed: { bg: "#f1f5f9", color: "#475569", labelKey: "completed", emoji: "🏁" },
+  cancelled: { bg: "#fee2e2", color: "#991b1b", labelKey: "cancelled", emoji: "✕"  },
 };
 
 const PRIORITY_COLORS: Record<number, string> = { 1: "#94a3b8", 2: "#60a5fa", 3: "#34d399", 4: "#f59e0b", 5: "#f43f5e" };
@@ -257,6 +258,7 @@ function OnboardingChecklist({
   hasTrip: boolean;
   hasFamilyMember: boolean;
 }) {
+  const t = useTranslations("dashboard");
   const [dismissed, setDismissed] = useState(false);
   if (dismissed) return null;
 
@@ -273,10 +275,10 @@ function OnboardingChecklist({
     <div className="card p-5 border border-indigo-100 bg-indigo-50/40">
       <div className="flex items-start justify-between gap-3 mb-3">
         <div>
-          <h2 className="font-bold text-slate-900 text-sm">Getting started</h2>
+          <h2 className="font-bold text-slate-900 text-sm">{t("getStarted")}</h2>
           <p className="text-xs text-slate-500 mt-0.5">{completedCount} of {items.length} steps complete</p>
         </div>
-        <button onClick={() => setDismissed(true)} className="text-slate-400 hover:text-slate-600 text-xs transition flex-shrink-0">Dismiss</button>
+        <button onClick={() => setDismissed(true)} className="text-slate-400 hover:text-slate-600 text-xs transition flex-shrink-0">{t("dismiss")}</button>
       </div>
       <div className="space-y-2">
         {items.map((item, i) => (
@@ -305,6 +307,7 @@ export default function DashboardClient({
   freeStays, wishlist, publicHolidaysByCountry, userCountry, familyMemberTripIds,
   allPublicHolidayDates,
 }: DashboardProps) {
+  const t = useTranslations("dashboard");
   const [isDark, setIsDark] = useState(false);
   useEffect(() => {
     const check = () => setIsDark(document.documentElement.getAttribute("data-theme") === "dark");
@@ -356,8 +359,8 @@ export default function DashboardClient({
   const awayDays    = memberAway.reduce((s, b)    => s + countWorkingDays(b.start_date, b.end_date, thisYear), 0);
   const plannedDays = isYou
     ? activeTrips
-        .filter(t => ["planning", "suggested"].includes(t.status) && t.latest_return >= todayISO)
-        .reduce((s, t) => s + (t.desired_duration_days ?? 0), 0)
+        .filter(trip => ["planning", "suggested"].includes(trip.status) && trip.latest_return >= todayISO)
+        .reduce((s, trip) => s + (trip.desired_duration_days ?? 0), 0)
     : 0;
   const remainingDays = Math.max(0, vacationTotal - bookedDays);
   const bookedPct  = Math.min(100, Math.round((bookedDays  / vacationTotal) * 100));
@@ -409,7 +412,7 @@ export default function DashboardClient({
   // Booked trip countdown — find the soonest booked trip that hasn't started yet
   const nextBookedTrip = isYou
     ? activeTrips
-        .filter(t => t.status === "booked" && t.earliest_departure >= todayISO)
+        .filter(trip => trip.status === "booked" && trip.earliest_departure >= todayISO)
         .sort((a, b) => a.earliest_departure.localeCompare(b.earliest_departure))[0] ?? null
     : null;
   const tripCountdown = nextBookedTrip ? daysUntil(nextBookedTrip.earliest_departure) : null;
@@ -430,12 +433,12 @@ export default function DashboardClient({
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">
-            {isYou ? `Hey ${firstName} 👋` : `Viewing ${displayName}'s calendar`}
+            {isYou ? t("welcome", { name: firstName }) : `Viewing ${displayName}'s calendar`}
           </h1>
           <p className="text-slate-500 text-sm mt-0.5">
             {remainingDays > 0
-              ? `${isYou ? "You have" : `${displayName} has`} ${remainingDays} vacation days left in ${thisYear}.`
-              : `All ${vacationTotal} vacation days used for ${thisYear}.`}
+              ? `${isYou ? "You have" : `${displayName} has`} ${remainingDays} ${t("vacationDays")} left in ${thisYear}.`
+              : `All ${vacationTotal} ${t("vacationDays")} used for ${thisYear}.`}
           </p>
         </div>
         <div className="flex gap-2 flex-wrap">
@@ -529,7 +532,7 @@ export default function DashboardClient({
           <div className="text-5xl flex-shrink-0">✈️</div>
           <div className="flex-1 min-w-0">
             <p className="text-xs font-bold uppercase tracking-wide text-emerald-700 mb-0.5">
-              {tripCountdown === 0 ? "Today!" : tripCountdown === 1 ? "Tomorrow!" : `${tripCountdown} days to go!`}
+              {tripCountdown === 0 ? t("today") : tripCountdown === 1 ? t("tomorrow") : t("daysToGo", { count: tripCountdown })}
             </p>
             <h2 className="text-xl font-bold text-slate-900 truncate">{nextBookedTrip.title}</h2>
             <p className="text-sm text-emerald-700 mt-0.5 font-medium">
@@ -595,10 +598,10 @@ export default function DashboardClient({
           <div className="text-5xl">🗺️</div>
           <div className="flex-1">
             <h2 className="text-lg font-bold text-slate-800">
-              {isYou ? "Nothing booked yet" : `Nothing booked for ${displayName} yet`}
+              {isYou ? t("nothingBooked") : `Nothing booked for ${displayName} yet`}
             </h2>
             <p className="text-sm text-slate-500 mt-0.5">
-              {isYou ? `You have ${remainingDays} days to use — plan something!` : `${remainingDays} vacation days remaining.`}
+              {isYou ? `You have ${remainingDays} days to use — plan something!` : `${remainingDays} ${t("vacationDays")} ${t("daysRemaining")}.`}
             </p>
           </div>
           {isYou
@@ -611,10 +614,10 @@ export default function DashboardClient({
       {/* ── Stats row ──────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: "Days remaining", value: remainingDays,  sub: `of ${vacationTotal}/yr`,    color: "#6366f1", bg: "#eef2ff", href: "/holidays" },
-          { label: "Days booked",    value: bookedDays,     sub: `${awayDays}d away too`,     color: "#0ea5e9", bg: "#f0f9ff", href: "/holidays" },
-          { label: "Free stays",     value: freeStays.length, sub: "save on hotels",          color: "#10b981", bg: "#ecfdf5", href: "/wishlist" },
-          { label: "Wishlist",       value: wishlist.length,  sub: "dream destinations",      color: "#f59e0b", bg: "#fffbeb", href: "/wishlist" },
+          { label: t("daysRemaining"), value: remainingDays,  sub: `of ${vacationTotal}/yr`,    color: "#6366f1", bg: "#eef2ff", href: "/holidays" },
+          { label: t("daysBooked"),    value: bookedDays,     sub: `${awayDays}d away too`,     color: "#0ea5e9", bg: "#f0f9ff", href: "/holidays" },
+          { label: t("freeStays"),     value: freeStays.length, sub: "save on hotels",          color: "#10b981", bg: "#ecfdf5", href: "/wishlist" },
+          { label: "Wishlist",         value: wishlist.length,  sub: "dream destinations",      color: "#f59e0b", bg: "#fffbeb", href: "/wishlist" },
         ].map(s => (
           <Link key={s.label} href={s.href}
             className="rounded-2xl p-4 text-center hover:scale-[1.02] transition-transform"
@@ -632,7 +635,7 @@ export default function DashboardClient({
         {/* Upcoming */}
         <div className="card p-5 space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="font-bold text-slate-900">Upcoming</h2>
+            <h2 className="font-bold text-slate-900">{t("upcoming")}</h2>
             <div className="flex items-center gap-2">
               {!isYou && (
                 <button onClick={() => setShowAddForm(f => !f)}
@@ -681,17 +684,17 @@ export default function DashboardClient({
         {(() => {
           const visibleTrips = isYou
             ? activeTrips
-            : activeTrips.filter(t => (familyMemberTripIds[selectedId] ?? []).includes(t.id));
+            : activeTrips.filter(trip => (familyMemberTripIds[selectedId] ?? []).includes(trip.id));
           const visibleCounts = {
-            planning:  visibleTrips.filter(t => t.status === "planning").length,
-            suggested: visibleTrips.filter(t => t.status === "suggested").length,
-            booked:    visibleTrips.filter(t => t.status === "booked").length,
+            planning:  visibleTrips.filter(trip => trip.status === "planning").length,
+            suggested: visibleTrips.filter(trip => trip.status === "suggested").length,
+            booked:    visibleTrips.filter(trip => trip.status === "booked").length,
           };
           return (
         <div className="card p-5 space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="font-bold text-slate-900">Trips</h2>
-            <Link href="/trips" className="text-xs text-indigo-600 font-semibold hover:underline">View all →</Link>
+            <h2 className="font-bold text-slate-900">{t("trips")}</h2>
+            <Link href="/trips" className="text-xs text-indigo-600 font-semibold hover:underline">{t("viewAll")} →</Link>
           </div>
           <div className="flex gap-2 flex-wrap">
             {[
@@ -699,9 +702,9 @@ export default function DashboardClient({
               { val: visibleCounts.suggested, style: STATUS_STYLE.suggested },
               { val: visibleCounts.booked,    style: STATUS_STYLE.booked    },
             ].filter(s => s.val > 0).map(s => (
-              <span key={s.style.label} className="px-2.5 py-1 rounded-full text-xs font-bold"
+              <span key={s.style.labelKey} className="px-2.5 py-1 rounded-full text-xs font-bold"
                 style={{ background: isDark ? `${s.style.color}26` : s.style.bg, color: s.style.color }}>
-                {s.style.emoji} {s.val} {s.style.label}
+                {s.style.emoji} {s.val} {t(s.style.labelKey as "planning" | "suggested" | "booked" | "completed" | "cancelled")}
               </span>
             ))}
             {visibleTrips.length === 0 && (
@@ -719,22 +722,22 @@ export default function DashboardClient({
             </div>
           ) : (
             <div className="space-y-2">
-              {visibleTrips.slice(0, 5).map(t => {
-                const s = STATUS_STYLE[t.status] ?? STATUS_STYLE.planning;
+              {visibleTrips.slice(0, 5).map(trip => {
+                const s = STATUS_STYLE[trip.status] ?? STATUS_STYLE.planning;
                 return (
-                  <Link key={t.id} href={`/trips/${t.id}`}
+                  <Link key={trip.id} href={`/trips/${trip.id}`}
                     className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 hover:bg-slate-100 transition">
                     <div className="w-9 h-9 rounded-xl flex-shrink-0 flex items-center justify-center text-lg"
                       style={{ background: isDark ? `${s.color}26` : s.bg }}>{s.emoji}</div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-slate-800 text-sm truncate">{t.title}</p>
+                      <p className="font-semibold text-slate-800 text-sm truncate">{trip.title}</p>
                       <p className="text-xs text-slate-400">
-                        {t.desired_duration_days}d · {fmtShort(t.earliest_departure)} – {fmtShort(t.latest_return)}
-                        {t.destination_city ? ` · ${t.destination_city}` : ""}
+                        {trip.desired_duration_days}d · {fmtShort(trip.earliest_departure)} – {fmtShort(trip.latest_return)}
+                        {trip.destination_city ? ` · ${trip.destination_city}` : ""}
                       </p>
                     </div>
                     <span className="text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0"
-                      style={{ background: isDark ? `${s.color}26` : s.bg, color: s.color }}>{s.label}</span>
+                      style={{ background: isDark ? `${s.color}26` : s.bg, color: s.color }}>{t(s.labelKey as "planning" | "suggested" | "booked" | "completed" | "cancelled")}</span>
                   </Link>
                 );
               })}

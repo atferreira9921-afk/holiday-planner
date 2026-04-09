@@ -1,16 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-
-const LEFT  = [
-  { href: "/trips",    icon: "✈️", label: "Trips"    },
-  { href: "/holidays", icon: "🗓️", label: "Calendar" },
-];
-const CENTER = { href: "/dashboard", icon: "🏠", label: "Dashboard" };
-const RIGHT = [
-  { href: "/wishlist", icon: "🌍",       label: "Wishlist" },
-  { href: "/family",   icon: "👨‍👩‍👧", label: "Family"   },
-];
+import { useTranslations } from "next-intl";
 
 function NavItem({ href, icon, label, active }: { href: string; icon: string; label: string; active: boolean }) {
   return (
@@ -27,6 +18,17 @@ function NavItem({ href, icon, label, active }: { href: string; icon: string; la
 
 export default function BottomNav() {
   const pathname = usePathname();
+  const t = useTranslations("nav");
+
+  const LEFT = [
+    { href: "/trips",    icon: "✈️", label: t("trips")    },
+    { href: "/holidays", icon: "🗓️", label: t("calendar") },
+  ];
+  const CENTER = { href: "/dashboard", icon: "🏠", label: t("dashboard") };
+  const RIGHT = [
+    { href: "/wishlist", icon: "🌍",       label: t("wishlist") },
+    { href: "/family",   icon: "👨‍👩‍👧", label: t("family")   },
+  ];
 
   function isActive(href: string) {
     return pathname === href || (href !== "/dashboard" && pathname.startsWith(href + "/"));

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import ConfirmDialog from "@/lib/ConfirmDialog";
+import { useTranslations } from "next-intl";
 
 interface Props {
   tripId: string;
@@ -12,6 +13,7 @@ export default function DeleteTripButton({ tripId }: Props) {
   const [loading, setLoading] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const router = useRouter();
+  const t = useTranslations("tripActions");
 
   async function handleDelete() {
     setConfirmOpen(false);
@@ -33,13 +35,13 @@ export default function DeleteTripButton({ tripId }: Props) {
         onClick={() => setConfirmOpen(true)}
         disabled={loading}
       >
-        {loading ? "Deleting…" : "🗑️ Delete"}
+        {loading ? t("deleting") : t("deleteButton")}
       </button>
       <ConfirmDialog
         open={confirmOpen}
-        title="Delete this trip?"
-        description="This will permanently delete the trip and all its data."
-        confirmLabel="Delete trip"
+        title={t("deleteConfirm")}
+        description={t("deleteWarning")}
+        confirmLabel={t("deleteAction")}
         danger
         onConfirm={handleDelete}
         onCancel={() => setConfirmOpen(false)}

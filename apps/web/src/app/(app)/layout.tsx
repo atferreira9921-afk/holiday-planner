@@ -87,7 +87,7 @@ export default async function AppLayout({
 
         {/* Nav */}
         <nav className="flex-1 space-y-1">
-          <p className="text-indigo-400 text-xs font-semibold px-3 mb-3 uppercase tracking-wider">Menu</p>
+          <p className="text-indigo-400 text-xs font-semibold px-3 mb-3 uppercase tracking-wider">{t("nav.menu")}</p>
           {navItems.map((item) => (
             <Link key={item.href} href={item.href} className="sidebar-link">
               <span className="text-base">{item.icon}</span>
@@ -97,7 +97,7 @@ export default async function AppLayout({
           {!prefs && (
             <Link href="/onboarding" className="sidebar-link" style={{ color: "#fbbf24", opacity: 0.9 }}>
               <span className="text-base">🚀</span>
-              <span>Get started</span>
+              <span>{t("nav.getStarted")}</span>
             </Link>
           )}
         </nav>
@@ -133,7 +133,7 @@ export default async function AppLayout({
           </Link>
           <form action="/api/auth/signout" method="POST">
             <button className="text-xs text-slate-400 hover:text-slate-700 font-medium px-2 py-1 rounded-lg hover:bg-slate-100 transition">
-              Sign out
+              {t("common.signOut")}
             </button>
           </form>
         </div>

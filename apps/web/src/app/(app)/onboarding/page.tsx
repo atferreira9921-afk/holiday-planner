@@ -2,24 +2,20 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 import { COUNTRIES, getAirports } from "@/lib/data/geo";
 
-const STEPS = [
-  { id: 1, title: "Your vacation budget", subtitle: "How many vacation days do you get per year, and where are you based?" },
-  { id: 2, title: "Your travel style",    subtitle: "Help us personalise trip suggestions for you." },
-  { id: 3, title: "You're all set!",      subtitle: "Head to the calendar to book your first vacation window." },
-];
-
 const STYLES = [
-  { value: "budget",    label: "Budget", icon: "🎒", desc: "Hostels, budget airlines, street food" },
-  { value: "mid-range", label: "Mid-range", icon: "✈️", desc: "3-star hotels, direct flights where possible" },
-  { value: "luxury",    label: "Luxury", icon: "💎", desc: "5-star resorts, business class, fine dining" },
+  { value: "budget",    labelKey: "budget" as const,    icon: "🎒", desc: "Hostels, budget airlines, street food" },
+  { value: "mid-range", labelKey: "midRange" as const,  icon: "✈️", desc: "3-star hotels, direct flights where possible" },
+  { value: "luxury",    labelKey: "luxury" as const,    icon: "💎", desc: "5-star resorts, business class, fine dining" },
 ];
 
 const INTERESTS = ["beach", "mountains", "culture", "food", "nightlife", "nature", "city", "adventure", "relaxation", "history"];
 
 export default function OnboardingPage() {
+  const t = useTranslations("onboarding");
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
@@ -61,15 +57,17 @@ export default function OnboardingPage() {
     setSaving(false);
   }
 
-  const progress = ((step - 1) / (STEPS.length - 1)) * 100;
+  const totalSteps = 3;
+  const stepTitles = [t("vacationBudget"), t("travelStyle"), t("allSet")];
+  const progress = ((step - 1) / (totalSteps - 1)) * 100;
 
   return (
     <div className="max-w-lg mx-auto">
       {/* Progress */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Setup</span>
-          <span className="text-xs text-slate-400">Step {step} of {STEPS.length}</span>
+          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">{t("setup")}</span>
+          <span className="text-xs text-slate-400">{t("stepOf", { step, total: totalSteps })}</span>
         </div>
         <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
           <div className="h-full rounded-full bg-indigo-500 transition-all duration-500"
@@ -80,15 +78,14 @@ export default function OnboardingPage() {
       {/* Card */}
       <div className="card p-8 space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">{STEPS[step - 1].title}</h1>
-          <p className="text-slate-500 text-sm mt-1">{STEPS[step - 1].subtitle}</p>
+          <h1 className="text-2xl font-bold text-slate-900">{stepTitles[step - 1]}</h1>
         </div>
 
         {/* Step 1: Vacation days + country */}
         {step === 1 && (
           <div className="space-y-5">
             <div>
-              <label className="label">Vacation days per year</label>
+              <label className="label">{t("vacationDaysYear")}</label>
               <div className="flex items-center gap-4">
                 <input type="range" min={5} max={40} value={vacDays}
                   onChange={e => setVacDays(Number(e.target.value))}
@@ -101,7 +98,7 @@ export default function OnboardingPage() {
             </div>
 
             <div>
-              <label className="label">Home country</label>
+              <label className="label">{t("homeCountry")}</label>
               <select className="input" value={country} onChange={e => setCountry(e.target.value)}>
                 {COUNTRIES.map(c => <option key={c.code} value={c.code}>{c.name}</option>)}
               </select>
@@ -116,7 +113,7 @@ export default function OnboardingPage() {
         {step === 2 && (
           <div className="space-y-5">
             <div>
-              <label className="label">Travel style</label>
+              <label className="label">{t("travelStyle")}</label>
               <div className="grid grid-cols-3 gap-3">
                 {STYLES.map(s => (
                   <button key={s.value} type="button" onClick={() => setTravelStyle(s.value)}
@@ -127,7 +124,7 @@ export default function OnboardingPage() {
                         : "border-slate-200 hover:border-slate-300",
                     ].join(" ")}>
                     <div className="text-2xl mb-1">{s.icon}</div>
-                    <div className="font-semibold text-slate-900 text-sm">{s.label}</div>
+                    <div className="font-semibold text-slate-900 text-sm">{t(s.labelKey)}</div>
                     <div className="text-xs text-slate-400 mt-0.5">{s.desc}</div>
                   </button>
                 ))}
@@ -135,7 +132,7 @@ export default function OnboardingPage() {
             </div>
 
             <div>
-              <label className="label">Interests (optional)</label>
+              <label className="label">{t("interestsOptional")}</label>
               <div className="flex flex-wrap gap-2">
                 {INTERESTS.map(i => (
                   <button key={i} type="button" onClick={() => toggleInterest(i)}
@@ -163,21 +160,21 @@ export default function OnboardingPage() {
             </p>
             <div className="flex flex-col gap-3 pt-2">
               <a href="/holidays" className="btn-primary text-sm">🗓️ Book vacation days →</a>
-              <a href="/dashboard" className="btn-ghost text-sm">Skip for now</a>
+              <a href="/dashboard" className="btn-ghost text-sm">{t("skipForNow")}</a>
             </div>
           </div>
         )}
 
         {step < 3 && (
           <button onClick={saveAndContinue} disabled={saving} className="btn-primary w-full">
-            {saving ? "Saving…" : step === 2 ? "Save & finish" : "Continue →"}
+            {saving ? t("saving") : step === 2 ? t("saveFinish") : t("continue")}
           </button>
         )}
       </div>
 
       {step < 3 && (
         <p className="text-center text-xs text-slate-400 mt-4">
-          You can change all of this later in <a href="/preferences" className="text-indigo-500 hover:underline">Preferences</a>.
+          {t("changeInPreferences")}
         </p>
       )}
     </div>

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import ReturnOriginPicker from "../ReturnOriginPicker";
 import { COUNTRIES } from "@/lib/data/geo";
+import { useTranslations } from "next-intl";
 
 interface TripData {
   id: string;
@@ -46,6 +47,8 @@ export default function EditTripModal({ trip }: Props) {
   const isDestinationFirst = trip.planning_mode === "destination_first" || !!trip.destination_city;
   const router = useRouter();
   const supabase = createClient();
+  const t = useTranslations("tripActions");
+  const tc = useTranslations("common");
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const { name, value } = e.target;
@@ -69,7 +72,7 @@ export default function EditTripModal({ trip }: Props) {
       return_origin_country: form.return_origin_country !== "" ? form.return_origin_country.toUpperCase().slice(0, 2) : null,
     }).eq("id", trip.id);
     setSaving(false);
-    if (error) { setSaveError("Failed to save. Please try again."); return; }
+    if (error) { setSaveError(t("failedSave")); return; }
     setIsEditing(false);
     router.refresh();
   }
@@ -84,10 +87,10 @@ export default function EditTripModal({ trip }: Props) {
 
   return (
     <form onSubmit={handleSubmit} className="card p-4 space-y-4 w-full">
-      <h3 className="font-semibold text-slate-900 text-sm">Edit trip details</h3>
+      <h3 className="font-semibold text-slate-900 text-sm">{t("editTitle")}</h3>
 
       <div>
-        <label className="block text-xs font-medium text-slate-600 mb-1">Title</label>
+        <label className="block text-xs font-medium text-slate-600 mb-1">{t("tripTitle")}</label>
         <input
           type="text"
           name="title"
@@ -100,7 +103,7 @@ export default function EditTripModal({ trip }: Props) {
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-xs font-medium text-slate-600 mb-1">Window start</label>
+          <label className="block text-xs font-medium text-slate-600 mb-1">{t("windowStart")}</label>
           <input
             type="date"
             name="earliest_departure"
@@ -111,7 +114,7 @@ export default function EditTripModal({ trip }: Props) {
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-slate-600 mb-1">Window end</label>
+          <label className="block text-xs font-medium text-slate-600 mb-1">{t("windowEnd")}</label>
           <input
             type="date"
             name="latest_return"
@@ -124,7 +127,7 @@ export default function EditTripModal({ trip }: Props) {
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-slate-600 mb-1">Duration (days)</label>
+        <label className="block text-xs font-medium text-slate-600 mb-1">{t("duration")}</label>
         <input
           type="number"
           name="desired_duration_days"
@@ -137,7 +140,7 @@ export default function EditTripModal({ trip }: Props) {
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-slate-600 mb-1">Budget per person (EUR) <span className="text-slate-400">(optional)</span></label>
+        <label className="block text-xs font-medium text-slate-600 mb-1">{t("budgetPp")} <span className="text-slate-400">({tc("optional")})</span></label>
         <input
           type="number"
           name="budget_per_person_eur"
@@ -151,7 +154,7 @@ export default function EditTripModal({ trip }: Props) {
       {isDestinationFirst ? (
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1">Destination city</label>
+            <label className="block text-xs font-medium text-slate-600 mb-1">{t("destCity")}</label>
             <input
               type="text"
               name="destination_city"
@@ -162,7 +165,7 @@ export default function EditTripModal({ trip }: Props) {
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1">Destination country</label>
+            <label className="block text-xs font-medium text-slate-600 mb-1">{t("destCountry")}</label>
             <select
               name="destination_country"
               value={form.destination_country}
@@ -178,7 +181,7 @@ export default function EditTripModal({ trip }: Props) {
         </div>
       ) : (
         <div>
-          <label className="block text-xs font-medium text-slate-600 mb-1">Destination hint <span className="text-slate-400">(optional)</span></label>
+          <label className="block text-xs font-medium text-slate-600 mb-1">{t("destHint")} <span className="text-slate-400">({tc("optional")})</span></label>
           <input
             type="text"
             name="destination_hint"
@@ -191,7 +194,7 @@ export default function EditTripModal({ trip }: Props) {
 
       <div>
         <label className="block text-xs font-medium text-slate-600 mb-2">
-          Return journey <span className="text-slate-400">(optional — for open-jaw trips)</span>
+          {t("returnJourney")}
         </label>
         <ReturnOriginPicker
           vehicleType={(trip.vehicle_type as "flight" | "car" | "bus") ?? "flight"}
@@ -205,7 +208,7 @@ export default function EditTripModal({ trip }: Props) {
 
       <div className="flex items-center gap-2">
         <button type="submit" className="btn-primary text-sm" disabled={saving}>
-          {saving ? "Saving…" : "Save changes"}
+          {saving ? tc("saving") : t("saveChanges")}
         </button>
         <button
           type="button"
@@ -213,7 +216,7 @@ export default function EditTripModal({ trip }: Props) {
           onClick={() => setIsEditing(false)}
           disabled={saving}
         >
-          Cancel
+          {tc("cancel")}
         </button>
       </div>
     </form>

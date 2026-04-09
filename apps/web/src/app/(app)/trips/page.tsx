@@ -1,6 +1,7 @@
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import TripsFilter from "./TripsFilter";
+import { getTranslations } from "next-intl/server";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -258,6 +259,7 @@ const TARGET_DURATIONS = [1, 2, 3, 4, 5, 7, 10, 14];
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function TripsPage() {
+  const t = await getTranslations("tripsPage");
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   const db = createServiceClient();
@@ -352,15 +354,15 @@ export default async function TripsPage() {
     remainingDays = Math.max(0, vacationTotal - bookedDays);
 
     const tripRanges = trips
-      .filter(t => !["cancelled", "completed"].includes(t.status))
-      .map(t => ({ start: t.earliest_departure, end: t.latest_return }));
+      .filter(trip => !["cancelled", "completed"].includes(trip.status))
+      .map(trip => ({ start: trip.earliest_departure, end: trip.latest_return }));
 
     const familyHolidays = familyHolidaysRaw ?? [];
 
     vacationWindows = (holidays ?? []).map(b => {
       const vacDays = countVacationDays(b.start_date, b.end_date, publicHolidays);
       const cal     = totalCalDays(b.start_date, b.end_date);
-      const hasTrip = tripRanges.some(t => t.start <= b.end_date && t.end >= b.start_date);
+      const hasTrip = tripRanges.some(tr => tr.start <= b.end_date && tr.end >= b.start_date);
 
       // Which family members have a holiday overlapping this window?
       const memberOverlap = familyHolidays
@@ -443,8 +445,8 @@ export default async function TripsPage() {
       {/* ── Header ── */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">My Trips</h1>
-          <p className="text-slate-500 text-sm mt-1">{trips.filter(t => !["cancelled", "archived"].includes(t.status)).length} active trip{trips.filter(t => !["cancelled", "archived"].includes(t.status)).length !== 1 ? "s" : ""}</p>
+          <h1 className="text-2xl font-bold text-slate-900">{t("title")}</h1>
+          <p className="text-slate-500 text-sm mt-1">{t("activePlural", { count: trips.filter(trip => !["cancelled", "archived"].includes(trip.status)).length })}</p>
         </div>
         <Link href="/trips/new" className="btn-primary">✈️ New trip</Link>
       </div>
@@ -452,15 +454,15 @@ export default async function TripsPage() {
       {/* ── Trips grid ── */}
       {trips.length > 0 ? (
         <div>
-          <h2 className="font-bold text-slate-900 mb-3">All trips</h2>
+          <h2 className="font-bold text-slate-900 mb-3">{t("allTrips")}</h2>
           <TripsFilter trips={trips} />
         </div>
       ) : (
         <div className="card p-16 text-center">
           <div className="text-6xl mb-4">✈️</div>
-          <h3 className="font-bold text-slate-900 text-xl mb-2">No trips yet</h3>
+          <h3 className="font-bold text-slate-900 text-xl mb-2">{t("noTrips")}</h3>
           <p className="text-slate-500 text-sm mb-6">Plan your first holiday and let AI find the best dates and prices.</p>
-          <Link href="/trips/new" className="btn-primary">Plan your first trip</Link>
+          <Link href="/trips/new" className="btn-primary">{t("planFirst")}</Link>
         </div>
       )}
 
@@ -469,7 +471,7 @@ export default async function TripsPage() {
         <div>
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h2 className="font-bold text-slate-900">Smart trip windows</h2>
+              <h2 className="font-bold text-slate-900">{t("smartWindows")}</h2>
               <p className="text-slate-400 text-xs mt-0.5">
                 {hasAnyVacation
                   ? `${vacationWindows.length} vacation period${vacationWindows.length !== 1 ? "s" : ""} · ${remainingDays > 0 ? `${remainingDays} day${remainingDays !== 1 ? "s" : ""} still available to book` : "all days booked"}`
@@ -513,7 +515,7 @@ export default async function TripsPage() {
                             </span>
                           )}
                           {w.hasTrip && (
-                            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">Trip planned ✓</span>
+                            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">{t("tripPlanned")}</span>
                           )}
                         </div>
                         <p className="text-xs text-slate-400 mt-0.5">
@@ -623,7 +625,7 @@ export default async function TripsPage() {
                   <Link
                     href={`/trips/new?from=${ov.start}&to=${ov.end}`}
                     className="flex-shrink-0 text-xs px-3 py-1.5 rounded-lg font-semibold border border-violet-200 text-violet-600 bg-violet-50 hover:bg-violet-100 transition opacity-0 group-hover:opacity-100">
-                    Plan together →
+                    {t("planTogether")}
                   </Link>
                 </div>
               );
@@ -637,7 +639,7 @@ export default async function TripsPage() {
         <div>
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h2 className="font-bold text-slate-900">🌉 Bridge opportunities</h2>
+              <h2 className="font-bold text-slate-900">🌉 {t("bridgeOpportunities")}</h2>
               <p className="text-xs text-slate-400 mt-0.5">
                 Unbooked days — take 1–2 days off to unlock a longer break
               </p>

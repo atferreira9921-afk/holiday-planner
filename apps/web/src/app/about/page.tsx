@@ -1,5 +1,6 @@
 import Link from "next/link";
 import DarkModeToggle from "@/app/(app)/DarkModeToggle";
+import { getTranslations } from "next-intl/server";
 
 // ─── Feature data ─────────────────────────────────────────────────────────────
 // UPDATE THIS FILE whenever a new feature is added to the app.
@@ -233,7 +234,8 @@ const COLOR_CLASSES: Record<string, { bg: string; border: string; badge: string;
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const t = await getTranslations("about");
   return (
     <main className="min-h-screen" style={{ background: "var(--bg)" }}>
 
@@ -245,7 +247,7 @@ export default function AboutPage() {
         </Link>
         <div className="flex items-center gap-3">
           <Link href="/dashboard" className="text-slate-500 hover:text-slate-700 text-sm font-medium transition">
-            ← Back to app
+            {t("navBack")}
           </Link>
           <DarkModeToggle compact />
         </div>
@@ -255,13 +257,13 @@ export default function AboutPage() {
       <section className="gradient-hero px-6 py-24 text-center">
         <div className="inline-flex items-center gap-2 bg-white/10 text-white/90 text-xs font-semibold px-4 py-2 rounded-full mb-6 border border-white/20">
           <span className="w-2 h-2 bg-green-400 rounded-full"></span>
-          App overview · {FEATURES.length} feature areas · Always up to date
+          {t("heroBadge", { count: FEATURES.length })}
         </div>
         <h1 className="text-4xl md:text-6xl font-bold text-white leading-tight max-w-3xl mx-auto">
-          Everything Holiday Planner can do
+          {t("heroHeading")}
         </h1>
         <p className="mt-5 text-lg text-indigo-200 max-w-2xl mx-auto">
-          Holiday Planner is an AI-powered multi-user travel coordination app. It syncs everyone&apos;s calendars, finds the best windows to travel, and handles everything from AI destination suggestions to shared expense splitting — all in one place.
+          {t("heroSubheading")}
         </p>
         {/* Quick-jump links */}
         <div className="mt-10 flex flex-wrap gap-2 justify-center">
@@ -280,10 +282,10 @@ export default function AboutPage() {
       {/* Summary stats */}
       <section className="px-6 py-12 max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { value: "10", label: "App sections", emoji: "📱" },
-          { value: "100+", label: "Countries supported", emoji: "🌍" },
-          { value: "AI", label: "Powered by Claude", emoji: "🤖" },
-          { value: "Live", label: "Real-time updates", emoji: "⚡" },
+          { value: "10", label: t("statSections"), emoji: "📱" },
+          { value: "100+", label: t("statCountries"), emoji: "🌍" },
+          { value: "AI", label: t("statAi"), emoji: "🤖" },
+          { value: "Live", label: t("statRealtime"), emoji: "⚡" },
         ].map(s => (
           <div key={s.label} className="card p-5 text-center">
             <div className="text-2xl mb-1">{s.emoji}</div>
@@ -295,7 +297,7 @@ export default function AboutPage() {
 
       {/* Feature sections */}
       <section className="px-6 pb-24 max-w-5xl mx-auto space-y-8">
-        <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-6">Feature breakdown</h2>
+        <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-6">{t("featureBreakdown")}</h2>
 
         {FEATURES.map(f => {
           const c = COLOR_CLASSES[f.color] ?? COLOR_CLASSES.indigo;
@@ -335,7 +337,7 @@ export default function AboutPage() {
       {/* Tech stack */}
       <section className="border-t border-slate-200 bg-white px-6 py-16">
         <div className="max-w-5xl mx-auto">
-          <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-8 text-center">Tech stack</h2>
+          <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-8 text-center">{t("techStack")}</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
               { name: "Next.js 16", role: "Web app + API routes", emoji: "▲" },
@@ -346,12 +348,12 @@ export default function AboutPage() {
               { name: "Nager.Date", role: "Public holidays", emoji: "📅" },
               { name: "Tailwind CSS", role: "Styling", emoji: "🎨" },
               { name: "TypeScript", role: "Type safety", emoji: "🔷" },
-            ].map(t => (
-              <div key={t.name} className="flex items-center gap-3 p-4 rounded-xl border border-slate-100 bg-slate-50">
-                <span className="text-xl">{t.emoji}</span>
+            ].map(tech => (
+              <div key={tech.name} className="flex items-center gap-3 p-4 rounded-xl border border-slate-100 bg-slate-50">
+                <span className="text-xl">{tech.emoji}</span>
                 <div>
-                  <div className="text-sm font-semibold text-slate-800">{t.name}</div>
-                  <div className="text-xs text-slate-500">{t.role}</div>
+                  <div className="text-sm font-semibold text-slate-800">{tech.name}</div>
+                  <div className="text-xs text-slate-500">{tech.role}</div>
                 </div>
               </div>
             ))}
@@ -361,12 +363,12 @@ export default function AboutPage() {
 
       {/* CTA */}
       <section className="gradient-hero px-6 py-20 text-center">
-        <h2 className="text-3xl font-bold text-white mb-4">Ready to plan your next trip?</h2>
+        <h2 className="text-3xl font-bold text-white mb-4">{t("ctaHeading")}</h2>
         <p className="text-indigo-200 mb-8 max-w-md mx-auto">
-          Head back to the app and start planning.
+          {t("ctaSubheading")}
         </p>
         <Link href="/dashboard" className="bg-white text-indigo-700 px-7 py-3.5 rounded-xl font-bold text-base hover:bg-indigo-50 transition shadow-lg inline-block">
-          Go to Dashboard
+          {t("ctaButton")}
         </Link>
       </section>
 

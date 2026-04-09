@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { useTranslations } from "next-intl";
 
 interface Props {
   tripId: string;
@@ -23,6 +24,8 @@ export default function TripStatusControl({ tripId, currentStatus, selectedSugge
   const [saving, setSaving] = useState(false);
   const router = useRouter();
   const supabase = createClient();
+  const t = useTranslations("tripActions");
+  const tc = useTranslations("common");
 
   const statusCls = statusStyles[currentStatus] ?? statusStyles.planning;
 
@@ -38,7 +41,7 @@ export default function TripStatusControl({ tripId, currentStatus, selectedSugge
   return (
     <div className="card p-4">
       <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-sm font-medium text-slate-600">Status:</span>
+        <span className="text-sm font-medium text-slate-600">{t("status")}</span>
         <span
           className={`badge ${statusCls}`}
         >
@@ -46,7 +49,7 @@ export default function TripStatusControl({ tripId, currentStatus, selectedSugge
         </span>
 
         {currentStatus === "completed" && (
-          <span className="text-sm text-slate-400">Trip completed</span>
+          <span className="text-sm text-slate-400">{t("tripCompleted")}</span>
         )}
 
         {currentStatus === "cancelled" && (
@@ -55,13 +58,13 @@ export default function TripStatusControl({ tripId, currentStatus, selectedSugge
             onClick={() => updateStatus("planning")}
             disabled={saving}
           >
-            ↩ Reopen trip
+            {t("reopenTrip")}
           </button>
         )}
 
         {currentStatus === "archived" && (
           <button className="btn-ghost text-sm" onClick={() => updateStatus("planning")} disabled={saving}>
-            ↩ Unarchive
+            {t("unarchive")}
           </button>
         )}
 
@@ -73,7 +76,7 @@ export default function TripStatusControl({ tripId, currentStatus, selectedSugge
                 onClick={() => updateStatus("booked")}
                 disabled={saving}
               >
-                ✅ Mark as Booked
+                {t("markBooked")}
               </button>
             )}
 
@@ -83,7 +86,7 @@ export default function TripStatusControl({ tripId, currentStatus, selectedSugge
                 onClick={() => updateStatus("booked")}
                 disabled={saving}
               >
-                ✅ Mark as Booked
+                {t("markBooked")}
               </button>
             )}
 
@@ -93,7 +96,7 @@ export default function TripStatusControl({ tripId, currentStatus, selectedSugge
                 onClick={() => updateStatus("completed")}
                 disabled={saving}
               >
-                🏁 Mark as Completed
+                {t("markCompleted")}
               </button>
             )}
 
@@ -103,19 +106,19 @@ export default function TripStatusControl({ tripId, currentStatus, selectedSugge
                 onClick={() => updateStatus("cancelled")}
                 disabled={saving}
               >
-                Cancel trip
+                {t("cancelTrip")}
               </button>
             )}
 
             {(currentStatus === "planning" || currentStatus === "suggested" || currentStatus === "booked") && (
               <button className="btn-ghost text-sm text-slate-400" onClick={() => updateStatus("archived")} disabled={saving}>
-                Archive
+                {t("archive")}
               </button>
             )}
           </>
         )}
 
-        {saving && <span className="text-xs text-slate-400">Saving…</span>}
+        {saving && <span className="text-xs text-slate-400">{tc("saving")}</span>}
       </div>
     </div>
   );

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { COUNTRIES, getAirports } from "@/lib/data/geo";
 import { getMunicipalHolidays } from "@/lib/data/pt-municipal-holidays";
+import { useTranslations } from "next-intl";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -344,6 +345,7 @@ function CalendarGrid({
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function HolidaysPage() {
+  const t = useTranslations("holidaysPage");
   const isDark = useDarkMode();
   const router = useRouter();
   const thisYear = new Date().getFullYear();
@@ -833,7 +835,7 @@ export default function HolidaysPage() {
     <div className="space-y-6">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Holiday Calendar</h1>
+          <h1 className="text-2xl font-bold text-slate-900">{t("title")}</h1>
           <p className="text-slate-500 text-sm mt-1">Register booked holidays, see everyone's availability, and plan new trips.</p>
         </div>
         <Link href="/family" className="btn-ghost text-sm">👨‍👩‍👧 Manage family</Link>
@@ -918,9 +920,13 @@ export default function HolidaysPage() {
 
       {/* Tabs */}
       <div className="flex gap-1 border-b border-slate-200">
-        {([["calendar","📅 Calendar"],["windows","✨ Smart windows"],["list","📋 All holidays"]] as const).map(([t, label]) => (
-          <button key={t} onClick={() => setActiveTab(t)}
-            className={`px-4 py-2 text-sm font-semibold border-b-2 transition ${activeTab === t ? "border-indigo-500 text-indigo-600" : "border-transparent text-slate-500 hover:text-slate-700"}`}>
+        {([
+          ["calendar", t("tabCalendar")],
+          ["windows", t("tabSmartWindows")],
+          ["list", t("tabAllHolidays")],
+        ] as const).map(([tab, label]) => (
+          <button key={tab} onClick={() => setActiveTab(tab)}
+            className={`px-4 py-2 text-sm font-semibold border-b-2 transition ${activeTab === tab ? "border-indigo-500 text-indigo-600" : "border-transparent text-slate-500 hover:text-slate-700"}`}>
             {label}
           </button>
         ))}
@@ -947,8 +953,8 @@ export default function HolidaysPage() {
               {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
             </select>
             <div className="flex rounded-lg border border-slate-200 overflow-hidden text-sm">
-              <button onClick={() => setViewMode("individual")} className={`px-4 py-1.5 font-medium transition ${viewMode === "individual" ? "bg-indigo-500 text-white" : "text-slate-600 hover:bg-slate-50"}`}>Individual</button>
-              <button onClick={() => setViewMode("family")} className={`px-4 py-1.5 font-medium transition ${viewMode === "family" ? "bg-indigo-500 text-white" : "text-slate-600 hover:bg-slate-50"}`}>Family</button>
+              <button onClick={() => setViewMode("individual")} className={`px-4 py-1.5 font-medium transition ${viewMode === "individual" ? "bg-indigo-500 text-white" : "text-slate-600 hover:bg-slate-50"}`}>{t("individual")}</button>
+              <button onClick={() => setViewMode("family")} className={`px-4 py-1.5 font-medium transition ${viewMode === "family" ? "bg-indigo-500 text-white" : "text-slate-600 hover:bg-slate-50"}`}>{t("family")}</button>
             </div>
             <span className="text-xs text-slate-400 ml-auto">Select a date range to book or plan a trip</span>
           </div>
@@ -985,10 +991,10 @@ export default function HolidaysPage() {
                 </div>
                 {selEnd && (
                   <>
-                    <button onClick={planTrip} className="btn-primary text-sm px-4">Plan a trip →</button>
+                    <button onClick={planTrip} className="btn-primary text-sm px-4">{t("planTrip")}</button>
                     <button onClick={() => setShowBookingForm(f => !f)}
                       className="text-sm px-4 py-2 rounded-lg border-2 border-indigo-300 text-indigo-700 font-semibold hover:bg-indigo-100 transition">
-                      {showBookingForm ? "Cancel" : "Mark as booked ✓"}
+                      {showBookingForm ? "Cancel" : t("markBooked")}
                     </button>
                   </>
                 )}
@@ -998,7 +1004,7 @@ export default function HolidaysPage() {
               {/* Booking form */}
               {showBookingForm && selEnd && (
                 <div className="rounded-xl p-4 space-y-3 border border-indigo-100" style={{ background: isDark ? "#1e293b" : "#ffffff" }}>
-                  <p className="text-sm font-semibold text-slate-700">Register this period</p>
+                  <p className="text-sm font-semibold text-slate-700">{t("registerPeriod")}</p>
                   {/* Category groups */}
                   {(["holiday", "away", "event"] as const).map(group => {
                     const cats = (Object.entries(BOOKING_META) as [BookingCategory, typeof BOOKING_META[BookingCategory]][]).filter(([, m]) => m.group === group);
@@ -1052,7 +1058,7 @@ export default function HolidaysPage() {
           {/* Upcoming bookings list */}
           {upcomingBookings.length > 0 && (
             <div className="card p-4 space-y-2">
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Upcoming periods</p>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">{t("upcoming")}</p>
               {upcomingBookings.map(b => (
                 <div key={b.id}>
                   {/* Row */}
@@ -1262,7 +1268,7 @@ export default function HolidaysPage() {
                       })}
                     </div>
                   ) : (
-                    <p className="text-xs text-slate-400 italic">Nothing coming up</p>
+                    <p className="text-xs text-slate-400 italic">{t("nothingComingUp")}</p>
                   )}
                 </div>
               );
@@ -1289,12 +1295,12 @@ export default function HolidaysPage() {
           <div className="card p-4 flex items-center gap-6 flex-wrap" style={{ background: isDark ? "#1e293b" : "#f8fafc" }}>
             <div className="text-center">
               <div className="text-2xl font-bold text-slate-800">{vacationDaysTotal}</div>
-              <div className="text-xs text-slate-400">vacation days/yr</div>
+              <div className="text-xs text-slate-400">{t("vacationDaysPerYear")}</div>
             </div>
             <div className="text-slate-300 text-xl font-thin">|</div>
             <div className="text-center">
               <div className="text-2xl font-bold text-indigo-600">{selectedHolidaysInYear}</div>
-              <div className="text-xs text-slate-400">public holidays selected</div>
+              <div className="text-xs text-slate-400">{t("publicHolidays")}</div>
             </div>
             <div className="text-slate-300 text-xl font-thin">|</div>
             <div className="text-center">
@@ -1353,7 +1359,7 @@ export default function HolidaysPage() {
                     <button
                       onClick={() => router.push(`/trips/new?from=${w.start}&to=${w.end}&days=${w.totalDays}`)}
                       className="btn-primary text-xs px-3 py-1.5">
-                      Plan trip →
+                      {t("planTrip")}
                     </button>
                     <button
                       onClick={() => !booked && bookWindowAsVacation(i, w.start, w.end)}
@@ -1575,7 +1581,7 @@ export default function HolidaysPage() {
                         );
                       })}
 
-                      {weekend && <span className="text-xs text-amber-600 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-full">Always free</span>}
+                      {weekend && <span className="text-xs text-amber-600 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-full">{t("alwaysFree")}</span>}
                     </div>
                   </div>
                 </div>
@@ -1600,7 +1606,7 @@ export default function HolidaysPage() {
                   <div className="card divide-y divide-slate-100 mt-3" style={{ borderColor: "#e2e8f0" }}>
                     <div className="px-5 py-2 rounded-t-xl flex items-center gap-2" style={{ background: isDark ? "#1e293b" : "#f8fafc" }}>
                       <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide flex-1">
-                        Weekends &amp; skipped ({skippedSection.length})
+                        {t("weekendsSkipped")} ({skippedSection.length})
                       </p>
                       <span className="text-xs text-slate-400">Excluded from smart windows</span>
                     </div>

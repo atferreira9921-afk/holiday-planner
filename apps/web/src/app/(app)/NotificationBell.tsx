@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 import type { Notification } from "@/lib/notifications";
 
@@ -25,6 +26,8 @@ function timeAgo(iso: string) {
 
 export default function NotificationBell({ userId }: { userId: string }) {
   const router = useRouter();
+  const t = useTranslations("notifications");
+  const tc = useTranslations("common");
   const [open, setOpen]               = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading]         = useState(false);
@@ -137,7 +140,7 @@ export default function NotificationBell({ userId }: { userId: string }) {
           setOpen(o => !o);
         }}
         className="relative flex items-center justify-center w-8 h-8 rounded-full hover:bg-white/10 transition text-slate-300 hover:text-white"
-        aria-label="Notifications"
+        aria-label={t("title")}
       >
         🔔
         {unread > 0 && (
@@ -157,13 +160,13 @@ export default function NotificationBell({ userId }: { userId: string }) {
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b"
             style={{ borderColor: "var(--border)" }}>
-            <h3 className="font-semibold text-slate-900 text-sm">Notifications</h3>
+            <h3 className="font-semibold text-slate-900 text-sm">{t("title")}</h3>
             {unread > 0 && (
               <button
                 onClick={markAllRead}
                 className="text-xs text-indigo-500 hover:text-indigo-700 transition"
               >
-                Mark all read
+                {t("markAllRead")}
               </button>
             )}
           </div>
@@ -171,11 +174,11 @@ export default function NotificationBell({ userId }: { userId: string }) {
           {/* List */}
           <div className="max-h-80 overflow-y-auto">
             {loading ? (
-              <div className="py-8 text-center text-slate-400 text-sm">Loading…</div>
+              <div className="py-8 text-center text-slate-400 text-sm">{tc("loading")}</div>
             ) : notifications.length === 0 ? (
               <div className="py-10 text-center space-y-1">
                 <div className="text-3xl">🔔</div>
-                <p className="text-sm text-slate-400">No notifications yet</p>
+                <p className="text-sm text-slate-400">{t("empty")}</p>
               </div>
             ) : (
               notifications.map(n => (

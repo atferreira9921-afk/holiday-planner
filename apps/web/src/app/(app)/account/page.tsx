@@ -1,10 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 import ConfirmDialog from "@/lib/ConfirmDialog";
 
 export default function AccountPage() {
+  const t = useTranslations("account");
+  const tCommon = useTranslations("common");
   const supabase = createClient();
 
   const [email, setEmail]         = useState("");
@@ -71,7 +74,7 @@ export default function AccountPage() {
       if (updateErr) { flash(updateErr.message, false); return; }
 
       setAvatarUrl(publicUrl + `?t=${Date.now()}`);
-      flash("Photo updated!", true);
+      flash(t("photoUpdated"), true);
     } finally {
       setUploading(false);
     }
@@ -91,7 +94,7 @@ export default function AccountPage() {
 
   async function handleChangePassword(e: React.FormEvent) {
     e.preventDefault();
-    if (newPw !== confirmPw) { flash("New passwords don't match.", false); return; }
+    if (newPw !== confirmPw) { flash(t("passwordMismatch"), false); return; }
     if (newPw.length < 8)    { flash("Password must be at least 8 characters.", false); return; }
 
     setSavingPw(true);
@@ -113,7 +116,7 @@ export default function AccountPage() {
 
     if (updateErr) { flash(updateErr.message, false); return; }
 
-    flash("Password changed successfully!", true);
+    flash(t("passwordChanged"), true);
     setCurrentPw(""); setNewPw(""); setConfirmPw("");
   }
 
@@ -143,7 +146,7 @@ export default function AccountPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Account</h1>
+        <h1 className="text-2xl font-bold text-slate-900">{t("title")}</h1>
         <p className="text-slate-500 text-sm mt-1">Manage your profile photo, display name, and password.</p>
       </div>
 
@@ -159,7 +162,7 @@ export default function AccountPage() {
 
       {/* ── Photo ── */}
       <div className="card p-6 space-y-4">
-        <h2 className="font-bold text-slate-900">Profile photo</h2>
+        <h2 className="font-bold text-slate-900">{t("profilePhoto")}</h2>
         <div className="flex items-center gap-5">
           <div className="relative group">
             {avatarUrl ? (
@@ -189,9 +192,9 @@ export default function AccountPage() {
               disabled={uploading}
               className="btn-primary text-sm"
             >
-              {uploading ? "Uploading…" : "Upload photo"}
+              {uploading ? t("uploading") : t("uploadPhoto")}
             </button>
-            <p className="text-xs text-slate-400 mt-1.5">JPG, PNG or WebP · max 5 MB</p>
+            <p className="text-xs text-slate-400 mt-1.5">{t("photoHint")}</p>
           </div>
           <input
             ref={fileRef}
@@ -205,7 +208,7 @@ export default function AccountPage() {
 
       {/* ── Display name ── */}
       <div className="card p-6 space-y-4 self-start">
-        <h2 className="font-bold text-slate-900">Display name</h2>
+        <h2 className="font-bold text-slate-900">{t("displayName")}</h2>
         <form onSubmit={handleSaveName} className="space-y-4">
           <div>
             <label className="label">Full name</label>
@@ -223,7 +226,7 @@ export default function AccountPage() {
             <p className="text-xs text-slate-400 mt-1">To change your email, use the section below.</p>
           </div>
           <button type="submit" className="btn-primary" disabled={savingName}>
-            {savingName ? "Saving…" : "Save name"}
+            {savingName ? tCommon("saving") : t("saveName")}
           </button>
         </form>
       </div>
@@ -232,7 +235,7 @@ export default function AccountPage() {
 
       {/* ── Password ── */}
       <div className="card p-6 space-y-4">
-        <h2 className="font-bold text-slate-900">Change password</h2>
+        <h2 className="font-bold text-slate-900">{t("changePassword")}</h2>
         <form onSubmit={handleChangePassword} className="space-y-4">
           <div>
             <label className="label">Current password</label>
@@ -251,14 +254,14 @@ export default function AccountPage() {
               onChange={e => setConfirmPw(e.target.value)} required autoComplete="new-password" />
           </div>
           <button type="submit" className="btn-primary" disabled={savingPw}>
-            {savingPw ? "Saving…" : "Change password"}
+            {savingPw ? tCommon("saving") : t("changePassword")}
           </button>
         </form>
       </div>
 
       {/* ── Change email ── */}
       <div className="card p-6 space-y-4">
-        <h2 className="font-bold text-slate-900">Change email</h2>
+        <h2 className="font-bold text-slate-900">{t("changeEmail")}</h2>
         <form onSubmit={handleChangeEmail} className="space-y-4">
           <div>
             <label className="label">Current email</label>
@@ -274,7 +277,7 @@ export default function AccountPage() {
             </div>
           )}
           <button type="submit" className="btn-primary" disabled={savingEmail}>
-            {savingEmail ? "Sending…" : "Send confirmation"}
+            {savingEmail ? tCommon("saving") : t("sendConfirmation")}
           </button>
           <p className="text-xs text-slate-400">A confirmation link will be sent to your new email address.</p>
         </form>
@@ -282,17 +285,17 @@ export default function AccountPage() {
 
       {/* ── Danger zone ── */}
       <div className="card p-6 space-y-4 border border-red-200">
-        <h2 className="font-bold text-red-700">Danger zone</h2>
-        <p className="text-sm text-slate-500">Permanently delete your account and all data. This cannot be undone.</p>
+        <h2 className="font-bold text-red-700">{t("dangerZone")}</h2>
+        <p className="text-sm text-slate-500">{t("deleteAccount")}</p>
         {deleteMsg && (
           <div className="bg-red-50 text-red-700 border border-red-200 rounded-xl px-4 py-3 text-sm font-medium">{deleteMsg}</div>
         )}
         <button className="text-sm px-4 py-2 rounded-xl font-semibold text-white bg-red-500 hover:bg-red-600 transition" onClick={() => setConfirmDeleteOpen(true)}>
-          Delete my account
+          {t("deleteButton")}
         </button>
         <ConfirmDialog
           open={confirmDeleteOpen}
-          title="Delete your account?"
+          title={t("deleteConfirm")}
           description="This will permanently delete your account and all your data. This cannot be undone."
           confirmLabel="Yes, delete my account"
           danger

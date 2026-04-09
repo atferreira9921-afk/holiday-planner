@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 import type { FamilyMember } from "@holiday-planner/shared-types";
 import { COUNTRIES, getAirports, getRegions } from "@/lib/data/geo";
@@ -76,6 +77,7 @@ interface Car {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function FamilyPage() {
+  const t = useTranslations("familyPage");
   const [members, setMembers] = useState<FamilyMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState(emptyForm);
@@ -156,7 +158,7 @@ export default function FamilyPage() {
     e?.preventDefault();
     setError(null);
     if (!form.display_name.trim() || !form.home_country) {
-      setError("Name and country are required.");
+      setError(t("nameRequired"));
       return;
     }
     setSaving(true);
@@ -349,7 +351,7 @@ export default function FamilyPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Family & Friends</h1>
+        <h1 className="text-2xl font-bold text-slate-900">{t("title")}</h1>
         <p className="text-slate-500 text-sm mt-1">
           Each person has their own profile — vacation days, interests, travel style, and parental leave — so trip planning accounts for everyone.
         </p>
@@ -360,7 +362,7 @@ export default function FamilyPage() {
         <FamilyLoading />
       ) : members.length === 0 ? (
         <div className="card p-8 text-center text-slate-400 text-sm">
-          No one added yet. Use the form below to add a family member or travel companion.
+          {t("noOne")}
         </div>
       ) : (
         <div className="card divide-y divide-slate-100">
@@ -392,9 +394,9 @@ export default function FamilyPage() {
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <span className="text-slate-400 text-xs">{expanded === m.id ? "▲" : "▼"}</span>
                   <button onClick={e => { e.stopPropagation(); startEdit(m); }}
-                    className="btn-ghost text-xs px-3 py-1.5">Edit</button>
+                    className="btn-ghost text-xs px-3 py-1.5">{t("edit")}</button>
                   <button onClick={e => { e.stopPropagation(); remove(m.id); }}
-                    className="text-xs px-3 py-1.5 rounded-lg text-red-500 hover:bg-red-50 transition">Remove</button>
+                    className="text-xs px-3 py-1.5 rounded-lg text-red-500 hover:bg-red-50 transition">{t("remove")}</button>
                 </div>
               </div>
 
@@ -467,10 +469,10 @@ export default function FamilyPage() {
 
           {/* ── Identity ── */}
           <section className="space-y-4">
-            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100 pb-2">Identity</h3>
+            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100 pb-2">{t("identity")}</h3>
 
             <div>
-              <label className="label">Name</label>
+              <label className="label">{t("name")}</label>
               <input className="input" value={form.display_name}
                 onChange={e => setF("display_name", e.target.value)} placeholder="e.g. Sarah" required />
             </div>
@@ -489,10 +491,10 @@ export default function FamilyPage() {
 
           {/* ── Home base ── */}
           <section className="space-y-4">
-            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100 pb-2">Home base</h3>
+            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100 pb-2">{t("homeBase")}</h3>
 
             <div>
-              <label className="label">Country</label>
+              <label className="label">{t("country")}</label>
               <select
                 className="input"
                 value={form.home_country}
@@ -506,7 +508,7 @@ export default function FamilyPage() {
             </div>
 
             <div>
-              <label className="label">Home airport</label>
+              <label className="label">{t("homeAirport")}</label>
               {formAirports.length > 0 ? (
                 <select
                   className="input"
@@ -568,7 +570,7 @@ export default function FamilyPage() {
             </div>
 
             <div>
-              <label className="label">Vacation days per year</label>
+              <label className="label">{t("vacationDays")}</label>
               <div className="flex items-center gap-2">
                 <input className="input" type="number" style={{ maxWidth: 100 }}
                   value={form.vacation_days_per_year}
@@ -581,7 +583,7 @@ export default function FamilyPage() {
 
           {/* ── Personal ── */}
           <section className="space-y-4">
-            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100 pb-2">Personal</h3>
+            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100 pb-2">{t("personal")}</h3>
 
             <div>
               <label className="label">Gender</label>
@@ -592,7 +594,7 @@ export default function FamilyPage() {
             </div>
 
             <div>
-              <label className="label">Birthday</label>
+              <label className="label">{t("birthday")}</label>
               <input className="input" type="date" value={form.birthday ?? ""} onChange={e => setF("birthday", e.target.value || null)} />
               <p className="text-xs text-slate-400 mt-1">Shown on calendar. Trip suggestions near their birthday get special ideas.</p>
             </div>
@@ -600,7 +602,7 @@ export default function FamilyPage() {
             {form.birthday && (
               <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
                 <div>
-                  <p className="text-sm font-semibold text-slate-700">Birthday is a vacation day</p>
+                  <p className="text-sm font-semibold text-slate-700">{t("birthdayVacationDay")}</p>
                   <p className="text-xs text-slate-400 mt-0.5">Count birthday as a taken vacation day each year</p>
                 </div>
                 <button type="button"
@@ -635,7 +637,7 @@ export default function FamilyPage() {
 
           {/* ── Travel style ── */}
           <section className="space-y-4">
-            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100 pb-2">Travel style</h3>
+            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100 pb-2">{t("travelStyle")}</h3>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {STYLES.map(s => (
@@ -664,7 +666,7 @@ export default function FamilyPage() {
 
           {/* ── Interests ── */}
           <section className="space-y-3">
-            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100 pb-2">Interests</h3>
+            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100 pb-2">{t("interests")}</h3>
             <div className="flex flex-wrap gap-2">
               {INTERESTS.map(interest => {
                 const active = form.interests.includes(interest);
@@ -680,7 +682,7 @@ export default function FamilyPage() {
 
           {/* ── Holiday countries ── */}
           <section className="space-y-3">
-            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100 pb-2">Holiday countries</h3>
+            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100 pb-2">{t("holidayCountries")}</h3>
             <p className="text-xs text-slate-400">Countries whose public holidays to track for this person.</p>
             <div className="flex flex-wrap gap-2">
               <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-semibold border border-indigo-200">
@@ -710,7 +712,7 @@ export default function FamilyPage() {
 
           {/* ── Avoid destinations ── */}
           <section className="space-y-3">
-            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100 pb-2">Avoid destinations</h3>
+            <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide border-b border-slate-100 pb-2">{t("avoidDestinations")}</h3>
             <p className="text-xs text-slate-400">Cities or countries this person prefers not to visit.</p>
             <div className="flex flex-wrap gap-2">
               {form.avoid_destinations.map(d => (
@@ -936,7 +938,7 @@ export default function FamilyPage() {
 
         <div className="flex gap-2 pt-2 border-t border-slate-100">
           <button type="button" onClick={handleSave} className="btn-primary" disabled={saving}>
-            {saving ? "Saving..." : editId ? "Save changes" : "Add person"}
+            {saving ? "Saving..." : editId ? t("saveChanges") : t("addPerson")}
           </button>
           {editId && (
             <button type="button" onClick={cancelEdit} className="btn-ghost">Cancel</button>

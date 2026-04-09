@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import WishlistLoading from "./loading";
 import dynamic from "next/dynamic";
 import { createClient } from "@/lib/supabase/client";
@@ -30,15 +31,7 @@ interface FreeStay {
   created_at: string;
 }
 
-const PRIORITY_LABELS: Record<number, { label: string; color: string }> = {
-  1: { label: "Someday",          color: "#94a3b8" },
-  2: { label: "Would love to",    color: "#60a5fa" },
-  3: { label: "Really want",      color: "#34d399" },
-  4: { label: "Top of list",      color: "#f59e0b" },
-  5: { label: "Dream destination",color: "#f43f5e" },
-};
-
-// Priority → globe dot color
+// Priority → color (used for globe dots and priority labels)
 const PRIORITY_COLORS: Record<number, string> = {
   1: "#94a3b8", 2: "#60a5fa", 3: "#34d399", 4: "#f59e0b", 5: "#f43f5e",
 };
@@ -120,6 +113,15 @@ function CityPicker({
 
 export default function WishlistPage() {
   const router = useRouter();
+  const t = useTranslations("wishlist");
+
+  const PRIORITY_LABELS: Record<number, { label: string; color: string }> = {
+    1: { label: t("someday"),          color: PRIORITY_COLORS[1] },
+    2: { label: t("wouldLove"),        color: PRIORITY_COLORS[2] },
+    3: { label: t("reallyWant"),       color: PRIORITY_COLORS[3] },
+    4: { label: t("topOfList"),        color: PRIORITY_COLORS[4] },
+    5: { label: t("dreamDestination"), color: PRIORITY_COLORS[5] },
+  };
 
   // Wishlist
   const [items, setItems] = useState<WishlistItem[]>([]);
@@ -313,17 +315,17 @@ export default function WishlistPage() {
       <section className="space-y-6">
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">🌍 Destination Wishlist</h1>
-            <p className="text-slate-500 text-sm mt-1">Places you dream of visiting. The AI will prioritise these when planning trips.</p>
+            <h1 className="text-2xl font-bold text-slate-900">🌍 {t("title")}</h1>
+            <p className="text-slate-500 text-sm mt-1">{t("subtitle")}</p>
           </div>
           <button onClick={() => setShowWishlistForm(f => !f)} className="btn-primary text-sm">
-            {showWishlistForm ? "Cancel" : "+ Add destination"}
+            {showWishlistForm ? "Cancel" : t("addDestination")}
           </button>
         </div>
 
         {showWishlistForm && (
           <form onSubmit={handleAddWishlist} className="card p-6 space-y-4">
-            <h2 className="font-semibold text-slate-900">Add a dream destination</h2>
+            <h2 className="font-semibold text-slate-900">{t("addDreamDestination")}</h2>
             <CityPicker
               country={wishlistForm.destination_country}
               city={wishlistForm.destination_city}
@@ -334,7 +336,7 @@ export default function WishlistPage() {
               onCityChange={city => setWishlistForm(f => ({ ...f, destination_city: city }))}
             />
             <div>
-              <label className="label">How much do you want to go?</label>
+              <label className="label">{t("howMuch")}</label>
               <div className="flex gap-2 flex-wrap">
                 {[1, 2, 3, 4, 5].map(p => {
                   const pl = PRIORITY_LABELS[p];
@@ -366,7 +368,7 @@ export default function WishlistPage() {
         ) : items.length === 0 ? (
           <div className="card p-12 text-center">
             <div className="text-5xl mb-4">🗺️</div>
-            <h3 className="font-bold text-slate-900 text-lg mb-2">Your wishlist is empty</h3>
+            <h3 className="font-bold text-slate-900 text-lg mb-2">{t("empty")}</h3>
             <p className="text-slate-500 text-sm">Add places you dream of visiting and the AI will factor them into your trip suggestions.</p>
           </div>
         ) : (
@@ -421,14 +423,14 @@ export default function WishlistPage() {
       <section className="space-y-6">
         <div className="flex items-start justify-between">
           <div>
-            <h2 className="text-xl font-bold text-slate-900">🏠 Free Stays</h2>
+            <h2 className="text-xl font-bold text-slate-900">🏠 {t("freeStays")}</h2>
             <p className="text-slate-500 text-sm mt-1">
               Cities where you have someone to stay with — hotel cost drops to €0,
               making these destinations significantly cheaper in AI suggestions.
             </p>
           </div>
           <button onClick={() => setShowStayForm(f => !f)} className="btn-primary text-sm">
-            {showStayForm ? "Cancel" : "+ Add free stay"}
+            {showStayForm ? "Cancel" : t("addFreeStay")}
           </button>
         </div>
 
@@ -485,7 +487,7 @@ export default function WishlistPage() {
         ) : freeStays.length === 0 ? (
           <div className="card p-8 text-center">
             <div className="text-4xl mb-3">🛋️</div>
-            <h3 className="font-bold text-slate-900 mb-1">No free stays saved</h3>
+            <h3 className="font-bold text-slate-900 mb-1">{t("noFreeStays")}</h3>
             <p className="text-slate-500 text-sm">
               Add cities where you can stay at a friend&apos;s or family&apos;s place — the AI will factor in the €0 hotel cost.
             </p>
@@ -556,7 +558,7 @@ export default function WishlistPage() {
         {/* ─── Right: sticky globe ─── */}
         <div className="w-full lg:w-[440px] flex-shrink-0 lg:sticky lg:top-[88px] space-y-3">
             <div>
-              <h2 className="text-sm font-bold text-slate-700">Your travel map</h2>
+              <h2 className="text-sm font-bold text-slate-700">{t("travelMap")}</h2>
               <p className="text-xs text-slate-400 mt-0.5">
                 {totalPins} {totalPins === 1 ? "city" : "cities"} pinned
                 {geocoding && <span className="text-indigo-500 ml-1">· locating…</span>}
@@ -567,7 +569,7 @@ export default function WishlistPage() {
 
             {/* Legend */}
             <div className="card p-3 space-y-1.5">
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Legend</p>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">{t("legend")}</p>
               {[5,4,3,2,1].map(p => {
                 const pl = PRIORITY_LABELS[p];
                 return (
@@ -583,7 +585,7 @@ export default function WishlistPage() {
               </div>
             </div>
 
-            <p className="text-xs text-slate-400 text-center">Drag to rotate · hover pins for city name</p>
+            <p className="text-xs text-slate-400 text-center">{t("mapHint")}</p>
           </div>
 
       </div>
