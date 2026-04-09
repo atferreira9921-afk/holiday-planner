@@ -1,5 +1,14 @@
 "use client";
 
+function esc(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 interface Props {
   tripTitle: string;
   departureDate: string;
@@ -20,17 +29,19 @@ export default function TripReportExport({
   destinationCountry,
 }: Props) {
   function printReport() {
-    const dep = new Date(departureDate).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
-    const ret = new Date(returnDate).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
-    const memberList = members.map(m => m.name).join(", ");
-    const budget = budgetPerPerson ? `€${budgetPerPerson} per person` : "No budget set";
-    const spent = `€${totalExpenses.toFixed(2)} logged`;
+    const dep = esc(new Date(departureDate).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }));
+    const ret = esc(new Date(returnDate).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }));
+    const memberList = members.map(m => esc(m.name)).join(", ");
+    const budget = budgetPerPerson ? `€${esc(String(budgetPerPerson))} per person` : "No budget set";
+    const spent = `€${esc(totalExpenses.toFixed(2))} logged`;
+    const safeTitle = esc(tripTitle);
+    const safeCountry = destinationCountry ? esc(destinationCountry) : null;
 
     const html = `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Trip Report — ${tripTitle}</title>
+  <title>Trip Report — ${safeTitle}</title>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 700px; margin: 40px auto; color: #1e293b; line-height: 1.6; }
     h1 { font-size: 2rem; font-weight: 800; margin-bottom: 4px; }
@@ -47,8 +58,8 @@ export default function TripReportExport({
   </style>
 </head>
 <body>
-  <h1>${tripTitle}</h1>
-  <p class="subtitle">${dep} → ${ret}${destinationCountry ? ` · ${destinationCountry}` : ""}</p>
+  <h1>${safeTitle}</h1>
+  <p class="subtitle">${dep} → ${ret}${safeCountry ? ` · ${safeCountry}` : ""}</p>
 
   <div class="section">
     <h2>Dates</h2>
