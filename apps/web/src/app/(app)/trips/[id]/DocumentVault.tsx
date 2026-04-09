@@ -38,6 +38,7 @@ export default function DocumentVault({
   initialDocs: TripDocument[];
   memberNames: Record<string, string>;
 }) {
+  const [open, setOpen]           = useState(true);
   const [docs, setDocs] = useState<TripDocument[]>(initialDocs);
   const [uploading, setUploading] = useState(false);
   const [selectedType, setSelectedType] = useState<string>("other");
@@ -106,13 +107,12 @@ export default function DocumentVault({
     <div className="card p-6 space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="font-bold text-slate-900 text-lg">📁 Documents &amp; vouchers</h2>
-        <button
-          onClick={() => fileRef.current?.click()}
-          disabled={uploading}
-          className="btn-ghost text-sm"
-        >
-          {uploading ? "Uploading…" : "+ Upload"}
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setOpen(o => !o)} className="btn-ghost text-sm">{open ? "Hide" : "Show"}</button>
+          {open && <button onClick={() => fileRef.current?.click()} disabled={uploading} className="btn-ghost text-sm">
+            {uploading ? "Uploading…" : "+ Upload"}
+          </button>}
+        </div>
       </div>
 
       <input
@@ -126,6 +126,7 @@ export default function DocumentVault({
         }}
       />
 
+      {open && <>
       {/* Type selector shown before uploading */}
       <div className="flex flex-wrap gap-2">
         {DOC_TYPES.map(t => (
@@ -200,6 +201,7 @@ export default function DocumentVault({
           })}
         </div>
       )}
+      </>}
     </div>
   );
 }

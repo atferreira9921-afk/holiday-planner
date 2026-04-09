@@ -48,6 +48,7 @@ export default function ItinerarySection({
   tripDays: number;
   departureDate: string;
 }) {
+  const [open, setOpen]     = useState(true);
   const [isDark, setIsDark] = useState(false);
   useEffect(() => {
     const check = () => setIsDark(document.documentElement.getAttribute("data-theme") === "dark");
@@ -223,12 +224,14 @@ export default function ItinerarySection({
               Close AI
             </button>
           )}
-          <button onClick={() => setShowForm(f => !f)} className="btn-ghost text-sm">
+          {open && <button onClick={() => setShowForm(f => !f)} className="btn-ghost text-sm">
             {showForm ? "Cancel" : "+ Add"}
-          </button>
+          </button>}
+          <button onClick={() => setOpen(o => !o)} className="btn-ghost text-sm">{open ? "Hide" : "Show"}</button>
         </div>
       </div>
 
+      {open && <>
       {/* Add form */}
       {showForm && (
         <form onSubmit={addItem} className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
@@ -446,6 +449,7 @@ export default function ItinerarySection({
           </div>
         </div>
       )}
+      </>}
     </div>
   );
 }

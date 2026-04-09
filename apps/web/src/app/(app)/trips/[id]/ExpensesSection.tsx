@@ -93,6 +93,7 @@ export default function ExpensesSection({
 
   const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
   const [cars, setCars]         = useState<Car[]>(initialCars);
+  const [open, setOpen]         = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [showCarForm, setShowCarForm] = useState(false);
   const [saving, setSaving]     = useState(false);
@@ -216,12 +217,16 @@ export default function ExpensesSection({
             </p>
           )}
         </div>
-        <button onClick={() => setShowForm(f => !f)} className="btn-ghost text-sm">
-          {showForm ? "Cancel" : "+ Add expense"}
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setOpen(o => !o)} className="btn-ghost text-sm">{open ? "Hide" : "Show"}</button>
+          {open && <button onClick={() => setShowForm(f => !f)} className="btn-ghost text-sm">
+            {showForm ? "Cancel" : "+ Add expense"}
+          </button>}
+        </div>
       </div>
 
       {/* Summary cards */}
+      {open && <>
       {expenses.length > 0 && (
         <>
           {/* By category */}
@@ -494,6 +499,7 @@ export default function ExpensesSection({
           </div>
         </div>
       )}
+      </>}
     </div>
   );
 }

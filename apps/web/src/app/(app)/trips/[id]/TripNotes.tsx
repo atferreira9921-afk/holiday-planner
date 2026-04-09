@@ -18,6 +18,7 @@ export default function TripNotes({
   updatedAt: string | null;
   memberNames: Record<string, string>;
 }) {
+  const [open, setOpen]       = useState(true);
   const [content, setContent] = useState(initialContent);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -61,26 +62,23 @@ export default function TripNotes({
     <div className="card p-6 space-y-3">
       <div className="flex items-center justify-between">
         <h2 className="font-bold text-slate-900 text-lg">📝 Trip notes</h2>
-        {saving && (
-          <span className="text-xs text-slate-400 animate-pulse">Saving…</span>
-        )}
-        {!saving && saved && (
-          <span className="text-xs text-emerald-500 font-medium transition-opacity">
-            ✓ Saved
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          {open && saving && <span className="text-xs text-slate-400 animate-pulse">Saving…</span>}
+          {open && !saving && saved && <span className="text-xs text-emerald-500 font-medium">✓ Saved</span>}
+          <button onClick={() => setOpen(o => !o)} className="btn-ghost text-sm">{open ? "Hide" : "Show"}</button>
+        </div>
       </div>
 
-      <textarea
+      {open && <textarea
         className="input w-full resize-y text-sm leading-relaxed"
         rows={6}
         value={content}
         onChange={e => setContent(e.target.value)}
         onBlur={handleBlur}
         placeholder="Shared notes for the group — restaurants to try, tips, reminders…"
-      />
+      />}
 
-      {editorName && lastUpdatedAt && (
+      {open && editorName && lastUpdatedAt && (
         <p className="text-xs text-slate-400">
           Last edited by{" "}
           <span className="font-medium text-slate-500">{editorName}</span>

@@ -35,6 +35,7 @@ function isOverdue(due: string | null, done: boolean) {
 
 export default function TripTasks({ tripId, currentUserId, members, initialTasks }: Props) {
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
+  const [open, setOpen]             = useState(true);
   const [addingTask, setAddingTask] = useState(false);
   const [saving, setSaving] = useState(false);
   const [showDone, setShowDone] = useState(false);
@@ -143,12 +144,16 @@ export default function TripTasks({ tripId, currentUserId, members, initialTasks
             {pending.length === 0 ? "All done!" : `${pending.length} task${pending.length !== 1 ? "s" : ""} remaining`}
           </p>
         </div>
-        <button onClick={() => setAddingTask(a => !a)} className="btn-ghost text-sm flex-shrink-0">
-          {addingTask ? "Cancel" : "+ Add task"}
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setOpen(o => !o)} className="btn-ghost text-sm flex-shrink-0">{open ? "Hide" : "Show"}</button>
+          {open && <button onClick={() => setAddingTask(a => !a)} className="btn-ghost text-sm flex-shrink-0">
+            {addingTask ? "Cancel" : "+ Add task"}
+          </button>}
+        </div>
       </div>
 
       {/* Add task form */}
+      {open && <>
       {addingTask && (
         <form onSubmit={addTask} className="bg-slate-50 rounded-xl p-4 space-y-3 border border-slate-200">
           <input
@@ -216,6 +221,7 @@ export default function TripTasks({ tripId, currentUserId, members, initialTasks
           )}
         </div>
       )}
+      </>}
     </div>
   );
 }

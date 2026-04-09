@@ -18,6 +18,7 @@ export default function ReceiptScanner({
   tripId: string;
   onResult?: (receipt: ParsedReceipt) => void;
 }) {
+  const [open, setOpen]         = useState(true);
   const [mode, setMode]         = useState<"text" | "image">("text");
   const [text, setText]         = useState("");
   const [scanning, setScanning] = useState(false);
@@ -73,8 +74,12 @@ export default function ReceiptScanner({
 
   return (
     <div className="card p-5 space-y-4">
-      <h3 className="font-bold text-slate-800">🧾 Receipt scanner</h3>
+      <div className="flex items-center justify-between">
+        <h3 className="font-bold text-slate-800">🧾 Receipt scanner</h3>
+        <button onClick={() => setOpen(o => !o)} className="btn-ghost text-sm">{open ? "Hide" : "Show"}</button>
+      </div>
 
+      {open && <>
       {/* Mode toggle */}
       <div className="flex gap-2">
         {(["text", "image"] as const).map(m => (
@@ -155,6 +160,7 @@ export default function ReceiptScanner({
           )}
         </div>
       )}
+      </>}
     </div>
   );
 }

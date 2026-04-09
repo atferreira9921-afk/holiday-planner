@@ -43,6 +43,7 @@ export default function GroupPolls({
   const [options, setOptions] = useState<PollOption[]>(initialOptions);
   const [votes, setVotes] = useState<PollVote[]>(initialVotes);
 
+  const [open, setOpen]                     = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [creating, setCreating] = useState(false);
   const [newQuestion, setNewQuestion] = useState("");
@@ -165,14 +166,15 @@ export default function GroupPolls({
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="font-bold text-slate-900 text-lg">🗳️ Group polls</h2>
-        <button
-          onClick={() => setShowCreateForm(f => !f)}
-          className="btn-ghost text-sm"
-        >
-          {showCreateForm ? "Cancel" : "+ Create poll"}
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setOpen(o => !o)} className="btn-ghost text-sm">{open ? "Hide" : "Show"}</button>
+          {open && <button onClick={() => setShowCreateForm(f => !f)} className="btn-ghost text-sm">
+            {showCreateForm ? "Cancel" : "+ Create poll"}
+          </button>}
+        </div>
       </div>
 
+      {open && <>
       {/* Create poll form */}
       {showCreateForm && (
         <form
@@ -348,6 +350,7 @@ export default function GroupPolls({
           );
         })}
       </div>
+      </>}
     </div>
   );
 }

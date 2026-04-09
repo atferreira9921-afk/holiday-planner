@@ -28,6 +28,7 @@ export default function LocalInfoCard({
   const destName = COUNTRIES.find(c => c.code === destinationCountry)?.name ?? destinationCountry;
   const homeName = COUNTRIES.find(c => c.code === homeCountry)?.name ?? homeCountry;
 
+  const [open, setOpen]     = useState(true);
   const [isDark, setIsDark] = useState(false);
   useEffect(() => {
     const check = () => setIsDark(document.documentElement.getAttribute("data-theme") === "dark");
@@ -44,8 +45,12 @@ export default function LocalInfoCard({
 
   return (
     <div className="card p-6 space-y-4">
-      <h2 className="font-bold text-slate-900 text-lg">🌐 {destName} — local info</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="font-bold text-slate-900 text-lg">🌐 {destName} — local info</h2>
+        <button onClick={() => setOpen(o => !o)} className="btn-ghost text-sm">{open ? "Hide" : "Show"}</button>
+      </div>
 
+      {open && <>
       {/* Travel warning */}
       <div className="rounded-xl px-4 py-3 border" style={{ background: isDark ? `${wColors.text}26` : wColors.bg, borderColor: isDark ? `${wColors.border}66` : wColors.border }}>
         <div className="flex items-start gap-2">
@@ -100,6 +105,7 @@ export default function LocalInfoCard({
           <Row label="💵 Tipping" value={info.tippingCulture} />
         </div>
       )}
+      </>}
     </div>
   );
 }

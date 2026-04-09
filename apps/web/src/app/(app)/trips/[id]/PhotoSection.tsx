@@ -24,6 +24,7 @@ export default function PhotoSection({
   memberNames: Record<string, string>;
   currentUserId: string;
 }) {
+  const [open, setOpen]       = useState(true);
   const [photos, setPhotos]   = useState<Photo[]>(initialPhotos);
   const [uploading, setUploading] = useState(false);
   const [caption, setCaption] = useState("");
@@ -85,15 +86,18 @@ export default function PhotoSection({
             <p className="text-xs text-slate-400 mt-0.5">{photos.length} photo{photos.length !== 1 ? "s" : ""}</p>
           )}
         </div>
-        <button onClick={() => fileRef.current?.click()} disabled={uploading}
-          className="btn-ghost text-sm">
-          {uploading ? "Uploading…" : "+ Upload photo"}
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setOpen(o => !o)} className="btn-ghost text-sm">{open ? "Hide" : "Show"}</button>
+          {open && <button onClick={() => fileRef.current?.click()} disabled={uploading} className="btn-ghost text-sm">
+            {uploading ? "Uploading…" : "+ Upload photo"}
+          </button>}
+        </div>
       </div>
 
       <input ref={fileRef} type="file" accept="image/*" className="hidden"
         onChange={e => { const f = e.target.files?.[0]; if (f) upload(f); }} />
 
+      {open && <>
       {/* Caption input shown while uploading or just before */}
       <div className="flex gap-2">
         <input className="input text-sm flex-1" value={caption}
@@ -147,6 +151,7 @@ export default function PhotoSection({
           </button>
         </div>
       )}
+      </>}
     </div>
   );
 }

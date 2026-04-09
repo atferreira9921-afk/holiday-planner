@@ -182,6 +182,7 @@ const TEMPLATES: Record<string, { item: string; category: string }[]> = {
 };
 
 export default function PackingSection({ tripId, currentUserId, members, initialItems }: Props) {
+  const [open, setOpen]               = useState(true);
   const [items, setItems]             = useState<PackingItem[]>(initialItems);
   const [showForm, setShowForm]       = useState(false);
   const [newItem, setNewItem]         = useState("");
@@ -301,11 +302,15 @@ export default function PackingSection({ tripId, currentUserId, members, initial
             </p>
           )}
         </div>
-        <button onClick={() => setShowForm(f => !f)} className="btn-ghost text-sm flex-shrink-0">
-          {showForm ? "Cancel" : "+ Add item"}
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setOpen(o => !o)} className="btn-ghost text-sm flex-shrink-0">{open ? "Hide" : "Show"}</button>
+          {open && <button onClick={() => setShowForm(f => !f)} className="btn-ghost text-sm flex-shrink-0">
+            {showForm ? "Cancel" : "+ Add item"}
+          </button>}
+        </div>
       </div>
 
+      {open && <>
       {/* Templates */}
       <div className="flex flex-wrap gap-2 items-center">
         <span className="text-xs text-slate-400 flex-shrink-0">Load template:</span>
@@ -475,6 +480,7 @@ export default function PackingSection({ tripId, currentUserId, members, initial
           ))}
         </div>
       )}
+      </>}
     </div>
   );
 }
