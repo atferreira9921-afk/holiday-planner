@@ -262,8 +262,9 @@ Return ONLY a JSON array of 3 suggestions (no markdown, no explanation):
 
         send({ progress: 82, stage: "Processing suggestions…" });
 
-        const rawText = message.content[0].type === "text" ? message.content[0].text : "";
-        const raw = rawText.trim().replace(/^```json?\n?/, "").replace(/\n?```$/, "");
+        const rawText = message.content[0].type === "text" ? message.content[0].text.trim() : "";
+        const arrayMatch = rawText.match(/\[[\s\S]*\]/);
+        const raw = arrayMatch ? arrayMatch[0] : rawText.replace(/^```json?\n?/, "").replace(/\n?```$/, "");
 
         let parsed: Record<string, unknown>[];
         try {

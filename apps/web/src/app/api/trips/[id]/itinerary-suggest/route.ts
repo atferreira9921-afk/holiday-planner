@@ -105,8 +105,9 @@ Generate items for all ${tripDays} days.`;
     });
 
     const raw = message.content[0].type === "text" ? message.content[0].text.trim() : "[]";
-    // Strip accidental markdown fences if present
-    const json = raw.replace(/^```json?\n?/, "").replace(/\n?```$/, "");
+    // Extract JSON array robustly — find the first [...] block even if surrounded by text/fences
+    const arrayMatch = raw.match(/\[[\s\S]*\]/);
+    const json = arrayMatch ? arrayMatch[0] : raw.replace(/^```json?\n?/, "").replace(/\n?```$/, "");
     const items = JSON.parse(json) as {
       day: number;
       time_slot: string;
@@ -130,7 +131,8 @@ Generate items for all ${tripDays} days.`;
 
     return NextResponse.json({ items: sanitized, city: destinationCity, country: destinationCountry });
   } catch (err) {
-    console.error("Itinerary AI error:", err instanceof Error ? err.message : String(err));
-    return NextResponse.json({ error: "Failed to generate itinerary" }, { status: 502 });
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("Itinerary AI error:", msg);
+    return NextResponse.json({ error: `Failed to generate itinerary: ${msg}` }, { status: 502 });
   }
 }

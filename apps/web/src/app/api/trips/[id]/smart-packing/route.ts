@@ -70,8 +70,9 @@ Focus on items that are:
       messages: [{ role: "user", content: prompt }],
     });
 
-    const text = message.content[0].type === "text" ? message.content[0].text : "[]";
-    const suggestions = JSON.parse(text.trim().replace(/^```json?\n?/, "").replace(/\n?```$/, ""));
+    const text = message.content[0].type === "text" ? message.content[0].text.trim() : "[]";
+    const arrayMatch = text.match(/\[[\s\S]*\]/);
+    const suggestions = JSON.parse(arrayMatch ? arrayMatch[0] : text.replace(/^```json?\n?/, "").replace(/\n?```$/, ""));
 
     return NextResponse.json({ suggestions });
   } catch (err) {

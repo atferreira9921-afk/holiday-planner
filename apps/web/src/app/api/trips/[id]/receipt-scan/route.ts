@@ -98,8 +98,9 @@ async function _POST(
       messages: [{ role: "user", content: messageContent }],
     });
 
-    const raw = message.content[0].type === "text" ? message.content[0].text : "{}";
-    const result = JSON.parse(raw.trim().replace(/^```json?\n?/, "").replace(/\n?```$/, ""));
+    const raw = message.content[0].type === "text" ? message.content[0].text.trim() : "{}";
+    const objMatch = raw.match(/\{[\s\S]*\}/);
+    const result = JSON.parse(objMatch ? objMatch[0] : raw.replace(/^```json?\n?/, "").replace(/\n?```$/, ""));
 
     return NextResponse.json({
       description: result.description ?? "Receipt",
