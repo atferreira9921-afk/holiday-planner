@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { isAiEnabled } from "@/lib/config";
 import { useTranslations } from "next-intl";
@@ -74,6 +74,8 @@ export default function ItinerarySection({
 
   // AI suggestions state
   const [aiLoading, setAiLoading] = useState(false);
+  const [aiProgress, setAiProgress] = useState(0);
+  const aiProgressRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [aiError, setAiError]     = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<AiSuggestion[] | null>(null);
   const [addedSet, setAddedSet]   = useState<Set<string>>(new Set());
@@ -97,6 +99,22 @@ export default function ItinerarySection({
         return diff !== 0 ? diff : a.sort_order - b.sort_order;
       });
   }
+
+  useEffect(() => {
+    if (!aiLoading) {
+      if (aiProgressRef.current) clearInterval(aiProgressRef.current);
+      setAiProgress(0);
+      return;
+    }
+    const start = Date.now();
+    const tick = () => {
+      const elapsed = Date.now() - start;
+      setAiProgress(Math.min(88, Math.round(90 * (1 - Math.exp(-elapsed / 28000)))));
+    };
+    tick();
+    aiProgressRef.current = setInterval(tick, 600);
+    return () => { if (aiProgressRef.current) clearInterval(aiProgressRef.current); };
+  }, [aiLoading]);
 
   async function fetchAiSuggestions() {
     setAiLoading(true);
@@ -219,9 +237,7 @@ export default function ItinerarySection({
               disabled={aiLoading}
               className="btn-ghost text-sm flex items-center gap-1.5"
             >
-              {aiLoading
-                ? <><span className="animate-spin inline-block text-xs">⏳</span> {t("generating")}</>
-                : <><span>🤖</span> {t("aiSuggest")}</>}
+              <span>🤖</span> {t("aiSuggest")}
             </button>
           )}
           {suggestions && (
@@ -293,6 +309,26 @@ export default function ItinerarySection({
             {saving ? t("adding") : t("addTitle")}
           </button>
         </form>
+      )}
+
+      {/* AI loading panel */}
+      {aiLoading && (
+        <div className="border border-indigo-200 bg-indigo-50 rounded-xl px-4 py-5 space-y-3">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl animate-pulse">🤖</span>
+            <div>
+              <p className="text-sm font-semibold text-indigo-800">{t("generating")}</p>
+              <p className="text-xs text-indigo-500 mt-0.5">{t("generatingHint")}</p>
+            </div>
+          </div>
+          <div className="h-2 w-full bg-indigo-100 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-indigo-500 rounded-full transition-all duration-700 ease-out"
+              style={{ width: `${aiProgress}%` }}
+            />
+          </div>
+          <p className="text-xs text-indigo-400 tabular-nums text-right">{aiProgress}%</p>
+        </div>
       )}
 
       {/* AI error */}

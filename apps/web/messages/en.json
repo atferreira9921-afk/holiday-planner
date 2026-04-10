@@ -60,6 +60,7 @@
     "timelineView": "Timeline",
     "aiSuggest": "AI suggest",
     "generating": "Generating…",
+    "generatingHint": "Claude is crafting your itinerary. This may take up to a minute…",
     "closeAi": "Close AI",
     "addButton": "+ Add",
     "addTitle": "Add to itinerary",

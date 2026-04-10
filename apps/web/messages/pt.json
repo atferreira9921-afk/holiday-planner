@@ -60,6 +60,7 @@
     "timelineView": "Linha do tempo",
     "aiSuggest": "Sugestão IA",
     "generating": "A gerar…",
+    "generatingHint": "O Claude está a criar o teu itinerário. Pode demorar até um minuto…",
     "closeAi": "Fechar IA",
     "addButton": "+ Adicionar",
     "addTitle": "Adicionar ao itinerário",

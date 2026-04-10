@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { isAiEnabled } from "@/lib/config";
+import { useTranslations } from "next-intl";
 
 interface PackingSuggestion {
   item: string;
@@ -19,6 +20,7 @@ export default function SmartPackingButton({
   destinationCountry: string | null;
   tripType: string;
 }) {
+  const t = useTranslations("packing");
   const [loading, setLoading]         = useState(false);
   const [suggestions, setSuggestions] = useState<PackingSuggestion[] | null>(null);
   const [added, setAdded]             = useState<Set<number>>(new Set());
@@ -72,8 +74,20 @@ export default function SmartPackingButton({
         disabled={loading}
         className="px-4 py-2 rounded-lg text-sm bg-indigo-600 text-white font-medium hover:bg-indigo-700 disabled:opacity-60 disabled:cursor-not-allowed transition"
       >
-        {loading ? "Thinking…" : "🤖 Suggest packing items"}
+        🤖 {t("aiSuggest")}
       </button>
+
+      {loading && (
+        <div className="border border-indigo-200 bg-indigo-50 rounded-xl px-4 py-4 flex items-center gap-3">
+          <span className="text-xl animate-pulse">🤖</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-indigo-800">{t("generating")}</p>
+            <div className="mt-2 h-1.5 w-full bg-indigo-100 rounded-full overflow-hidden">
+              <div className="h-full bg-indigo-400 rounded-full animate-[pulse_1.5s_ease-in-out_infinite] w-1/2" />
+            </div>
+          </div>
+        </div>
+      )}
 
       {error && (
         <p className="text-sm text-red-600">{error}</p>
@@ -82,7 +96,7 @@ export default function SmartPackingButton({
       {suggestions && suggestions.length > 0 && (
         <div className="card p-4 space-y-3">
           <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
-            AI suggestions for {destinationCountry ?? "your trip"}
+            {t("aiPanelTitle")}
           </p>
           <ul className="space-y-2">
             {suggestions.map((s, i) => (
@@ -106,7 +120,7 @@ export default function SmartPackingButton({
                       : "bg-indigo-600 text-white hover:bg-indigo-700"
                   }`}
                 >
-                  {added.has(i) ? "✓ Added" : "+ Add"}
+                  {added.has(i) ? t("added") : t("addSuggestion")}
                 </button>
               </li>
             ))}
