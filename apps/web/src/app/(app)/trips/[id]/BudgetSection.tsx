@@ -12,11 +12,6 @@ interface ItineraryItem {
   cost_eur: number | null;
 }
 
-const CATEGORY_LABELS: Record<string, string> = {
-  flight: "✈️ Flights", hotel: "🏨 Hotel", "car-trip": "🚗 Road trip",
-  food: "🍽️ Food", transport: "🚌 Transport", activity: "🎟️ Activities", other: "📦 Other",
-};
-
 export default function BudgetSection({
   budgetPerPerson,
   members,
@@ -30,6 +25,13 @@ export default function BudgetSection({
 }) {
   const t  = useTranslations("budget");
   const tc = useTranslations("common");
+  const te = useTranslations("expenses");
+  const catLabel = (cat: string) => ({
+    flight: te("category.flight"), hotel: te("category.hotel"),
+    "car-trip": te("category.car-trip"), food: te("category.food"),
+    transport: te("category.transport"), activity: te("category.activity"),
+    other: te("category.other"),
+  }[cat] ?? cat);
   const [open, setOpen] = useState(true);
 
   if (!budgetPerPerson && expenses.length === 0 && itineraryItems.length === 0) return null;
@@ -114,7 +116,7 @@ export default function BudgetSection({
                 const catPct = totalActual > 0 ? (amount / totalActual) * 100 : 0;
                 return (
                   <div key={cat} className="flex items-center gap-2">
-                    <span className="text-xs text-slate-600 w-24 sm:w-32 flex-shrink-0">{CATEGORY_LABELS[cat] ?? cat}</span>
+                    <span className="text-xs text-slate-600 w-24 sm:w-32 flex-shrink-0">{catLabel(cat)}</span>
                     <div className="flex-1 h-2 rounded-full bg-slate-100 overflow-hidden">
                       <div className="h-full rounded-full bg-indigo-400 transition-all"
                         style={{ width: `${catPct}%` }} />

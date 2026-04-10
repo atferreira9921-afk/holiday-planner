@@ -29,19 +29,15 @@ interface Expense {
   created_at: string;
 }
 
-const CATEGORIES = [
-  { value: "flight",    label: "✈️ Flight",      color: "#3b82f6", bg: "#eff6ff" },
-  { value: "hotel",     label: "🏨 Hotel",        color: "#8b5cf6", bg: "#f5f3ff" },
-  { value: "car-trip",  label: "🚗 Road trip",    color: "#f59e0b", bg: "#fffbeb" },
-  { value: "food",      label: "🍽️ Food",         color: "#10b981", bg: "#ecfdf5" },
-  { value: "transport", label: "🚌 Transport",     color: "#06b6d4", bg: "#ecfeff" },
-  { value: "activity",  label: "🎟️ Activity",     color: "#f43f5e", bg: "#fff1f2" },
-  { value: "other",     label: "📦 Other",         color: "#94a3b8", bg: "#f8fafc" },
+const CATEGORY_DEFS = [
+  { value: "flight",    color: "#3b82f6", bg: "#eff6ff" },
+  { value: "hotel",     color: "#8b5cf6", bg: "#f5f3ff" },
+  { value: "car-trip",  color: "#f59e0b", bg: "#fffbeb" },
+  { value: "food",      color: "#10b981", bg: "#ecfdf5" },
+  { value: "transport", color: "#06b6d4", bg: "#ecfeff" },
+  { value: "activity",  color: "#f43f5e", bg: "#fff1f2" },
+  { value: "other",     color: "#94a3b8", bg: "#f8fafc" },
 ];
-
-function catMeta(cat: string) {
-  return CATEGORIES.find(c => c.value === cat) ?? CATEGORIES[CATEGORIES.length - 1];
-}
 
 function name(uid: string, members: Member[]) {
   return members.find(m => m.user_id === uid)?.name ?? "Unknown";
@@ -85,6 +81,13 @@ export default function ExpensesSection({
 }) {
   const t  = useTranslations("expenses");
   const tc = useTranslations("common");
+
+  const CATEGORIES = CATEGORY_DEFS.map(c => ({
+    ...c,
+    label: t(`category.${c.value as "flight" | "hotel" | "car-trip" | "food" | "transport" | "activity" | "other"}`),
+  }));
+  const catMeta = (cat: string) => CATEGORIES.find(c => c.value === cat) ?? CATEGORIES[CATEGORIES.length - 1];
+
   const [isDark, setIsDark] = useState(false);
   useEffect(() => {
     const check = () => setIsDark(document.documentElement.getAttribute("data-theme") === "dark");

@@ -67,7 +67,7 @@ export default function TripNotes({
         <h2 className="font-bold text-slate-900 text-lg">{t("title")}</h2>
         <div className="flex items-center gap-2">
           {open && saving && <span className="text-xs text-slate-400 animate-pulse">{tc("saving")}</span>}
-          {open && !saving && saved && <span className="text-xs text-emerald-500 font-medium">✓ {tc("saved")}</span>}
+          {open && !saving && saved && <span className="text-xs text-emerald-500 font-medium">{tc("saved")}</span>}
           <button onClick={() => setOpen(o => !o)} className="btn-ghost text-sm">{open ? tc("hide") : tc("show")}</button>
         </div>
       </div>
