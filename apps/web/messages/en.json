@@ -340,7 +340,15 @@
     "destinationSet": "✅ Destination set",
     "selected": "✅ Selected",
     "durationLabel": "Duration",
-    "perPerson": "per person"
+    "perPerson": "per person",
+    "suggestDays": "{days} days · {vacationDays} vacation days used",
+    "flightsLabel": "flights",
+    "hotelLabel": "hotel",
+    "otherOptions": "{count, plural, =1 {1 other option} other {{count} other options}} — not selected",
+    "batchLabel": "Batch {n} — {count, plural, =1 {1 suggestion} other {{count} suggestions}}",
+    "regenerateHint": "Not happy with these suggestions? Generate new ones",
+    "aiSuggestDesc": "The AI will analyse public holidays, find optimal date windows, and suggest your top trips.",
+    "exportReport": "🖨️ Export trip report"
   },
   "familyMembers": {
     "title": "👨‍👩‍👧 Travellers",
@@ -574,6 +582,12 @@
     "duplicate": "⧉ Duplicate",
     "duplicated": "Trip duplicated!",
     "failed": "Failed to duplicate trip"
+  },
+  "voting": {
+    "title": "🗳️ Group voting",
+    "memberCount": "{count, plural, =1 {1 member} other {{count} members}} in group",
+    "description": "Vote on each suggestion — when everyone gives a 👍, the trip is confirmed!",
+    "everyonesIn": "✓ Everyone's in!"
   },
   "auth": {
     "title": "Welcome back",

@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 interface Member { user_id: string; name: string; }
 interface Vote { suggestion_id: string; user_id: string; vote: "up" | "down"; }
@@ -18,6 +19,7 @@ export default function VotingSection({
   votes: Vote[];
   currentUserId: string;
 }) {
+  const t = useTranslations("voting");
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [optimisticVotes, setOptimisticVotes] = useState<Vote[]>(votes);
@@ -64,10 +66,10 @@ export default function VotingSection({
   return (
     <div className="card p-6 space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="font-bold text-slate-900 text-lg">🗳️ Group voting</h2>
-        <p className="text-xs text-slate-400">{members.length} member{members.length !== 1 ? "s" : ""} in group</p>
+        <h2 className="font-bold text-slate-900 text-lg">{t("title")}</h2>
+        <p className="text-xs text-slate-400">{t("memberCount", { count: members.length })}</p>
       </div>
-      <p className="text-xs text-slate-400">Vote on each suggestion — when everyone gives a 👍, the trip is confirmed!</p>
+      <p className="text-xs text-slate-400">{t("description")}</p>
 
       <div className="space-y-3">
         {suggestions.map(s => {
@@ -80,7 +82,7 @@ export default function VotingSection({
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-slate-800 text-sm">
                   #{s.rank} {s.destination_city}, {s.destination_country}
-                  {agreed && <span className="ml-2 text-green-600 text-xs">✓ Everyone's in!</span>}
+                  {agreed && <span className="ml-2 text-green-600 text-xs">{t("everyonesIn")}</span>}
                 </p>
                 {(upCount > 0 || downCount > 0) && (
                   <p className="text-xs text-slate-400 mt-0.5">

@@ -405,7 +405,7 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
             <div className="flex-1">
               <h2 className="font-bold text-slate-900">{t("getAiSuggestions")}</h2>
               <p className="text-sm text-slate-500 mt-1 mb-4">
-                The AI will analyse public holidays, find optimal date windows, and suggest your top trips.
+                {t("aiSuggestDesc")}
               </p>
               <GenerateSuggestionsButton tripId={trip.id} hasSuggestions={false} />
             </div>
@@ -439,7 +439,7 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
                     )}
                   </div>
                   <p className="text-sm text-slate-500">
-                    {s.suggested_departure} → {s.suggested_return} · {s.total_days} days · {s.vacation_days_used} vacation days used
+                    {s.suggested_departure} → {s.suggested_return} · {t("suggestDays", { days: s.total_days, vacationDays: s.vacation_days_used })}
                   </p>
                   {!dimmed && s.suggested_departure && s.suggested_return && (
                     <SuggestionWeather
@@ -466,14 +466,14 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
                         <div className="flex items-center gap-2 bg-blue-50 rounded-lg px-3 py-2">
                           <span>✈️</span>
                           <span className="text-sm font-semibold text-blue-700">€{Math.round(s.estimated_flight_price_eur)}</span>
-                          <span className="text-xs text-blue-400">flights</span>
+                          <span className="text-xs text-blue-400">{t("flightsLabel")}</span>
                         </div>
                       )}
                       {s.estimated_hotel_price_eur && (
                         <div className="flex items-center gap-2 bg-purple-50 rounded-lg px-3 py-2">
                           <span>🏨</span>
                           <span className="text-sm font-semibold text-purple-700">€{Math.round(s.estimated_hotel_price_eur)}</span>
-                          <span className="text-xs text-purple-400">hotel</span>
+                          <span className="text-xs text-purple-400">{t("hotelLabel")}</span>
                         </div>
                       )}
                     </div>
@@ -587,8 +587,8 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
                   <summary className="list-none cursor-pointer flex items-center gap-2 px-1 py-2 text-sm text-slate-400 hover:text-slate-600 transition select-none">
                     <span className="text-xs group-open:rotate-90 transition-transform inline-block">▶</span>
                     {isLatest
-                      ? `${visibleBatch.length} other option${visibleBatch.length !== 1 ? "s" : ""} — not selected`
-                      : `Batch ${batchNum} — ${visibleBatch.length} suggestion${visibleBatch.length !== 1 ? "s" : ""}`}
+                      ? t("otherOptions", { count: visibleBatch.length })
+                      : t("batchLabel", { n: batchNum, count: visibleBatch.length })}
                   </summary>
                   <div className="space-y-2 mt-2 opacity-60">
                     {visibleBatch.map(s => <SuggestionCard key={s.id} s={s} dimmed />)}
@@ -606,7 +606,7 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
           <details className="group">
             <summary className="flex items-center gap-2 cursor-pointer list-none text-sm font-medium text-slate-500 hover:text-slate-700 transition">
               <span className="group-open:rotate-90 transition-transform inline-block">▸</span>
-              Not happy with these suggestions? Generate new ones
+              {t("regenerateHint")}
             </summary>
             <div className="mt-4">
               <GenerateSuggestionsButton tripId={trip.id} hasSuggestions={true} />

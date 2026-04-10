@@ -340,7 +340,15 @@
     "destinationSet": "✅ Destino definido",
     "selected": "✅ Selecionado",
     "durationLabel": "Duração",
-    "perPerson": "por pessoa"
+    "perPerson": "por pessoa",
+    "suggestDays": "{days} dias · {vacationDays} dias de férias utilizados",
+    "flightsLabel": "voos",
+    "hotelLabel": "hotel",
+    "otherOptions": "{count, plural, =1 {1 outra opção} other {{count} outras opções}} — não selecionada",
+    "batchLabel": "Grupo {n} — {count, plural, =1 {1 sugestão} other {{count} sugestões}}",
+    "regenerateHint": "Não gostas destas sugestões? Gera novas",
+    "aiSuggestDesc": "A IA irá analisar os feriados, encontrar as melhores janelas de viagem e sugerir os melhores destinos.",
+    "exportReport": "🖨️ Exportar relatório da viagem"
   },
   "familyMembers": {
     "title": "👨‍👩‍👧 Viajantes",
@@ -574,6 +582,12 @@
     "duplicate": "⧉ Duplicar",
     "duplicated": "Viagem duplicada!",
     "failed": "Erro ao duplicar a viagem"
+  },
+  "voting": {
+    "title": "🗳️ Votação do grupo",
+    "memberCount": "{count, plural, =1 {1 membro} other {{count} membros}} no grupo",
+    "description": "Vota em cada sugestão — quando todos derem 👍, a viagem fica confirmada!",
+    "everyonesIn": "✓ Todos a bordo!"
   },
   "auth": {
     "title": "Bem-vindo de volta",

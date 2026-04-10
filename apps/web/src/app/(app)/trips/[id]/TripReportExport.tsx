@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 function esc(str: string): string {
   return str
     .replace(/&/g, "&amp;")
@@ -28,6 +30,8 @@ export default function TripReportExport({
   budgetPerPerson,
   destinationCountry,
 }: Props) {
+  const t = useTranslations("tripHeader");
+
   function printReport() {
     const dep = esc(new Date(departureDate).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }));
     const ret = esc(new Date(returnDate).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }));
@@ -96,7 +100,7 @@ export default function TripReportExport({
 
   return (
     <button onClick={printReport} className="btn-ghost text-sm flex items-center gap-2">
-      🖨️ Export trip report
+      {t("exportReport")}
     </button>
   );
 }
