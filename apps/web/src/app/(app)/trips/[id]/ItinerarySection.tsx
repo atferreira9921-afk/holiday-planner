@@ -79,7 +79,6 @@ export default function ItinerarySection({
   const [aiError, setAiError]     = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<AiSuggestion[] | null>(null);
   const [addedSet, setAddedSet]   = useState<Set<string>>(new Set());
-  const [addingAll, setAddingAll] = useState(false);
 
   const days = Array.from({ length: Math.max(tripDays, 1) }, (_, i) => i + 1);
 
@@ -128,8 +127,38 @@ export default function ItinerarySection({
         body: JSON.stringify({}),
       });
       const data = await res.json();
-      if (!res.ok) { setAiError(data.error ?? "Failed to generate itinerary"); }
-      else { setSuggestions(data.items ?? []); }
+      if (!res.ok) { setAiError(data.error ?? "Failed to generate itinerary"); return; }
+
+      const fetched: AiSuggestion[] = data.items ?? [];
+      setSuggestions(fetched);
+      if (fetched.length === 0) return;
+
+      // Auto-save all to DB immediately so navigating away doesn't lose them
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const rows = fetched.map((s, idx) => ({
+        trip_id: tripId,
+        day_number: s.day,
+        time_slot: s.time_slot,
+        title: s.title,
+        description: s.description,
+        location: s.location,
+        cost_eur: s.cost_eur,
+        sort_order: idx,
+        created_by: user.id,
+      }));
+
+      const { data: saved } = await supabase
+        .from("trip_itinerary_items")
+        .insert(rows)
+        .select("*");
+
+      if (saved) {
+        setItems(prev => [...prev, ...(saved as ItineraryItem[])]);
+        setAddedSet(new Set(fetched.map(suggestionKey)));
+      }
     } catch {
       setAiError("Network error. Please try again.");
     } finally {
@@ -139,38 +168,6 @@ export default function ItinerarySection({
 
   function suggestionKey(s: AiSuggestion) {
     return `${s.day}-${s.time_slot}-${s.title}`;
-  }
-
-  async function addSuggestion(s: AiSuggestion) {
-    const key = suggestionKey(s);
-    if (addedSet.has(key)) return;
-    const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    const { data } = await supabase.from("trip_itinerary_items").insert({
-      trip_id: tripId,
-      day_number: s.day,
-      time_slot: s.time_slot,
-      title: s.title,
-      description: s.description,
-      location: s.location,
-      cost_eur: s.cost_eur,
-      sort_order: items.filter(i => i.day_number === s.day && i.time_slot === s.time_slot).length,
-      created_by: user.id,
-    }).select("*").single();
-    if (data) {
-      setItems(prev => [...prev, data as ItineraryItem]);
-      setAddedSet(prev => new Set([...prev, key]));
-    }
-  }
-
-  async function addAllSuggestions() {
-    if (!suggestions) return;
-    setAddingAll(true);
-    for (const s of suggestions) {
-      await addSuggestion(s);
-    }
-    setAddingAll(false);
   }
 
   async function addItem(e: React.FormEvent) {
@@ -346,16 +343,9 @@ export default function ItinerarySection({
             <div>
               <p className="text-sm font-semibold text-indigo-800">{t("aiPanelTitle")}</p>
               <p className="text-xs text-indigo-500 mt-0.5">
-                {t("activities", { count: suggestions.length })} · {t("aiPanelAdded", { added: addedSet.size })}
+                {t("activities", { count: suggestions.length })} · {t("allAdded")}
               </p>
             </div>
-            <button
-              onClick={addAllSuggestions}
-              disabled={addingAll || addedSet.size === suggestions.length}
-              className="btn-primary text-xs px-3 py-1.5"
-            >
-              {addingAll ? t("adding") : addedSet.size === suggestions.length ? t("allAdded") : t("addAll")}
-            </button>
           </div>
           <div className="divide-y divide-slate-100 max-h-[520px] overflow-y-auto">
             {Array.from({ length: tripDays }, (_, i) => i + 1).map(day => {
@@ -366,10 +356,9 @@ export default function ItinerarySection({
                   <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">{dayLabel(day)}</p>
                   {dayItems.map(s => {
                     const key = suggestionKey(s);
-                    const added = addedSet.has(key);
                     const slot = slotMeta(s.time_slot);
                     return (
-                      <div key={key} className={`flex items-start gap-3 p-2.5 rounded-xl transition ${added ? "opacity-50 bg-emerald-50" : "bg-white border border-slate-100 hover:border-indigo-200"}`}>
+                      <div key={key} className="flex items-start gap-3 p-2.5 rounded-xl bg-white border border-slate-100">
                         <div className="w-7 h-7 rounded-lg flex items-center justify-center text-sm flex-shrink-0 mt-0.5"
                           style={{ background: isDark ? `${slot.color}26` : slot.bg, color: slot.color }}>
                           {slot.emoji}
@@ -383,13 +372,11 @@ export default function ItinerarySection({
                           )}
                           {s.cost_eur === 0 && <p className="text-xs text-emerald-500 mt-0.5">Free</p>}
                         </div>
-                        <button
-                          onClick={() => addSuggestion(s)}
-                          disabled={added}
-                          className={`flex-shrink-0 text-xs font-semibold px-2.5 py-1 rounded-lg transition ${added ? "text-emerald-600 bg-emerald-100" : "text-indigo-600 bg-indigo-50 hover:bg-indigo-100"}`}
+                        <span
+                          className="flex-shrink-0 text-xs font-semibold px-2.5 py-1 rounded-lg text-emerald-600 bg-emerald-100"
                         >
-                          {added ? "✓" : t("addButton")}
-                        </button>
+                          ✓
+                        </span>
                       </div>
                     );
                   })}
