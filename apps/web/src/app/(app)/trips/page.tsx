@@ -63,6 +63,7 @@ function findBridgeOpportunities(
   publicHolidays: Set<string>,
   bookedRanges: { start: string; end: string }[],
   remainingDays: number,
+  locale: string,
   maxResults = 12,
 ): BridgeOpportunity[] {
   if (remainingDays <= 0) return [];
@@ -410,7 +411,7 @@ export default async function TripsPage() {
 
     // ── Bridge opportunities ────────────────────────────────────────────────
     const userBookedRanges = (holidays ?? []).map(b => ({ start: b.start_date, end: b.end_date }));
-    bridgeOpportunities = findBridgeOpportunities(todayISO, publicHolidays, userBookedRanges, remainingDays);
+    bridgeOpportunities = findBridgeOpportunities(todayISO, publicHolidays, userBookedRanges, remainingDays, locale);
 
     // ── Group overlap windows ───────────────────────────────────────────────
     // Periods where the user AND at least one family member are both off simultaneously
