@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 
 interface Member { user_id: string; name: string; pending?: boolean; familyMember?: boolean; }
@@ -19,8 +19,8 @@ function dateRange(from: string, to: string): string[] {
   return dates;
 }
 
-function fmt(d: string) {
-  return new Date(d).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+function fmt(d: string, locale: string) {
+  return new Date(d).toLocaleDateString(locale, { weekday: "short", day: "numeric", month: "short" });
 }
 
 function isWeekend(d: string) {
@@ -45,6 +45,7 @@ export default function AvailabilityPoll({
 }) {
   const t = useTranslations("availability");
   const tc = useTranslations("common");
+  const locale = useLocale();
   const [entries, setEntries]   = useState<AvailabilityEntry[]>(initialEntries);
   const [saving, setSaving]     = useState<string | null>(null);
   const [collapsed, setCollapsed] = useState(false);
@@ -127,7 +128,7 @@ export default function AvailabilityPoll({
         <>
           {/* Legend */}
           <div className="flex items-center gap-3 flex-wrap text-xs text-slate-500">
-            <span className="flex items-center gap-1"><span className="w-4 h-4 rounded bg-emerald-400 inline-block" /> Free</span>
+            <span className="flex items-center gap-1"><span className="w-4 h-4 rounded bg-emerald-400 inline-block" /> {t("free")}</span>
             <span className="flex items-center gap-1"><span className="w-4 h-4 rounded bg-red-300 inline-block" /> Busy</span>
             <span className="flex items-center gap-1"><span className="w-4 h-4 rounded bg-slate-200 inline-block" /> No response</span>
             {members.length > 1 && <span className="flex items-center gap-1"><span className="w-4 h-4 rounded bg-emerald-600 inline-block" /> Everyone free</span>}
@@ -142,7 +143,7 @@ export default function AvailabilityPoll({
                   {dates.map(date => (
                     <th key={date} className={`p-0.5 text-center font-normal ${isWeekend(date) ? "text-indigo-400" : "text-slate-400"}`}
                       style={{ minWidth: "28px" }}>
-                      <div>{new Date(date).toLocaleDateString("en-GB", { weekday: "narrow" })}</div>
+                      <div>{new Date(date).toLocaleDateString(locale, { weekday: "narrow" })}</div>
                       <div className="font-semibold">{new Date(date).getDate()}</div>
                     </th>
                   ))}
@@ -154,7 +155,7 @@ export default function AvailabilityPoll({
                     <td className="p-1 pr-3 font-semibold text-slate-700 sticky left-0 bg-white whitespace-nowrap max-w-[120px] truncate">
                       <span title={member.name}>{member.name}</span>
                       {member.user_id === currentUserId && <span className="text-slate-400 font-normal ml-1">(you)</span>}
-                      {member.pending && <span className="text-amber-500 font-normal ml-1 text-[10px]">invited</span>}
+                      {member.pending && <span className="text-amber-500 font-normal ml-1 text-[10px]">{t("invited")}</span>}
                       {member.familyMember && <span className="text-indigo-400 font-normal ml-1 text-[10px]">traveller</span>}
                     </td>
                     {dates.map(date => {

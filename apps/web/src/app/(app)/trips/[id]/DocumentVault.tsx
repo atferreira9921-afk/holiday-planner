@@ -186,7 +186,7 @@ export default function DocumentVault({
                           rel="noopener noreferrer"
                           className="btn-ghost text-xs"
                         >
-                          Download
+                          {t("download")}
                         </a>
                         {doc.uploaded_by === currentUserId && (
                           <button

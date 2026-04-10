@@ -1,7 +1,7 @@
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import TripsFilter from "./TripsFilter";
-import { getTranslations } from "next-intl/server";
+import { getTranslations, getLocale } from "next-intl/server";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -11,17 +11,17 @@ function localISO(d: Date) {
 
 function isWeekend(d: Date) { return d.getDay() === 0 || d.getDay() === 6; }
 
-function fmtDay(iso: string) {
-  return new Date(iso + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric" });
+function fmtDay(iso: string, locale: string) {
+  return new Date(iso + "T00:00:00").toLocaleDateString(locale, { day: "numeric" });
 }
-function fmtMonth(iso: string) {
-  return new Date(iso + "T00:00:00").toLocaleDateString("en-GB", { month: "short" });
+function fmtMonth(iso: string, locale: string) {
+  return new Date(iso + "T00:00:00").toLocaleDateString(locale, { month: "short" });
 }
-function fmtShort(iso: string) {
-  return new Date(iso + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+function fmtShort(iso: string, locale: string) {
+  return new Date(iso + "T00:00:00").toLocaleDateString(locale, { day: "numeric", month: "short" });
 }
-function fmtFull(iso: string) {
-  return new Date(iso + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+function fmtFull(iso: string, locale: string) {
+  return new Date(iso + "T00:00:00").toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" });
 }
 
 function countVacationDays(start: string, end: string, publicHolidays: Set<string>): number {
@@ -108,8 +108,8 @@ function findBridgeOpportunities(
       const key = `1::${extStart}::${extEnd}`;
       if (calDays >= 3 && !seen.has(key)) {
         seen.add(key);
-        const dayName = new Date(iso + "T00:00:00").toLocaleDateString("en-GB", { weekday: "short" });
-        results.push({ start: extStart, end: extEnd, vacDays: 1, calDays, label: `${dayName} ${fmtShort(iso)}` });
+        const dayName = new Date(iso + "T00:00:00").toLocaleDateString(locale, { weekday: "short" });
+        results.push({ start: extStart, end: extEnd, vacDays: 1, calDays, label: `${dayName} ${fmtShort(iso, locale)}` });
       }
 
       // 2-day bridge: this day + next free working day
@@ -140,7 +140,7 @@ function findBridgeOpportunities(
           const key2 = `2::${extStart2}::${extEnd2}`;
           if (calDays2 >= 4 && !seen.has(key2)) {
             seen.add(key2);
-            results.push({ start: extStart2, end: extEnd2, vacDays: 2, calDays: calDays2, label: `${fmtShort(iso)}–${fmtShort(iso2)}` });
+            results.push({ start: extStart2, end: extEnd2, vacDays: 2, calDays: calDays2, label: `${fmtShort(iso, locale)}–${fmtShort(iso2, locale)}` });
           }
         }
       }
@@ -260,6 +260,7 @@ const TARGET_DURATIONS = [1, 2, 3, 4, 5, 7, 10, 14];
 
 export default async function TripsPage() {
   const t = await getTranslations("tripsPage");
+  const locale = await getLocale();
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   const db = createServiceClient();
@@ -495,8 +496,8 @@ export default async function TripsPage() {
                     <div className="flex items-center gap-4 px-5 py-4 border-b border-slate-100">
                       {/* Date pill */}
                       <div className="flex-shrink-0 w-12 text-center rounded-xl py-1.5" style={{ background: accent.bg }}>
-                        <div className="text-xs font-bold uppercase" style={{ color: accent.text }}>{fmtMonth(w.start)}</div>
-                        <div className="text-xl font-black leading-tight" style={{ color: accent.text }}>{fmtDay(w.start)}</div>
+                        <div className="text-xs font-bold uppercase" style={{ color: accent.text }}>{fmtMonth(w.start, locale)}</div>
+                        <div className="text-xl font-black leading-tight" style={{ color: accent.text }}>{fmtDay(w.start, locale)}</div>
                       </div>
 
                       {/* Info */}
@@ -519,7 +520,7 @@ export default async function TripsPage() {
                           )}
                         </div>
                         <p className="text-xs text-slate-400 mt-0.5">
-                          {w.end !== w.start ? `${fmtShort(w.start)} – ${fmtShort(w.end)}` : fmtFull(w.start)}
+                          {w.end !== w.start ? `${fmtShort(w.start, locale)} – ${fmtShort(w.end, locale)}` : fmtFull(w.start, locale)}
                           {" · "}
                           <span className="font-medium text-slate-600">
                             {w.vacationDays} vacation day{w.vacationDays !== 1 ? "s" : ""}
@@ -563,7 +564,7 @@ export default async function TripsPage() {
                                 {hasOverlap && <span className="text-xs">👥</span>}
                               </div>
                               <div className="text-xs text-slate-500 mt-0.5 whitespace-nowrap">
-                                {fmtShort(opt.start)}–{fmtShort(opt.end)}
+                                {fmtShort(opt.start, locale)}–{fmtShort(opt.end, locale)}
                               </div>
                               <div className="text-xs font-semibold mt-0.5 whitespace-nowrap" style={{ color: accent.text }}>
                                 {opt.calDays} cal day{opt.calDays !== 1 ? "s" : ""}
@@ -605,8 +606,8 @@ export default async function TripsPage() {
               return (
                 <div key={i} className="flex items-center gap-4 px-5 py-4 hover:bg-slate-50 transition group">
                   <div className="flex-shrink-0 w-12 text-center rounded-xl py-1.5" style={{ background: accent.bg }}>
-                    <div className="text-xs font-bold uppercase" style={{ color: accent.text }}>{fmtMonth(ov.start)}</div>
-                    <div className="text-xl font-black leading-tight" style={{ color: accent.text }}>{fmtDay(ov.start)}</div>
+                    <div className="text-xs font-bold uppercase" style={{ color: accent.text }}>{fmtMonth(ov.start, locale)}</div>
+                    <div className="text-xl font-black leading-tight" style={{ color: accent.text }}>{fmtDay(ov.start, locale)}</div>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
@@ -618,7 +619,7 @@ export default async function TripsPage() {
                       </span>
                     </div>
                     <p className="text-xs text-slate-400 mt-0.5">
-                      {fmtShort(ov.start)} – {fmtShort(ov.end)} · <span className="font-medium text-slate-600">{ov.calDays}d together</span>
+                      {fmtShort(ov.start, locale)} – {fmtShort(ov.end, locale)} · <span className="font-medium text-slate-600">{ov.calDays}d together</span>
                       {ov.daysAway > 0 && <span> · in {ov.daysAway}d</span>}
                     </p>
                   </div>
@@ -659,8 +660,8 @@ export default async function TripsPage() {
                   className="card p-4 flex gap-3 hover:shadow-md transition group"
                 >
                   <div className="flex-shrink-0 w-11 text-center rounded-xl py-1.5" style={{ background: accent.bg }}>
-                    <div className="text-xs font-bold uppercase" style={{ color: accent.text }}>{fmtMonth(b.start)}</div>
-                    <div className="text-lg font-black leading-tight" style={{ color: accent.text }}>{fmtDay(b.start)}</div>
+                    <div className="text-xs font-bold uppercase" style={{ color: accent.text }}>{fmtMonth(b.start, locale)}</div>
+                    <div className="text-lg font-black leading-tight" style={{ color: accent.text }}>{fmtDay(b.start, locale)}</div>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap">
@@ -675,7 +676,7 @@ export default async function TripsPage() {
                     </div>
                     <p className="text-xs text-slate-500 mt-1">
                       <span className="font-medium text-slate-700">{b.calDays} days total</span>
-                      {" · "}{fmtShort(b.start)}–{fmtShort(b.end)}
+                      {" · "}{fmtShort(b.start, locale)}–{fmtShort(b.end, locale)}
                     </p>
                     <p className="text-xs text-slate-400 mt-0.5">{b.label}</p>
                   </div>

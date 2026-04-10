@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import DashboardGlobe from "./DashboardGlobe";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -147,12 +147,12 @@ function daysUntil(iso: string) {
   return Math.round((new Date(iso + "T00:00:00").getTime() - t.getTime()) / 86400000);
 }
 
-function fmtShort(iso: string) {
-  return new Date(iso + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+function fmtShort(iso: string, locale: string) {
+  return new Date(iso + "T00:00:00").toLocaleDateString(locale, { day: "numeric", month: "short" });
 }
 
-function fmtMed(iso: string) {
-  return new Date(iso + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "long" });
+function fmtMed(iso: string, locale: string) {
+  return new Date(iso + "T00:00:00").toLocaleDateString(locale, { day: "numeric", month: "long" });
 }
 
 // ─── Add Booking Form ─────────────────────────────────────────────────────────
@@ -308,6 +308,7 @@ export default function DashboardClient({
   allPublicHolidayDates,
 }: DashboardProps) {
   const t = useTranslations("dashboard");
+  const locale = useLocale();
   const [isDark, setIsDark] = useState(false);
   useEffect(() => {
     const check = () => setIsDark(document.documentElement.getAttribute("data-theme") === "dark");
@@ -536,7 +537,7 @@ export default function DashboardClient({
             </p>
             <h2 className="text-xl font-bold text-slate-900 truncate">{nextBookedTrip.title}</h2>
             <p className="text-sm text-emerald-700 mt-0.5 font-medium">
-              {fmtMed(nextBookedTrip.earliest_departure)}
+              {fmtMed(nextBookedTrip.earliest_departure, locale)}
               {nextBookedTrip.destination_city ? ` · ${nextBookedTrip.destination_city}` : ""}
               {" · "}{nextBookedTrip.desired_duration_days} days
             </p>
@@ -558,7 +559,7 @@ export default function DashboardClient({
                 ? `Happy Birthday${isYou ? "" : `, ${displayName}`}! 🎉`
                 : `${isYou ? "Your" : `${displayName}'s`} birthday is in ${bdAway} day${bdAway === 1 ? "" : "s"}`}
             </p>
-            <p className="text-xs text-purple-500 mt-0.5">{fmtMed(birthday!)} — why not make it special?</p>
+            <p className="text-xs text-purple-500 mt-0.5">{fmtMed(birthday!, locale)} — why not make it special?</p>
           </div>
           {isYou && (
             <Link href={`/trips/new?from=${birthday}&days=7`}
@@ -580,7 +581,7 @@ export default function DashboardClient({
             </p>
             <h2 className="text-xl font-bold text-slate-900 truncate">{nextUp.title}</h2>
             <p className="text-sm text-slate-500 mt-0.5">
-              {fmtMed(nextUp.start)}{nextUp.end !== nextUp.start ? ` → ${fmtMed(nextUp.end)}` : ""}
+              {fmtMed(nextUp.start, locale)}{nextUp.end !== nextUp.start ? ` → ${fmtMed(nextUp.end, locale)}` : ""}
             </p>
           </div>
           {upcoming.length > 1 && (
@@ -665,7 +666,7 @@ export default function DashboardClient({
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-slate-800 text-sm truncate">{item.title}</p>
                       <p className="text-xs text-slate-400">
-                        {fmtShort(item.start)}{duration > 1 ? ` – ${fmtShort(item.end)} · ${duration}d` : ""}
+                        {fmtShort(item.start, locale)}{duration > 1 ? ` – ${fmtShort(item.end, locale)} · ${duration}d` : ""}
                       </p>
                     </div>
                     <span className="text-xs font-semibold text-slate-500 flex-shrink-0">
@@ -732,7 +733,7 @@ export default function DashboardClient({
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-slate-800 text-sm truncate">{trip.title}</p>
                       <p className="text-xs text-slate-400">
-                        {trip.desired_duration_days}d · {fmtShort(trip.earliest_departure)} – {fmtShort(trip.latest_return)}
+                        {trip.desired_duration_days}d · {fmtShort(trip.earliest_departure, locale)} – {fmtShort(trip.latest_return, locale)}
                         {trip.destination_city ? ` · ${trip.destination_city}` : ""}
                       </p>
                     </div>
@@ -854,7 +855,7 @@ export default function DashboardClient({
                   {nextBk && (
                     <p className="text-xs text-slate-500 border-t border-slate-100 pt-2">
                       Next: <span className="font-semibold text-slate-700">{nextBk.title}</span>
-                      <span className="text-slate-400"> · {fmtShort(nextBk.start_date)}</span>
+                      <span className="text-slate-400"> · {fmtShort(nextBk.start_date, locale)}</span>
                     </p>
                   )}
                 </button>

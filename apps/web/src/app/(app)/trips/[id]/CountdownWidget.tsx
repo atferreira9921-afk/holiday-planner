@@ -1,6 +1,6 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 
 interface Props {
   departureDate: string;
@@ -10,6 +10,7 @@ interface Props {
 
 export default function CountdownWidget({ departureDate, returnDate, tripTitle }: Props) {
   const t = useTranslations("countdown");
+  const locale = useLocale();
   const today      = new Date(); today.setHours(0, 0, 0, 0);
   const departure  = new Date(departureDate); departure.setHours(0, 0, 0, 0);
   const returnD    = new Date(returnDate); returnD.setHours(0, 0, 0, 0);
@@ -56,13 +57,13 @@ export default function CountdownWidget({ departureDate, returnDate, tripTitle }
     emoji = "✈️";
     numberStr = String(daysToGo);
     label = t("daysToGo");
-    sub = new Date(departureDate).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
+    sub = new Date(departureDate).toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "long" });
   } else {
     bg = "from-slate-500 to-slate-600";
     emoji = "📅";
     numberStr = String(daysToGo);
     label = t("daysToGo");
-    sub = new Date(departureDate).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+    sub = new Date(departureDate).toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" });
   }
 
   return (

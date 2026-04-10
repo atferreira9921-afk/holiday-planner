@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useLocale } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 import { isAiEnabled } from "@/lib/config";
 import { useTranslations } from "next-intl";
@@ -51,6 +52,7 @@ export default function ItinerarySection({
 }) {
   const t  = useTranslations("itinerary");
   const tc = useTranslations("common");
+  const locale = useLocale();
   const TIME_SLOTS = TIME_SLOT_DEFS.map(s => ({ ...s, label: t(s.key) }));
 
   const [open, setOpen]     = useState(true);
@@ -86,7 +88,7 @@ export default function ItinerarySection({
     if (!departureDate) return `Day ${n}`;
     const d = new Date(departureDate);
     d.setDate(d.getDate() + n - 1);
-    return `Day ${n} — ${d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })}`;
+    return `Day ${n} — ${d.toLocaleDateString(locale, { weekday: "short", day: "numeric", month: "short" })}`;
   }
 
   function itemsForDay(day: number) {
@@ -370,7 +372,7 @@ export default function ItinerarySection({
                           {s.cost_eur != null && s.cost_eur > 0 && (
                             <p className="text-xs text-indigo-500 mt-0.5 font-semibold">~€{s.cost_eur}</p>
                           )}
-                          {s.cost_eur === 0 && <p className="text-xs text-emerald-500 mt-0.5">Free</p>}
+                          {s.cost_eur === 0 && <p className="text-xs text-emerald-500 mt-0.5">{t("free")}</p>}
                         </div>
                         <span
                           className="flex-shrink-0 text-xs font-semibold px-2.5 py-1 rounded-lg text-emerald-600 bg-emerald-100"

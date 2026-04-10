@@ -70,6 +70,7 @@
     "aiPanelAdded": "{added} adicionados",
     "addAll": "Adicionar todos",
     "allAdded": "✓ Todos adicionados",
+    "free": "Grátis",
     "day": "Dia",
     "time": "Hora",
     "morning": "Manhã",
@@ -201,7 +202,9 @@
     "closed": "Fechada",
     "noPolls": "Ainda não há sondagens.",
     "votes": "{count} voto(s)",
-    "alreadyVoted": "Já votaste"
+    "alreadyVoted": "Já votaste",
+    "yourPick": "A tua escolha",
+    "winner": "Vencedor"
   },
   "documents": {
     "title": "📁 Documentos e vouchers",
@@ -209,6 +212,7 @@
     "uploading": "A carregar…",
     "selectType": "Seleciona o tipo de documento:",
     "noDocuments": "Ainda não há documentos carregados.",
+    "download": "Transferir",
     "delete": "Eliminar",
     "types": {
       "flight": "✈️ Bilhete de avião",
@@ -266,7 +270,9 @@
     "title": "📅 Sondagem de disponibilidade",
     "sharedDays": "{count} dia(s) em comum",
     "membersInfo": "{count} membro(s) · verde = todos disponíveis",
-    "justYou": "Só tu por agora — convida outros para comparar disponibilidade"
+    "justYou": "Só tu por agora — convida outros para comparar disponibilidade",
+    "free": "Disponível",
+    "invited": "convidado"
   },
   "invite": {
     "title": "👥 Convidar pessoas",

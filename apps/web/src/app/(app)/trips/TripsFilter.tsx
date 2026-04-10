@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useLocale } from "next-intl";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -46,13 +47,14 @@ const STATUS_PILLS = [
 
 // ─── Helper ────────────────────────────────────────────────────────────────────
 
-function fmtShort(iso: string) {
-  return new Date(iso + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+function fmtShort(iso: string, locale: string) {
+  return new Date(iso + "T00:00:00").toLocaleDateString(locale, { day: "numeric", month: "short" });
 }
 
 // ─── Component ─────────────────────────────────────────────────────────────────
 
 export default function TripsFilter({ trips }: Props) {
+  const locale = useLocale();
   const [search, setSearch]             = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [sort, setSort]                 = useState("newest");
@@ -132,7 +134,7 @@ export default function TripsFilter({ trips }: Props) {
                 <div className="mt-3 space-y-1">
                   <p className="text-sm text-slate-500 flex items-center gap-1.5">
                     <span>📅</span>
-                    {fmtShort(trip.earliest_departure)} – {fmtShort(trip.latest_return)}
+                    {fmtShort(trip.earliest_departure, locale)} – {fmtShort(trip.latest_return, locale)}
                   </p>
                   <p className="text-sm text-slate-500 flex items-center gap-1.5">
                     <span>🌙</span>

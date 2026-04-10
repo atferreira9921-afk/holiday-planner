@@ -70,6 +70,7 @@
     "aiPanelAdded": "{added} added so far",
     "addAll": "Add all",
     "allAdded": "✓ All added",
+    "free": "Free",
     "day": "Day",
     "time": "Time",
     "morning": "Morning",
@@ -201,7 +202,9 @@
     "closed": "Closed",
     "noPolls": "No polls yet.",
     "votes": "{count} vote(s)",
-    "alreadyVoted": "You voted"
+    "alreadyVoted": "You voted",
+    "yourPick": "Your pick",
+    "winner": "Winner"
   },
   "documents": {
     "title": "📁 Documents & vouchers",
@@ -209,6 +212,7 @@
     "uploading": "Uploading…",
     "selectType": "Select document type:",
     "noDocuments": "No documents uploaded yet.",
+    "download": "Download",
     "delete": "Delete",
     "types": {
       "flight": "✈️ Flight ticket",
@@ -266,7 +270,9 @@
     "title": "📅 Availability poll",
     "sharedDays": "{count} shared day(s)",
     "membersInfo": "{count} member(s) · green = everyone free",
-    "justYou": "Just you so far — invite others to compare availability"
+    "justYou": "Just you so far — invite others to compare availability",
+    "free": "Free",
+    "invited": "invited"
   },
   "invite": {
     "title": "👥 Invite people",

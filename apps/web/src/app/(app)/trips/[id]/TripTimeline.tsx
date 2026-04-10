@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useLocale } from "next-intl";
 
 interface ItineraryItem {
   id: string;
@@ -27,10 +28,10 @@ const CAT_EMOJI: Record<string, string> = {
   transport: "🚌", activity: "🎟️", other: "📦",
 };
 
-function addDays(dateStr: string, days: number): string {
+function addDays(dateStr: string, days: number, locale: string): string {
   const d = new Date(dateStr);
   d.setDate(d.getDate() + days);
-  return d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+  return d.toLocaleDateString(locale, { weekday: "short", day: "numeric", month: "short" });
 }
 
 export default function TripTimeline({
@@ -44,6 +45,7 @@ export default function TripTimeline({
   itineraryItems: ItineraryItem[];
   expenses: Expense[];
 }) {
+  const locale = useLocale();
   const [collapsed, setCollapsed] = useState(false);
   const hasContent = itineraryItems.length > 0 || expenses.length > 0;
   if (!hasContent) return null;
@@ -84,7 +86,7 @@ export default function TripTimeline({
 
                   <div>
                     <p className="text-xs font-semibold text-slate-500 mb-2">
-                      {addDays(departureDate, day - 1)}
+                      {addDays(departureDate, day - 1, locale)}
                     </p>
                     <div className="space-y-1.5">
                       {dayItems.map(item => (

@@ -323,8 +323,8 @@ export default function GroupPolls({
                           <span className="text-xs font-semibold ml-2 flex-shrink-0">
                             {t("votes", { count })}
                             {totalVotes > 0 && ` · ${pct}%`}
-                            {isUserChoice && " · Your pick"}
-                            {isWinner && " · Winner"}
+                            {isUserChoice && ` · ${t("yourPick")}`}
+                            {isWinner && ` · ${t("winner")}`}
                           </span>
                         </div>
                       </button>

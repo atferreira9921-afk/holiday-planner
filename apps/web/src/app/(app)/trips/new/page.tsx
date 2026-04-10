@@ -6,7 +6,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { COUNTRIES } from "@/lib/data/geo";
 import ReturnOriginPicker from "../ReturnOriginPicker";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 
 type PlanningMode = "days_first" | "destination_first";
 type VehicleType = "flight" | "car" | "bus";
@@ -31,12 +31,13 @@ function daysBetween(a: string, b: string) {
   return Math.round((new Date(b).getTime() - new Date(a).getTime()) / 86400000);
 }
 
-function fmt(d: string) {
-  return new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+function fmt(d: string, locale: string) {
+  return new Date(d).toLocaleDateString(locale, { day: "numeric", month: "short", year: "numeric" });
 }
 
 export default function NewTripPage() {
   const t = useTranslations("newTrip");
+  const locale = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
@@ -243,7 +244,7 @@ export default function NewTripPage() {
                       </div>
                       <div className="flex-1">
                         <p className="text-sm font-semibold text-slate-800">{h.title}</p>
-                        <p className="text-xs text-slate-500">{fmt(h.start_date)} → {fmt(h.end_date)} · {days} day{days !== 1 ? "s" : ""}</p>
+                        <p className="text-xs text-slate-500">{fmt(h.start_date, locale)} → {fmt(h.end_date, locale)} · {days} day{days !== 1 ? "s" : ""}</p>
                       </div>
                     </button>
                   );
@@ -303,7 +304,7 @@ export default function NewTripPage() {
               <span className="text-lg">✅</span>
               <div>
                 <p className="text-sm font-semibold text-indigo-800">{selectedHoliday.title}</p>
-                <p className="text-xs text-indigo-600">{fmt(selectedHoliday.start_date)} → {fmt(selectedHoliday.end_date)} · {form.desired_duration_days} days</p>
+                <p className="text-xs text-indigo-600">{fmt(selectedHoliday.start_date, locale)} → {fmt(selectedHoliday.end_date, locale)} · {form.desired_duration_days} days</p>
               </div>
             </div>
           )}

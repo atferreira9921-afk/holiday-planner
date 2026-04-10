@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
-import { getTranslations } from "next-intl/server";
+import { getTranslations, getLocale } from "next-intl/server";
 import Link from "next/link";
 import GenerateSuggestionsButton from "./GenerateSuggestionsButton";
 import VotingSection from "./VotingSection";
@@ -47,6 +47,7 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) notFound();
 
+  const locale = await getLocale();
   const t  = await getTranslations("tripHeader");
   const tc = await getTranslations("common");
   const tf = await getTranslations("flights");
@@ -132,7 +133,7 @@ export default async function TripDetailPage({ params }: { params: Promise<{ id:
     if (expiry < sixMonthsAfterReturn) {
       const daysUntilExpiry = Math.ceil((expiry.getTime() - Date.now()) / 86400000);
       if (daysUntilExpiry <= 0) return t("passportExpired");
-      return t("passportWarning", { date: expiry.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) });
+      return t("passportWarning", { date: expiry.toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" }) });
     }
     return null;
   })();

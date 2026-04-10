@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 
 interface Task {
@@ -25,8 +25,8 @@ interface Props {
   initialTasks: Task[];
 }
 
-function fmtDate(d: string) {
-  return new Date(d + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+function fmtDate(d: string, locale: string) {
+  return new Date(d + "T00:00:00").toLocaleDateString(locale, { day: "numeric", month: "short" });
 }
 
 function isOverdue(due: string | null, done: boolean) {
@@ -36,6 +36,7 @@ function isOverdue(due: string | null, done: boolean) {
 
 export default function TripTasks({ tripId, currentUserId, members, initialTasks }: Props) {
   const t = useTranslations("tasks");
+  const locale = useLocale();
   const tc = useTranslations("common");
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [open, setOpen]             = useState(true);
@@ -115,11 +116,11 @@ export default function TripTasks({ tripId, currentUserId, members, initialTasks
             )}
             {task.due_date && (
               <span className={`text-xs font-semibold ${overdue ? "text-red-500" : "text-slate-400"}`}>
-                {overdue ? `⚠️ ${t("overdue")} ` : "📅 "}{fmtDate(task.due_date)}
+                {overdue ? `⚠️ ${t("overdue")} ` : "📅 "}{fmtDate(task.due_date, locale)}
               </span>
             )}
             {task.is_done && task.done_at && (
-              <span className="text-xs text-emerald-500">Done {fmtDate(task.done_at)}</span>
+              <span className="text-xs text-emerald-500">Done {fmtDate(task.done_at, locale)}</span>
             )}
           </div>
         </div>

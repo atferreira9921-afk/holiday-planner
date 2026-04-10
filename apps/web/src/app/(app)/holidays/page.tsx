@@ -6,7 +6,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { COUNTRIES, getAirports } from "@/lib/data/geo";
 import { getMunicipalHolidays } from "@/lib/data/pt-municipal-holidays";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -110,8 +110,8 @@ function toISO(d: Date) {
 function parseDate(iso: string) { return new Date(iso + "T00:00:00"); }
 function addDays(d: Date, n: number) { const r = new Date(d); r.setDate(r.getDate() + n); return r; }
 function isWeekend(d: Date) { return d.getDay() === 0 || d.getDay() === 6; }
-function fmtShort(iso: string) { return parseDate(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short" }); }
-function fmtLong(iso: string) { return parseDate(iso).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }); }
+function fmtShort(iso: string, locale: string) { return parseDate(iso).toLocaleDateString(locale, { day: "numeric", month: "short" }); }
+function fmtLong(iso: string, locale: string) { return parseDate(iso).toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" }); }
 
 /** Count days in [start, end] that are working days AND not in publicHolidayDates. */
 function countVacationDays(start: string, end: string, publicHolidayDates: Set<string>): number {
@@ -346,6 +346,7 @@ function CalendarGrid({
 
 export default function HolidaysPage() {
   const t = useTranslations("holidaysPage");
+  const locale = useLocale();
   const isDark = useDarkMode();
   const router = useRouter();
   const thisYear = new Date().getFullYear();
@@ -804,7 +805,7 @@ export default function HolidaysPage() {
   function prevMonth() { if (month === 0) { setMonth(11); setYear(y => y - 1); } else setMonth(m => m - 1); }
   function nextMonth() { if (month === 11) { setMonth(0); setYear(y => y + 1); } else setMonth(m => m + 1); }
 
-  const monthName = new Date(year, month, 1).toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+  const monthName = new Date(year, month, 1).toLocaleDateString(locale, { month: "long", year: "numeric" });
   const today = toISO(new Date());
   const bridges = computeBridgeWindows(membersForWindows, year).filter(w => w.end >= today);
   const isLoading = loadingKeys.size > 0;
@@ -980,11 +981,11 @@ export default function HolidaysPage() {
                 <div className="flex-1">
                   {!selEnd ? (
                     <p className="text-sm font-semibold text-indigo-800">
-                      Start: <span className="text-indigo-600">{fmtLong(selStart)}</span> — now click an end date
+                      Start: <span className="text-indigo-600">{fmtLong(selStart, locale)}</span> — now click an end date
                     </p>
                   ) : (
                     <p className="text-sm font-semibold text-indigo-800">
-                      <span className="text-indigo-600">{fmtLong(selStart)}</span> → <span className="text-indigo-600">{fmtLong(selEnd)}</span>
+                      <span className="text-indigo-600">{fmtLong(selStart, locale)}</span> → <span className="text-indigo-600">{fmtLong(selEnd, locale)}</span>
                       <span className="ml-2 text-indigo-400 font-normal">({selDays} days)</span>
                     </p>
                   )}
@@ -1066,7 +1067,7 @@ export default function HolidaysPage() {
                     <span className="text-sm flex-shrink-0">{b.start === b.end && rawHolidayDates.has(b.start) ? "📅" : (BOOKING_META[b.category]?.emoji ?? "📅")}</span>
                     <div className="flex-1 min-w-0">
                       <span className="text-sm font-semibold text-slate-700">{b.title}</span>
-                      <span className="text-xs text-slate-400 ml-2">{b.start === b.end ? fmtShort(b.start) : `${fmtShort(b.start)} – ${fmtShort(b.end)}`} · {b.memberName}</span>
+                      <span className="text-xs text-slate-400 ml-2">{b.start === b.end ? fmtShort(b.start, locale) : `${fmtShort(b.start, locale)} – ${fmtShort(b.end, locale)}`} · {b.memberName}</span>
                     </div>
                     <button
                       onClick={() => editingId === b.id ? setEditingId(null) : startEdit(b)}
@@ -1133,7 +1134,7 @@ export default function HolidaysPage() {
                 <span className="text-2xl">🎂</span>
                 <div className="flex-1">
                   <p className="text-sm font-semibold text-purple-800">
-                    {b.name === "You" ? "Your" : `${b.name}'s`} birthday — {fmtShort(b.iso)}
+                    {b.name === "You" ? "Your" : `${b.name}'s`} birthday — {fmtShort(b.iso, locale)}
                   </p>
                   {isHoliday
                     ? <p className="text-xs text-purple-600">🎉 Falls on a public holiday: {isHoliday}! Lucky!</p>
@@ -1241,7 +1242,7 @@ export default function HolidaysPage() {
                               <span>🗓️</span>
                               <span className="font-medium" style={{ color: isDark ? "#cbd5e1" : "#374151" }}>{item.name}</span>
                             </span>
-                            <span className="text-slate-400 flex-shrink-0">{fmtShort(item.date)}</span>
+                            <span className="text-slate-400 flex-shrink-0">{fmtShort(item.date, locale)}</span>
                           </div>
                         );
                         if (item.kind === "booked") return (
@@ -1251,7 +1252,7 @@ export default function HolidaysPage() {
                               <span className="font-medium text-slate-700">{item.name}</span>
                             </span>
                             <span className="text-slate-400 flex-shrink-0">
-                              {fmtShort(item.date)}{item.days > 1 ? `–${fmtShort(item.endDate)}` : ""}
+                              {fmtShort(item.date, locale)}{item.days > 1 ? `–${fmtShort(item.endDate, locale)}` : ""}
                             </span>
                           </div>
                         );
@@ -1262,7 +1263,7 @@ export default function HolidaysPage() {
                               <span>{meta.emoji}</span>
                               <span className="font-medium" style={{ color: meta.dotColor }}>{item.name}</span>
                             </span>
-                            <span className="text-slate-400 flex-shrink-0">{fmtShort(item.date)}</span>
+                            <span className="text-slate-400 flex-shrink-0">{fmtShort(item.date, locale)}</span>
                           </div>
                         );
                       })}
@@ -1338,7 +1339,7 @@ export default function HolidaysPage() {
                       {birthdayInWindow && <span className="text-xs">🎂 {birthdayInWindow.name}&apos;s birthday!</span>}
                       {booked && <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">✓ Booked</span>}
                     </div>
-                    <p className="font-semibold text-slate-800 text-sm">{fmtShort(w.start)} – {fmtShort(w.end)}</p>
+                    <p className="font-semibold text-slate-800 text-sm">{fmtShort(w.start, locale)} – {fmtShort(w.end, locale)}</p>
                     <p className="text-xs text-slate-500 mt-0.5">
                       <b>{w.totalDays} days off</b> using only <span className="text-indigo-600 font-semibold">{w.vacationDaysNeeded} vacation {w.vacationDaysNeeded === 1 ? "day" : "days"}</span>
                       <span className="text-slate-400"> · {w.holidays.length} public holiday{w.holidays.length !== 1 ? "s" : ""} + weekends</span>
@@ -1485,9 +1486,9 @@ export default function HolidaysPage() {
                 <div className={`flex items-start gap-4 px-5 py-3 ${past ? "opacity-40" : ""}`}>
                   {/* Date */}
                   <div className="w-14 text-center flex-shrink-0 pt-0.5">
-                    <div className="text-xs text-slate-400">{d.toLocaleDateString("en-GB", { weekday: "short" })}</div>
+                    <div className="text-xs text-slate-400">{d.toLocaleDateString(locale, { weekday: "short" })}</div>
                     <div className={`font-bold text-sm ${autoSkipped ? "text-slate-400" : "text-slate-700"}`}>
-                      {d.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                      {d.toLocaleDateString(locale, { day: "numeric", month: "short" })}
                     </div>
                   </div>
 

@@ -1,6 +1,7 @@
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { getLocale } from "next-intl/server";
 import AcceptButton from "./AcceptButton";
 
 export default async function AcceptInvitePage({
@@ -9,6 +10,7 @@ export default async function AcceptInvitePage({
   params: Promise<{ token: string }>;
 }) {
   const { token } = await params;
+  const locale    = await getLocale();
   const supabase  = await createClient();
   const db        = createServiceClient();
 
@@ -69,7 +71,7 @@ export default async function AcceptInvitePage({
           <p><span className="font-semibold">Group:</span> {groupName}</p>
           <p>
             <span className="font-semibold">Expires:</span>{" "}
-            {new Date(invite.expires_at).toLocaleDateString("en-GB", {
+            {new Date(invite.expires_at).toLocaleDateString(locale, {
               day: "numeric", month: "long", year: "numeric",
             })}
           </p>

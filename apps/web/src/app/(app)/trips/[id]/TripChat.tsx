@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 
 interface Message {
@@ -18,14 +18,14 @@ interface Props {
   initialMessages: Message[];
 }
 
-function fmt(ts: string) {
+function fmt(ts: string, locale: string) {
   const d = new Date(ts);
   const now = new Date();
   const isToday = d.toDateString() === now.toDateString();
   return isToday
-    ? d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })
-    : d.toLocaleDateString("en-GB", { day: "numeric", month: "short" }) + " " +
-      d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+    ? d.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })
+    : d.toLocaleDateString(locale, { day: "numeric", month: "short" }) + " " +
+      d.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
 }
 
 function initials(name: string) {
@@ -45,6 +45,7 @@ function avatarColor(uid: string) {
 export default function TripChat({ tripId, currentUserId, memberNames, initialMessages }: Props) {
   const t = useTranslations("chat");
   const tc = useTranslations("common");
+  const locale = useLocale();
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
@@ -141,7 +142,7 @@ export default function TripChat({ tripId, currentUserId, memberNames, initialMe
                   <div className={`flex flex-col max-w-[75%] ${isMe ? "items-end" : "items-start"}`}>
                     <div className={`flex items-baseline gap-1.5 mb-0.5 ${isMe ? "flex-row-reverse" : ""}`}>
                       <span className="text-xs font-semibold text-slate-600">{isMe ? "You" : name}</span>
-                      <span className="text-xs text-slate-400">{fmt(m.created_at)}</span>
+                      <span className="text-xs text-slate-400">{fmt(m.created_at, locale)}</span>
                     </div>
                     <div className={`relative px-3 py-2 rounded-2xl text-sm leading-relaxed break-words ${
                       isMe
