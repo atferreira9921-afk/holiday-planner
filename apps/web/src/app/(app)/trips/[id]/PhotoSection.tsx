@@ -93,7 +93,7 @@ export default function PhotoSection({
         <div className="flex items-center gap-2">
           <button onClick={() => setOpen(o => !o)} className="btn-ghost text-sm">{open ? tc("hide") : tc("show")}</button>
           {open && <button onClick={() => fileRef.current?.click()} disabled={uploading} className="btn-ghost text-sm">
-            {uploading ? tc("uploading") : `+ ${t("upload")}`}
+            {uploading ? tc("uploading") : t("upload")}
           </button>}
         </div>
       </div>

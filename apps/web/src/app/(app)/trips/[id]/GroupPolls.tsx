@@ -173,7 +173,7 @@ export default function GroupPolls({
         <div className="flex items-center gap-2">
           <button onClick={() => setOpen(o => !o)} className="btn-ghost text-sm">{open ? tc("hide") : tc("show")}</button>
           {open && <button onClick={() => setShowCreateForm(f => !f)} className="btn-ghost text-sm">
-            {showCreateForm ? tc("cancel") : `+ ${t("createPoll")}`}
+            {showCreateForm ? tc("cancel") : t("createPoll")}
           </button>}
         </div>
       </div>
