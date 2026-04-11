@@ -7,7 +7,7 @@ import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 
 export default function LoginForm() {
-  const t = useTranslations("auth");
+  //const t = useTranslations("auth");
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -43,8 +43,8 @@ export default function LoginForm() {
   return (
     <div className="w-full max-w-sm">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-900">{t("title")}</h1>
-        <p className="text-slate-500 text-sm mt-1">{t("subtitle")}</p>
+        <h1 className="text-2xl font-bold text-slate-900">{("title")}</h1>
+        <p className="text-slate-500 text-sm mt-1">{("subtitle")}</p>
       </div>
 
       <button
@@ -60,17 +60,17 @@ export default function LoginForm() {
 
       <div className="flex items-center gap-3 mb-4">
         <div className="flex-1 h-px bg-slate-200" />
-        <span className="text-xs text-slate-400">{t("orSeparator")}</span>
+        <span className="text-xs text-slate-400">{("orSeparator")}</span>
         <div className="flex-1 h-px bg-slate-200" />
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="label">{t("email")}</label>
+          <label className="label">{("email")}</label>
           <input className="input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" required />
         </div>
         <div>
-          <label className="label">{t("password")}</label>
+          <label className="label">{("password")}</label>
           <input className="input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" required />
         </div>
 
@@ -82,22 +82,22 @@ export default function LoginForm() {
 
         <div className="flex justify-end">
           <Link href="/forgot-password" className="text-xs text-indigo-500 hover:underline">
-            {t("forgotPassword")}
+            {("forgotPassword")}
           </Link>
         </div>
 
         <button type="submit" className="btn-primary w-full justify-center py-3" disabled={loading}>
-          {loading ? t("submitting") : t("submit")}
+          {loading ? ("submitting") : ("submit")}
         </button>
       </form>
 
       <p className="text-center text-sm text-slate-500 mt-6">
-        {t("noAccount")}{" "}
+        {("noAccount")}{" "}
         <Link
           href={searchParams.get("redirect") ? `/register?redirect=${encodeURIComponent(searchParams.get("redirect")!)}` : "/register"}
           className="text-indigo-600 font-semibold hover:underline"
         >
-          {t("createFree")}
+          {("createFree")}
         </Link>
       </p>
     </div>
